@@ -1,0 +1,199 @@
+# Cursor Rules for Leaderboard Project
+
+
+ 
+
+  You are an expert in TypeScript, Node.js, Next.js App Router, React, Shadcn UI, Radix UI and Tailwind.
+  
+  Code Style and Structure
+  - Write concise, technical TypeScript code with accurate examples.
+  - Use functional and declarative programming patterns; avoid classes.
+  - Prefer iteration and modularization over code duplication.
+  - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+  - Structure files: exported component, subcomponents, helpers, static content, types.
+  
+  Naming Conventions
+  - Use lowercase with dashes for directories (e.g., components/auth-wizard).
+  - Favor named exports for components.
+  
+  TypeScript Usage
+  - Use TypeScript for all code; prefer interfaces over types.
+  - Avoid enums; use maps instead.
+  - Use functional components with TypeScript interfaces.
+  
+  Syntax and Formatting
+  - Use the "function" keyword for pure functions.
+  - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+  - Use declarative JSX.
+  
+  UI and Styling
+  - Use Shadcn UI, Radix, and Tailwind for components and styling.
+  - Implement responsive design with Tailwind CSS; use a mobile-first approach.
+  
+  Performance Optimization
+  - Minimize 'use client', 'useEffect', and 'setState'; favor React Server Components (RSC).
+  - Wrap client components in Suspense with fallback.
+  - Use dynamic loading for non-critical components.
+  - Optimize images: use WebP format, include size data, implement lazy loading.
+  
+  Key Conventions
+  - Use 'nuqs' for URL search parameter state management.
+  - Optimize Web Vitals (LCP, CLS, FID).
+  - Limit 'use client':
+    - Favor server components and Next.js SSR.
+    - Use only for Web API access in small components.
+    - Avoid for data fetching or state management.
+  
+  Follow Next.js docs for Data Fetching, Rendering, and Routing.
+
+  
+    You are an expert in web scraping and data extraction, with a focus on Python libraries and frameworks such as requests, BeautifulSoup, selenium, and advanced tools like jina, firecrawl, agentQL, and multion.
+
+        Key Principles:
+        - Write concise, technical responses with accurate Python examples.
+        - Prioritize readability, efficiency, and maintainability in scraping workflows.
+        - Use modular and reusable functions to handle common scraping tasks.
+        - Handle dynamic and complex websites using appropriate tools (e.g., Selenium, agentQL).
+        - Follow PEP 8 style guidelines for Python code.
+
+        General Web Scraping:
+        - Use requests for simple HTTP GET/POST requests to static websites.
+        - Parse HTML content with BeautifulSoup for efficient data extraction.
+        - Handle JavaScript-heavy websites with selenium or headless browsers.
+        - Respect website terms of service and use proper request headers (e.g., User-Agent).
+        - Implement rate limiting and random delays to avoid triggering anti-bot measures.
+
+        Text Data Gathering:
+        - Use jina or firecrawl for efficient, large-scale text data extraction.
+            - Jina: Best for structured and semi-structured data, utilizing AI-driven pipelines.
+            - Firecrawl: Preferred for crawling deep web content or when data depth is critical.
+        - Use jina when text data requires AI-driven structuring or categorization.
+        - Apply firecrawl for tasks that demand precise and hierarchical exploration.
+
+        Handling Complex Processes:
+        - Use agentQL for known, complex processes (e.g., logging in, form submissions).
+            - Define clear workflows for steps, ensuring error handling and retries.
+            - Automate CAPTCHA solving using third-party services when applicable.
+        - Leverage multion for unknown or exploratory tasks.
+            - Examples: Finding the cheapest plane ticket, purchasing newly announced concert tickets.
+            - Design adaptable, context-aware workflows for unpredictable scenarios.
+
+        Data Validation and Storage:
+        - Validate scraped data formats and types before processing.
+        - Handle missing data by flagging or imputing as required.
+        - Store extracted data in appropriate formats (e.g., CSV, JSON, or databases such as SQLite).
+        - For large-scale scraping, use batch processing and cloud storage solutions.
+
+        Error Handling and Retry Logic:
+        - Implement robust error handling for common issues:
+            - Connection timeouts (requests.Timeout).
+            - Parsing errors (BeautifulSoup.FeatureNotFound).
+            - Dynamic content issues (Selenium element not found).
+        - Retry failed requests with exponential backoff to prevent overloading servers.
+        - Log errors and maintain detailed error messages for debugging.
+
+        Performance Optimization:
+        - Optimize data parsing by targeting specific HTML elements (e.g., id, class, or XPath).
+        - Use asyncio or concurrent.futures for concurrent scraping.
+        - Implement caching for repeated requests using libraries like requests-cache.
+        - Profile and optimize code using tools like cProfile or line_profiler.
+
+        Dependencies:
+        - requests
+        - BeautifulSoup (bs4)
+        - selenium
+        - jina
+        - firecrawl
+        - agentQL
+        - multion
+        - lxml (for fast HTML/XML parsing)
+        - pandas (for data manipulation and cleaning)
+
+        Key Conventions:
+        1. Begin scraping with exploratory analysis to identify patterns and structures in target data.
+        2. Modularize scraping logic into clear and reusable functions.
+        3. Document all assumptions, workflows, and methodologies.
+        4. Use version control (e.g., git) for tracking changes in scripts and workflows.
+        5. Follow ethical web scraping practices, including adhering to robots.txt and rate limiting.
+        Refer to the official documentation of jina, firecrawl, agentQL, and multion for up-to-date APIs and best practices.
+
+
+## Project Context
+- This is a web scraping application that tracks Amazon book rankings
+- The application needs to extract book titles, authors, and Best Seller Ranks (BSR)
+- Data is stored in JSON format 
+- The application displays books sorted by BSR in "Title - Author" format
+- We must implement Amazon-friendly scraping to avoid blocking
+
+## Code Style & Architecture
+- Use modern JavaScript (ES6+) with async/await for asynchronous operations
+- Implement modular architecture with clear separation of concerns
+- Follow the DRY (Don't Repeat Yourself) principle
+- Use meaningful variable and function names
+- Include JSDoc comments for all functions and complex code blocks
+- Use promises or async/await for all asynchronous operations
+- Maintain consistent error handling patterns
+
+## Amazon Scraping Requirements
+- Always implement random delays between requests (3-10 seconds)
+- Rotate user agents for each request
+- Use Puppeteer with stealth plugin to avoid detection
+- Implement exponential backoff for retries
+- Never make concurrent requests to Amazon from the same IP
+- Include proper error handling for network issues and page structure changes
+- Always extract from all possible locations (fallback strategies)
+- Cache successful results immediately
+
+## Data Management
+- Implement atomic file operations to prevent data corruption
+- Always create backups before updating data
+- Never lose previously successful scrape results
+- Use proper validation for all scraped data
+- Store BSR as numeric values for accurate sorting
+- Implement data rotation/cleanup for historical data
+
+## Security Considerations
+- Never execute arbitrary code
+- Sanitize all inputs and outputs
+- Use secure dependencies
+- Handle errors without exposing sensitive information
+
+## Performance Guidelines
+- Minimize memory usage during scraping operations
+- Implement proper resource cleanup (browser contexts, pages)
+- Use streaming for file operations when appropriate
+- Consider caching for frequently accessed data
+- Implement graceful shutdown procedures
+
+## Testing
+- Write tests for all critical functions
+- Implement mocks for Amazon responses in tests
+- Test error handling paths
+- Validate data integrity after operations
+
+## Logging
+- Use structured logging (Winston)
+- Include appropriate context in log messages
+- Implement different log levels based on severity
+- Avoid logging sensitive information
+
+## Configuration
+- Use environment variables for deployment-specific settings
+- Keep sensitive configuration separate from code
+- Provide sensible defaults when configuration is missing
+- Validate configuration at startup
+
+## Puppeteer Best Practices
+- Always close browser contexts and pages
+- Implement proper timeout handling
+- Use proper selectors for element detection
+- Handle navigation errors and timeouts gracefully
+- Implement viewport and user agent rotation
+
+## Frontend
+- Keep the UI minimal and focused on displaying the book data
+- Format entries as "Title - Author" as specified
+- Sort books by BSR (lower is better)
+- Include timestamp of last data update
+- Implement proper error handling for display
+- Ensure responsive design for various screen sizes

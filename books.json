@@ -1,0 +1,302 @@
+{
+    "version": "1.0",
+    "last_updated": "2025-02-27T12:22:06.642Z",
+    "books": {
+        "1922427586": {
+            "rank": 24,
+            "title": "Remembering the Dead and Other Stories",
+            "author": "Lewis Woolston",
+            "cover_url": "https://m.media-amazon.com/images/I/611yH2-BvNL._SY522_.jpg",
+            "bsr": 5360589,
+            "url": "https://www.amazon.com/Remembering-Other-Stories-Lewis-Woolston/dp/1922427586"
+        },
+        "1925536882": {
+            "rank": 17,
+            "title": "The Last Free Man and Other Stories",
+            "author": "Lewis Woolston",
+            "cover_url": "https://m.media-amazon.com/images/I/71TPgME7cpL._SY522_.jpg",
+            "bsr": 4818989,
+            "url": "https://www.amazon.com/Last-Free-Man-Other-Stories/dp/1925536882"
+        },
+        "1957599006": {
+            "rank": 25,
+            "title": "Five to Four",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/61ra9mvilSL._SY522_.jpg",
+            "bsr": 5582460,
+            "url": "https://www.amazon.com/dp/1957599006"
+        },
+        "1957599022": {
+            "rank": 15,
+            "title": "Faceless",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/61hIGnVOy4L._SY522_.jpg",
+            "bsr": 4169353,
+            "url": "https://www.amazon.com/dp/1957599022"
+        },
+        "1957599030": {
+            "rank": 32,
+            "title": "Gamma Coin",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/710761zZlLL._SY522_.jpg",
+            "bsr": 7252154,
+            "url": "https://www.amazon.com/dp/1957599030"
+        },
+        "1957599065": {
+            "rank": 18,
+            "title": "Ship of Fuls",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/71riYYAiG5L._SY522_.jpg",
+            "bsr": 4847492,
+            "url": "https://www.amazon.com/dp/1957599065"
+        },
+        "1957599103": {
+            "rank": 29,
+            "title": "Low Key Connections",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/61jRXT0WGcL._SY522_.jpg",
+            "bsr": 6019960,
+            "url": "https://www.amazon.com/dp/1957599103"
+        },
+        "B0BW32CX2G": {
+            "rank": 1,
+            "title": "Mixtape Hyperborea",
+            "author": "Adem Luz Rienspects",
+            "cover_url": "https://m.media-amazon.com/images/I/71Z6dEF6rBL._SY522_.jpg",
+            "bsr": 207419,
+            "url": "https://www.amazon.com/Mixtape-Hyperborea-Adem-Luz-Rienspects/dp/B0BW32CX2G"
+        },
+        "B0CJLCZVCG": {
+            "rank": 2,
+            "title": "INCEL",
+            "author": "ARX-Han",
+            "cover_url": "https://m.media-amazon.com/images/I/81DwGA83SgL._SY522_.jpg",
+            "bsr": 639583,
+            "url": "https://www.amazon.com/INCEL-Novel-ARX-Han/dp/B0CJLCZVCG"
+        },
+        "B0CWCF7J13": {
+            "rank": 3,
+            "title": "Improvidence",
+            "author": "David Herod",
+            "cover_url": "https://m.media-amazon.com/images/I/61EhziObbuL._SY522_.jpg",
+            "bsr": 1053381,
+            "url": "https://www.amazon.com/Improvidence-David-Herod/dp/B0CWCF7J13"
+        },
+        "B0BRC7Z2Q9": {
+            "rank": 4,
+            "title": "Fedbook",
+            "author": "John Jay Stancliff",
+            "cover_url": "https://m.media-amazon.com/images/I/41q8CLN+x6L._SY522_.jpg",
+            "bsr": 1268159,
+            "url": "https://www.amazon.com/Fedbook-John-Jay-Stancliff/dp/B0BRC7Z2Q9/"
+        },
+        "B08KHDJQZW": {
+            "rank": 5,
+            "title": "Baby Alex",
+            "author": "The Book Club",
+            "cover_url": "https://m.media-amazon.com/images/I/51d-NEAHkbL._SY522_.jpg",
+            "bsr": 1405390,
+            "url": "https://www.amazon.com/Baby-Alex-Book-Club/dp/B08KHDJQZW/"
+        },
+        "B0DJ6T6SCY": {
+            "rank": 6,
+            "title": "Frazzledrip",
+            "author": "F. Gardner",
+            "cover_url": "https://m.media-amazon.com/images/I/61i4Qzc5SUL._SY522_.jpg",
+            "bsr": 1470582,
+            "url": "https://www.amazon.com/dp/B0DJ6T6SCY"
+        },
+        "B0DRT5T927": {
+            "rank": 7,
+            "title": "Harry Potter Trivia Book",
+            "author": "Amanda Hopkins",
+            "cover_url": "https://m.media-amazon.com/images/I/71F562RlHAL._SY522_.jpg",
+            "bsr": 2132084,
+            "url": "https://www.amazon.com/dp/B0DRT5T927"
+        },
+        "B0BZF9QYLF": {
+            "rank": 8,
+            "title": "Kabbalah of the Crocodile",
+            "author": "F. Gardner",
+            "cover_url": "https://m.media-amazon.com/images/I/715VCASMqWL._SY522_.jpg",
+            "bsr": 2607589,
+            "url": "https://www.amazon.com/dp/B0BZF9QYLF"
+        },
+        "B0B9265BPY": {
+            "rank": 9,
+            "title": "The Savage Green",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71TbYqEmBxL._SY522_.jpg",
+            "bsr": 2725339,
+            "url": "https://www.amazon.com/Savage-Green-Zulu-Alitspa/dp/B0B9265BPY"
+        },
+        "B09MJBNL7X": {
+            "rank": 10,
+            "title": "Eggplant",
+            "author": "Ogden Nesmer",
+            "cover_url": "https://m.media-amazon.com/images/I/71sQQGkR2TL._SY522_.jpg",
+            "bsr": 3357099,
+            "url": "https://www.amazon.com/Eggplant-Ogden-Nesmer/dp/B09MJBNL7X"
+        },
+        "B0B5KVDCR6": {
+            "rank": 11,
+            "title": "Egregore",
+            "author": "Spencer Weedman",
+            "cover_url": "https://m.media-amazon.com/images/I/71HhSPmoZEL._SY522_.jpg",
+            "bsr": 3383285,
+            "url": "https://www.amazon.com/Egregore-Gothic-Horror-Spencer-Weedman/dp/B0B5KVDCR6"
+        },
+        "B0863V2KCT": {
+            "rank": 12,
+            "title": "ESKETIT",
+            "author": "quindelin _",
+            "cover_url": "https://m.media-amazon.com/images/I/61cyE-0cRvL._SY522_.jpg",
+            "bsr": 3408636,
+            "url": "https://www.amazon.com/ESKETIT-quindelin-_/dp/B0863V2KCT"
+        },
+        "B0BW31G7MG": {
+            "rank": 13,
+            "title": "Cephalopology",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/717tTvRYggL._SY522_.jpg",
+            "bsr": 3971340,
+            "url": "https://www.amazon.com/Cephalopology-narrative-recounting-humanitys-intelligence/dp/B0BW31G7MG"
+        },
+        "B0DCS1X54Z": {
+            "rank": 14,
+            "title": "SILKWORM",
+            "author": "Ogden Nesmer",
+            "cover_url": "https://m.media-amazon.com/images/I/71g7j2pCt5L._SY522_.jpg",
+            "bsr": 4091418,
+            "url": "https://www.amazon.com/SILKWORM-Ogden-Nesmer/dp/B0DCS1X54Z"
+        },
+        "B0BMJMP3GK": {
+            "rank": 16,
+            "title": "I Pray to the Hungry God",
+            "author": "Ogden Nesmer",
+            "cover_url": "https://m.media-amazon.com/images/I/619K8gFdVVL._SY522_.jpg",
+            "bsr": 4469064,
+            "url": "https://www.amazon.com/Pray-Hungry-God-Ogden-Nesmer/dp/B0BMJMP3GK"
+        },
+        "B09JJFF82K": {
+            "rank": 19,
+            "title": "The Book of the Void-Sun and the Lion-Serpent at the feet of Christ",
+            "author": "Frater Asemlen",
+            "cover_url": "https://m.media-amazon.com/images/I/719juUMCMrL._SY522_.jpg",
+            "bsr": 4979141,
+            "url": "https://www.amazon.com/Book-Void-Sun-Lion-Serpent-feet-Christ/dp/B09JJFF82K"
+        },
+        "B0BYRNM6Z5": {
+            "rank": 20,
+            "title": "Chicken World",
+            "author": "K. R. Hartley",
+            "cover_url": "https://m.media-amazon.com/images/I/61SRpyydboL._SY522_.jpg",
+            "bsr": 5108049,
+            "url": "https://www.amazon.com/dp/B0BYRNM6Z5"
+        },
+        "B098G8XF6Q": {
+            "rank": 21,
+            "title": "Reptilian Odyssey",
+            "author": "F. Gardner",
+            "cover_url": "https://m.media-amazon.com/images/I/512rf6-1W7S._SY522_.jpg",
+            "bsr": 5162399,
+            "url": "https://www.amazon.com/dp/B098G8XF6Q"
+        },
+        "B0B6LBBJ3S": {
+            "rank": 22,
+            "title": "Modem Waves",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71DxACNamhL._SY522_.jpg",
+            "bsr": 5174575,
+            "url": "https://www.amazon.com/Modem-Waves-Zulu-Alitspa/dp/B0B6LBBJ3S"
+        },
+        "B08XR19N6X": {
+            "rank": 23,
+            "title": "Six Days in the Life of David Vallejo",
+            "author": "K. D. Walter",
+            "cover_url": "https://m.media-amazon.com/images/I/71-G6+ZNqWL._SY522_.jpg",
+            "bsr": 5318830,
+            "url": "https://www.amazon.com/Six-Days-Life-David-Vallejo/dp/B08XR19N6X"
+        },
+        "B09NGZ2R9W": {
+            "rank": 26,
+            "title": "2084",
+            "author": "Kadon Landon Peterson",
+            "cover_url": "https://m.media-amazon.com/images/I/61IuG16vRKL._SY522_.jpg",
+            "bsr": 5629495,
+            "url": "https://www.amazon.com/2084-Book-Kadon-Landon-Peterson/dp/B09NGZ2R9W"
+        },
+        "B0CCCNBQ3M": {
+            "rank": 27,
+            "title": "A Knight of Valora",
+            "author": "K.K. Wing",
+            "cover_url": "https://m.media-amazon.com/images/I/71Q1xpwtBnL._SY522_.jpg",
+            "bsr": 5799385,
+            "url": "https://www.amazon.com/Knight-Valora-Serenity-K-K-Wing/dp/B0CCCNBQ3M"
+        },
+        "B0BTRTBP5H": {
+            "rank": 28,
+            "title": "The Beautiful Kingdom",
+            "author": "K.K. Wing",
+            "cover_url": "https://m.media-amazon.com/images/I/71ZjCe3Kb1L._SY522_.jpg",
+            "bsr": 5919168,
+            "url": "https://www.amazon.com/Beautiful-Kingdom-K-K-Wing/dp/B0BTRTBP5H"
+        },
+        "B0BTJ6JV1D": {
+            "rank": 30,
+            "title": "Panther Pride",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71+NPJOyl3L._SY522_.jpg",
+            "bsr": 6559203,
+            "url": "https://www.amazon.com/Panther-Pride-Zulu-Alitspa/dp/B0BTJ6JV1D"
+        },
+        "195759912X": {
+            "rank": 31,
+            "title": "Take Down Request",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/61May26C-iL._SY522_.jpg",
+            "bsr": 6655348,
+            "url": "https://www.amazon.com/dp/195759912X"
+        },
+        "B0BF2XBBLX": {
+            "rank": 33,
+            "title": "The Orators",
+            "author": "Pseudo Bulkington",
+            "cover_url": "https://m.media-amazon.com/images/I/613bu5-d1kL._SY522_.jpg",
+            "bsr": 8379547,
+            "url": "https://www.amazon.com/Orators-Pseudo-Bulkington/dp/B0BF2XBBLX"
+        },
+        "B0DLGLKGFB": {
+            "rank": 34,
+            "title": "Shards",
+            "author": "Robert James Cross",
+            "cover_url": "https://m.media-amazon.com/images/I/41Nr6CfHZUL._SY522_.jpg",
+            "bsr": 9207271,
+            "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB"
+        },
+        "B0DK7T1HYD": {
+            "rank": 35,
+            "title": "Cherno Caster",
+            "author": "Akaso",
+            "cover_url": "https://m.media-amazon.com/images/I/61jqsD7cBeL._SY522_.jpg",
+            "bsr": 9433034,
+            "url": "https://www.amazon.com/Cherno-Caster-Cyberpunk-LitRPG-Akaso/dp/B0DK7T1HYD"
+        },
+        "B09ZCJN9CT": {
+            "rank": 36,
+            "title": "2084",
+            "author": "Kadon Landon Peterson",
+            "cover_url": "https://m.media-amazon.com/images/I/511e71j6LUL._SY522_.jpg",
+            "bsr": 10688116,
+            "url": "https://www.amazon.com/2084-Book-Kadon-Landon-Peterson/dp/B09ZCJN9CT"
+        },
+        "B0B477N8ZG": {
+            "rank": 37,
+            "title": "People Mover",
+            "author": "John David Card",
+            "cover_url": "https://m.media-amazon.com/images/I/715C3sWJR6L._SY522_.jpg",
+            "bsr": 10917694,
+            "url": "https://www.amazon.com/People-Mover-John-David-Card/dp/B0B477N8ZG"
+        }
+    }
+}

@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/lit/ Leaderboard</title>
+    <link rel="icon" type="image/png" href="https://lampbylit.com/magazine/wp-content/uploads/2020/12/favicon.png">
+    <style>
+        /* Material Design-like styles */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            transition: opacity 0.2s;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 400;
+            margin: 20px 0;
+            color: #202124;
+        }
+
+        .fine-print {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .fine-print p {
+            margin: 6px 0;
+        }
+
+        .secret-toggle {
+            cursor: pointer;
+            color: inherit;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .secret-toggle:hover {
+            opacity: 0.7;
+        }
+
+        .card {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+        }
+
+        .submit-container {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .input-button-group {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        input[type="url"] {
+            flex: 1;
+            padding: 12px;
+            margin: 0;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #1557b0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .button-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feedback-display {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.4;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            text-align: left;
+            margin: 0;
+        }
+
+        .feedback-display.progress {
+            background: #e8f4ff;
+            border-left: 4px solid #1a73e8;
+            color: #1a73e8;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { background-color: #e8f4ff; }
+            50% { background-color: #d0e8ff; }
+            100% { background-color: #e8f4ff; }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            text-align: left;
+            padding: 16px;
+            border-bottom: 1px solid #dadce0;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        .cover-img {
+            width: 40px;
+            height: auto;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+            transform-origin: center center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover-img:hover {
+            transform: scale(4);
+            z-index: 100;
+        }
+
+        /* Container for expanded image */
+        .expanded-cover-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .expanded-cover-container.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .expanded-cover {
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .expanded-cover-container.visible .expanded-cover {
+            transform: scale(1);
+        }
+
+        .cycle-button {
+            position: relative;
+            min-width: 200px;
+        }
+        
+        .cycle-button:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+        
+        .cooldown-display {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+        
+        @keyframes cooldownPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .cycle-button:disabled {
+            animation: cooldownPulse 2s infinite ease-in-out;
+        }
+
+        /* Ensure progress animation doesn't conflict */
+        .cycle-button:disabled:not(.progress) {
+            animation: cooldownPulse 2s infinite ease-in-out;
+        }
+
+        .cycle-button.progress:disabled {
+            animation: none;
+        }
+
+        .code-blocks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .code-block {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            max-height: 150px;
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .code-block-header h3 {
+            font-weight: 500;
+            color: #5f6368;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .copy-button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #1557b0;
+        }
+
+        .json-display {
+            font-size: 11px;
+            line-height: 1.3;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="https://lampbylit.com" target="_blank">
+            <img src="https://lampbylit.com/magazine/wp-content/uploads/2020/12/logo01.png" alt="LampByLit Logo" class="logo">
+        </a>
+        <h1>/lit/ Leaderboard</h1>
+    </header>
+
+    <div class="fine-print">
+        <p>This leaderboard uses several exhaustive methods to scrape amazon paperback links and sort them by Best Sellers Rank.</p>
+        <p>This tool is sketchy and will break any moment.</p>
+        <p>If you want to add your book to the leaderboard, please use the submission form below. PLEASE ONLY ENTER VALID AMAZON PAPERBACK URLs. Please submit <span class="secret-toggle" onclick="toggleLimiter(isLimiterEnabled = !isLimiterEnabled)">one book per day</span>. Please only submit books that you yourself have written or published. Please respect this tool, it is fragile.</p>
+        <p>To update the leaderboard, press the Cycle button.</p>
+    </div>
+
+    <div class="card">
+        <form id="submit-form" onsubmit="return submitBook(event)">
+            <div class="submit-container">
+                <div class="input-button-group">
+                    <input type="url" id="amazon-url" placeholder="Enter Amazon paperback URL" required>
+                    <button type="submit">Submit</button>
+                </div>
+                <div class="feedback-display" id="feedback-display">
+                    <!-- Status messages will appear here -->
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="controls">
+        <div class="button-stack">
+            <button id="cycle-button" onclick="handleCycleClick()" class="cycle-button">Cycle the Leaderboard</button>
+            <div id="cooldown-display" class="cooldown-display"></div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Cover</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Best Sellers Rank</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+            <!-- Will be populated dynamically -->
+        </tbody>
+    </table>
+
+    <!-- Add code blocks container -->
+    <div class="code-blocks-container">
+        <div class="code-block">
+            <div class="code-block-header">
+                <h3>Input</h3>
+                <button onclick="copyToClipboard('input-json')" class="copy-button">Copy</button>
+            </div>
+            <pre id="input-json" class="json-display"></pre>
+        </div>
+        
+        <div class="code-block">
+            <div class="code-block-header">
+                <h3>Output</h3>
+                <button onclick="copyToClipboard('output-json')" class="copy-button">Copy</button>
+            </div>
+            <pre id="output-json" class="json-display"></pre>
+        </div>
+    </div>
+
+    <!-- Add expanded cover container -->
+    <div class="expanded-cover-container" id="expanded-cover-container">
+        <img class="expanded-cover" id="expanded-cover" alt="Expanded Cover">
+    </div>
+
+    <footer style="text-align: center; padding: 20px; margin-top: 40px; color: #666; font-size: 12px;">
+        Copyright © &amp;amp
+    </footer>
+
+    <script>
+        let isLimiterEnabled = true;
+
+        // Add syntax highlighting function
+        function syntaxHighlight(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, null, 2);
+            }
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        // Add copy to clipboard function
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const button = element.previousElementSibling.querySelector('.copy-button');
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Function to load and display JSON files
+        async function loadJsonFiles() {
+            try {
+                // Load input.json
+                const inputResponse = await fetch('/input.json');
+                if (inputResponse.ok) {
+                    const inputData = await inputResponse.json();
+                    const inputElement = document.getElementById('input-json');
+                    inputElement.innerHTML = syntaxHighlight(inputData);
+                }
+
+                // Load books.json
+                const booksResponse = await fetch('/books.json');
+                if (booksResponse.ok) {
+                    const booksData = await booksResponse.json();
+                    const outputElement = document.getElementById('output-json');
+                    outputElement.innerHTML = syntaxHighlight(booksData);
+                }
+            } catch (error) {
+                console.error('Error loading JSON files:', error);
+            }
+        }
+
+        // Load JSON files on page load and after updates
+        window.addEventListener('DOMContentLoaded', loadJsonFiles);
+        
+        // Add style for syntax highlighting
+        const style = document.createElement('style');
+        style.textContent = `
+            .json-display {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                padding: 16px;
+                border-radius: 4px;
+                overflow-x: auto;
+                font-family: 'Consolas', 'Monaco', monospace;
+            }
+            .json-display .string { color: #ce9178; }
+            .json-display .number { color: #b5cea8; }
+            .json-display .boolean { color: #569cd6; }
+            .json-display .null { color: #569cd6; }
+            .json-display .key { color: #9cdcfe; }
+        `;
+        document.head.appendChild(style);
+
+        // Orchestrates a full cycle of all operations
+        async function cycle() {
+            const feedbackDisplay = document.getElementById('feedback-display');
+            const buttons = document.querySelectorAll('.button-stack button');
+            const steps = [
+                { name: 'Update', function: updateLeaderboard },
+                { name: 'Purge', function: purgeLeaderboard },
+                { name: 'Cleanup', function: cleanupSubmissions },
+                { name: 'Publish', function: publishLeaderboard }
+            ];
+            
+            // Disable all buttons during cycle
+            buttons.forEach(button => button.disabled = true);
+            
+            feedbackDisplay.textContent = 'Starting full cycle...';
+            feedbackDisplay.className = 'feedback-display progress';
+
+            try {
+                for (let i = 0; i < steps.length; i++) {
+                    const step = steps[i];
+                    feedbackDisplay.textContent = `Step ${i + 1}/${steps.length}: ${step.name} in progress...`;
+                    
+                    // Create a promise that will resolve when the operation is complete
+                    await new Promise((resolve, reject) => {
+                        let isCompleted = false;
+                        
+                        // Create an observer to watch for feedback display changes
+                        const observer = new MutationObserver((mutations) => {
+                            const newText = feedbackDisplay.textContent;
+                            // If the text indicates completion or error, resolve
+                            if (!isCompleted && (
+                                newText.includes('complete') || 
+                                newText.includes('successfully') || 
+                                newText.includes('failed') || 
+                                newText.includes('Error'))
+                            ) {
+                                isCompleted = true;
+                                observer.disconnect();
+                                // Add a small delay to ensure any final updates are processed
+                                setTimeout(resolve, 1000);
+                            }
+                        });
+
+                        // Start observing feedback display changes
+                        observer.observe(feedbackDisplay, { 
+                            characterData: true, 
+                            childList: true, 
+                            subtree: true 
+                        });
+
+                        // Execute the step function
+                        step.function();
+
+                        // Set a timeout to prevent hanging
+                        setTimeout(() => {
+                            if (!isCompleted) {
+                                observer.disconnect();
+                                reject(new Error(`${step.name} operation timed out after 5 minutes`));
+                            }
+                        }, 300000); // 5 minute timeout
+                    });
+
+                    // Add a small delay between steps
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+
+                feedbackDisplay.className = 'feedback-display';
+                feedbackDisplay.textContent = 'Full cycle completed successfully!';
+            } catch (error) {
+                console.error('Cycle error:', error);
+                feedbackDisplay.className = 'feedback-display';
+                feedbackDisplay.textContent = `Cycle stopped: ${error.message}`;
+            } finally {
+                // Re-enable all buttons
+                buttons.forEach(button => button.disabled = false);
+            }
+        }
+
+        // Load and display leaderboard on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/books.json');
+                if (!response.ok) {
+                    // If file doesn't exist or other error, just leave table empty
+                    console.log('No books.json found or error loading it');
+                    return;
+                }
+                const data = await response.json();
+                if (data && data.books && Object.keys(data.books).length > 0) {
+                    updateLeaderboardDisplay(data);
+                }
+            } catch (error) {
+                console.log('Error loading initial leaderboard:', error);
+                // Don't show error message, just leave table empty
+            }
+        });
+
+        async function toggleLimiter(enabled) {
+            const feedbackDisplay = document.getElementById('feedback-display');
+            feedbackDisplay.textContent = 'Updating limiter status...';
+            
+            try {
+                const response = await fetch('/toggle-limiter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ enabled })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if (data.success) {
+                    isLimiterEnabled = enabled;
+                    feedbackDisplay.textContent = `Daily submission limit ${enabled ? 'enabled' : 'disabled'}`;
+                } else {
+                    throw new Error(data.error || 'Failed to toggle limiter');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                feedbackDisplay.textContent = `Error: ${error.message}`;
+                // Revert the visual state if there was an error
+                isLimiterEnabled = !enabled;
+            }
+        }
+
+        function submitBook(event) {
+            event.preventDefault();
+            const url = document.getElementById('amazon-url').value;
+            const feedbackDisplay = document.getElementById('feedback-display');
+            
+            if (!url.includes('amazon.com') || !url.includes('/dp/')) {
+                feedbackDisplay.textContent = 'Please enter a valid Amazon paperback URL';
+                return false;
+            }
+
+            if (url.length > 150) {
+                feedbackDisplay.textContent = 'URL is too long (maximum 150 characters)';
+                return false;
+            }
+
+            feedbackDisplay.textContent = 'Submitting URL...';
+
+            fetch('/submit-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    url,
+                    bypassLimiter: !isLimiterEnabled
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    feedbackDisplay.textContent = 'URL submitted successfully!';
+                    document.getElementById('amazon-url').value = '';
+                } else {
+                    feedbackDisplay.textContent = data.error || 'Failed to submit URL';
+                }
+            })
+            .catch(error => {
+                feedbackDisplay.textContent = 'Error submitting URL';
+                console.error('Error:', error);
+            });
+
+            return false;
+        }
+
+        function updateLeaderboard() {
+            const feedbackDisplay = document.getElementById('feedback-display');
+            feedbackDisplay.textContent = 'Starting leaderboard update...';
+            feedbackDisplay.className = 'feedback-display progress';
+
+            // Start progress checking
+            const progressChecker = setInterval(async () => {
+                try {
+                    const response = await fetch('/metadata.json');
+                    const metadata = await response.json();
+                    if (metadata.scraping_progress) {
+                        const { current, total } = metadata.scraping_progress;
+                        feedbackDisplay.textContent = `${current} of ${total} books scraped`;
+                        feedbackDisplay.className = 'feedback-display progress';
+                    }
+                } catch (error) {
+                    console.error('Error checking progress:', error);
+                }
+            }, 1000);
+
+            fetch('/update-leaderboard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressChecker); // Stop checking progress
+                feedbackDisplay.className = 'feedback-display';
+                if (data.success) {
+                    if (data.books) {
+                        feedbackDisplay.textContent = 'Leaderboard updated successfully!';
+                        updateLeaderboardDisplay(data.books);
+                    } else if (data.message) {
+                        // Keep checking progress even after initial response
+                        const continueChecking = setInterval(async () => {
+                            try {
+                                const response = await fetch('/metadata.json');
+                                const metadata = await response.json();
+                                if (metadata.scraping_progress) {
+                                    const { current, total } = metadata.scraping_progress;
+                                    feedbackDisplay.textContent = `${current} of ${total} books scraped`;
+                                    feedbackDisplay.className = 'feedback-display progress';
+                                } else {
+                                    // If scraping_progress is gone, it means scraping is complete
+                                    clearInterval(continueChecking);
+                                    feedbackDisplay.className = 'feedback-display';
+                                    feedbackDisplay.textContent = 'Leaderboard updated successfully!';
+                                    // Refresh the display
+                                    const finalResponse = await fetch('/metadata.json');
+                                    const finalMetadata = await finalResponse.json();
+                                    const activeBooks = Object.values(finalMetadata.books)
+                                        .filter(book => book.status === 'active')
+                                        .sort((a, b) => a.bsr - b.bsr);
+                                    updateLeaderboardDisplay(activeBooks);
+                                }
+                            } catch (error) {
+                                console.error('Error checking progress:', error);
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    feedbackDisplay.textContent = data.error || 'Update failed';
+                }
+            })
+            .catch(error => {
+                clearInterval(progressChecker); // Stop checking progress
+                feedbackDisplay.className = 'feedback-display';
+                feedbackDisplay.textContent = 'Error updating leaderboard';
+                console.error('Error:', error);
+            });
+        }
+
+        function purgeLeaderboard() {
+            const feedbackDisplay = document.getElementById('feedback-display');
+            feedbackDisplay.textContent = 'Purging blacklisted authors...';
+            feedbackDisplay.className = 'feedback-display progress';
+
+            fetch('/purge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                feedbackDisplay.className = 'feedback-display';
+                if (data.success) {
+                    const stats = data.stats;
+                    feedbackDisplay.textContent = `Purge complete: ${stats.purged} books removed (${stats.total_checked} checked, ${stats.errors} errors)`;
+                    
+                    // Refresh the display after purge
+                    fetch('/metadata.json')
+                        .then(response => response.json())
+                        .then(metadata => {
+                            const activeBooks = Object.values(metadata.books)
+                                .filter(book => book.status === 'active')
+                                .sort((a, b) => a.bsr - b.bsr);
+                            updateLeaderboardDisplay(activeBooks);
+                        })
+                        .catch(error => {
+                            console.error('Error refreshing display:', error);
+                        });
+                } else {
+                    feedbackDisplay.textContent = data.error || 'Purge failed';
+                }
+            })
+            .catch(error => {
+                feedbackDisplay.className = 'feedback-display';
+                feedbackDisplay.textContent = 'Error during purge operation';
+                console.error('Error:', error);
+            });
+        }
+
+        function publishLeaderboard() {
+            const feedbackDisplay = document.getElementById('feedback-display');
+            feedbackDisplay.textContent = 'Publishing leaderboard...';
+
+            fetch('/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    feedbackDisplay.textContent = 'Leaderboard published successfully!';
+                    // Fetch and display the latest books.json
+                    fetch('/books.json')
+                        .then(response => response.json())
+                        .then(booksData => {
+                            updateLeaderboardDisplay(booksData);
+                        })
+                        .catch(error => {
+                            console.error('Error refreshing display:', error);
+                        });
+                } else {
+                    feedbackDisplay.textContent = data.error || 'Publish failed';
+                }
+            })
+            .catch(error => {
+                feedbackDisplay.textContent = 'Error publishing leaderboard';
+                console.error('Error:', error);
+            });
+        }
+
+        function cleanupSubmissions() {
+            const feedbackDisplay = document.getElementById('feedback-display');
+            feedbackDisplay.textContent = 'Cleaning up submissions...';
+            feedbackDisplay.className = 'feedback-display progress';
+
+            fetch('/cleanup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                feedbackDisplay.className = 'feedback-display';
+                if (data.success) {
+                    const stats = data.stats;
+                    feedbackDisplay.textContent = `Cleanup complete: ${stats.submissions_removed} submissions removed (${stats.submissions_checked} checked, ${stats.errors} errors)`;
+                } else {
+                    feedbackDisplay.textContent = data.error || 'Cleanup failed';
+                }
+            })
+            .catch(error => {
+                feedbackDisplay.className = 'feedback-display';
+                feedbackDisplay.textContent = 'Error during cleanup operation';
+                console.error('Error:', error);
+            });
+        }
+
+        // Add expanded cover handling
+        const expandedContainer = document.getElementById('expanded-cover-container');
+        const expandedCover = document.getElementById('expanded-cover');
+
+        // Close expanded view when clicking outside the image
+        expandedContainer.addEventListener('click', (e) => {
+            if (e.target === expandedContainer) {
+                expandedContainer.classList.remove('visible');
+            }
+        });
+
+        // Close expanded view when pressing Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && expandedContainer.classList.contains('visible')) {
+                expandedContainer.classList.remove('visible');
+            }
+        });
+
+        // Update the book display function to handle cover expansion
+        function updateLeaderboardDisplay(data) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+
+            // Return early if no valid data
+            if (!data || (!Array.isArray(data) && !data.books)) {
+                return;
+            }
+
+            // Handle both array and object formats
+            const books = Array.isArray(data) ? data : Object.values(data.books || {});
+            
+            // Return if no books
+            if (books.length === 0) {
+                return;
+            }
+            
+            // Sort by rank if available, otherwise by BSR
+            books.sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
+
+            books.forEach(book => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${book.rank || '-'}</td>
+                    <td><img src="${book.cover_url || ''}" alt="Cover" class="cover-img" onclick="expandCover('${book.cover_url || ''}', '${book.title || 'Book Cover'}')"></td>
+                    <td><a href="${book.url || '#'}" target="_blank">${book.title || 'Unknown'}</a></td>
+                    <td>${book.author || 'Unknown'}</td>
+                    <td>${(book.bsr || 0).toLocaleString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Function to handle cover expansion
+        function expandCover(url, title) {
+            if (!url) return;
+            
+            expandedCover.src = url;
+            expandedCover.alt = title;
+            expandedContainer.classList.add('visible');
+        }
+
+        // Cooldown Constants
+        const COOLDOWN_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+        const COOLDOWN_CHECK_INTERVAL = 1000; // Check every second
+        const STORAGE_KEY = 'cycle_cooldown_state';
+        const MAX_COOLDOWN_DURATION = 24 * 60 * 60 * 1000; // 24 hours - sanity check
+
+        // Cooldown State Management
+        let cooldownInterval = null;
+
+        function validateCooldownState(state) {
+            if (!state) return false;
+            
+            const now = Date.now();
+            
+            // Validate state structure
+            if (!state.lastCycleTime || !state.nextAvailableTime) return false;
+            
+            // Validate timestamps are numbers
+            if (typeof state.lastCycleTime !== 'number' || typeof state.nextAvailableTime !== 'number') return false;
+            
+            // Validate timestamps are reasonable
+            if (state.lastCycleTime > now || state.nextAvailableTime < state.lastCycleTime) return false;
+            
+            // Validate cooldown duration is reasonable
+            const cooldownDuration = state.nextAvailableTime - state.lastCycleTime;
+            if (cooldownDuration > MAX_COOLDOWN_DURATION || cooldownDuration < 0) return false;
+            
+            return true;
+        }
+
+        function getCooldownState() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (!stored) return null;
+                
+                const state = JSON.parse(stored);
+                return validateCooldownState(state) ? state : null;
+            } catch {
+                // If there's any error, clear the invalid state
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch {} // Ignore removal errors
+                return null;
+            }
+        }
+
+        function updateCooldownState(state) {
+            try {
+                if (!validateCooldownState(state)) {
+                    throw new Error('Invalid cooldown state');
+                }
+
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                
+                // Broadcast to other tabs
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: STORAGE_KEY,
+                    newValue: JSON.stringify(state)
+                }));
+            } catch (error) {
+                console.error('Error updating cooldown state:', error);
+                // Attempt to clear invalid state
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch {} // Ignore removal errors
+            }
+        }
+
+        function clearCooldownState() {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                // Broadcast clear to other tabs
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: STORAGE_KEY,
+                    newValue: null
+                }));
+            } catch {} // Ignore removal errors
+        }
+
+        function formatTimeRemaining(ms) {
+            if (ms < 0) return '0:00';
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateButtonState() {
+            const cycleButton = document.getElementById('cycle-button');
+            const cooldownDisplay = document.getElementById('cooldown-display');
+            const state = getCooldownState();
+            
+            if (!state) {
+                cycleButton.disabled = false;
+                cycleButton.textContent = 'Cycle the Leaderboard';
+                cooldownDisplay.textContent = '';
+                return;
+            }
+
+            const now = Date.now();
+            const timeRemaining = state.nextAvailableTime - now;
+
+            if (timeRemaining > 0) {
+                cycleButton.disabled = true;
+                cycleButton.textContent = 'Cycle the Leaderboard';
+                cooldownDisplay.textContent = `Available in ${formatTimeRemaining(timeRemaining)}`;
+            } else {
+                // Clear expired cooldown state
+                clearCooldownState();
+                cycleButton.disabled = false;
+                cycleButton.textContent = 'Cycle the Leaderboard';
+                cooldownDisplay.textContent = '';
+            }
+        }
+
+        function startCooldownTimer() {
+            if (cooldownInterval) {
+                clearInterval(cooldownInterval);
+            }
+            
+            updateButtonState();
+            cooldownInterval = setInterval(updateButtonState, COOLDOWN_CHECK_INTERVAL);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('unload', () => {
+            if (cooldownInterval) {
+                clearInterval(cooldownInterval);
+            }
+        });
+
+        // Initialize cooldown on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            startCooldownTimer();
+        });
+
+        // Listen for changes from other tabs
+        window.addEventListener('storage', (event) => {
+            if (event.key === STORAGE_KEY) {
+                updateButtonState();
+            }
+        });
+
+        async function handleCycleClick() {
+            const cycleButton = document.getElementById('cycle-button');
+            const state = getCooldownState();
+            const now = Date.now();
+
+            if (state && state.nextAvailableTime > now) {
+                return; // Still in cooldown
+            }
+
+            // Start new cooldown
+            updateCooldownState({
+                lastCycleTime: now,
+                isInProgress: true,
+                nextAvailableTime: now + COOLDOWN_DURATION_MS
+            });
+
+            // Update UI
+            updateButtonState();
+
+            // Run the cycle
+            try {
+                cycleButton.classList.add('progress');
+                await cycle();
+            } catch (error) {
+                console.error('Cycle error:', error);
+                // On error, reduce cooldown to 1 minute to allow quick retry
+                updateCooldownState({
+                    lastCycleTime: now,
+                    isInProgress: false,
+                    nextAvailableTime: now + 60000
+                });
+            } finally {
+                cycleButton.classList.remove('progress');
+                // Update state after cycle completes (if no error occurred)
+                if (!getCooldownState()?.isInProgress) {
+                    updateCooldownState({
+                        lastCycleTime: now,
+                        isInProgress: false,
+                        nextAvailableTime: now + COOLDOWN_DURATION_MS
+                    });
+                }
+                updateButtonState();
+            }
+        }
+    </script>
+</body>
+</html> 

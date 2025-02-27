@@ -1,0 +1,104 @@
+/**
+ * AMAZON HTML STRUCTURE SAMPLES
+ * 
+ * This file contains sample HTML snippets from Amazon book pages
+ * showing the structure for extracting title, author, and BSR.
+ * 
+ * Note: Amazon may change their HTML structure over time,
+ * so parser logic should be adaptable.
+ */
+
+/**
+ * BOOK TITLE
+ * The book title is typically found in the #productTitle element
+ */
+<span id="productTitle" class="a-size-extra-large">
+    The Great Book: An Amazing Story
+</span>
+
+/**
+ * AUTHOR NAME
+ * Author information is typically in the #bylineInfo section,
+ * often within a.contributorNameID elements
+ */
+<div id="bylineInfo" class="a-section a-spacing-micro bylineHidden">
+    <span class="author notFaded" data-testid="author-info">
+        <span class="a-size-medium">
+            by
+            <a class="a-link-normal contributorNameID" href="/John-Doe/e/B001ILKH8C/">
+                John Doe
+            </a>
+            (Author)
+        </span>
+    </span>
+</div>
+
+/**
+ * ALTERNATIVE AUTHOR STRUCTURE
+ * Sometimes the author appears in a different format
+ */
+<span class="author">
+    <a class="a-link-normal" href="/Jane-Smith/e/B002LKSE2Y/">Jane Smith</a>
+</span>
+
+/**
+ * BEST SELLER RANK (BSR)
+ * Usually found in the product details section
+ * Can be in different formats depending on the page
+ */
+
+<!-- Format 1: Table format -->
+<table id="productDetails_detailBullets_sections1" class="a-keyvalue prodDetTable">
+    <tr>
+        <th class="a-color-secondary a-size-base prodDetSectionEntry">
+            Best Sellers Rank:
+        </th>
+        <td>
+            <span>
+                #1,234 in Books (<a href="/gp/bestsellers/books/">See Top 100 in Books</a>)
+                <br/>
+                #42 in Fiction Category
+            </span>
+        </td>
+    </tr>
+</table>
+
+<!-- Format 2: List format -->
+<ul class="a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list">
+    <li><span class="a-list-item">
+        <span class="a-text-bold">Best Sellers Rank:</span> 
+        #5,678 in Books (<a href="/gp/bestsellers/books/">See Top 100 in Books</a>)
+    </span></li>
+</ul>
+
+<!-- Format 3: Detail bullets format -->
+<div id="detailBulletsWrapper_feature_div">
+    <div id="detailBullets_feature_div">
+        <ul class="a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list">
+            <li>
+                <span class="a-list-item">
+                    <span class="a-text-bold">Best Sellers Rank:</span> 
+                    #9,876 in Books
+                </span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+/**
+ * PARSING STRATEGIES
+ * 
+ * For Title:
+ * - Get text content of #productTitle and trim whitespace
+ * 
+ * For Author:
+ * - Look for contributorNameID elements
+ * - Extract text from the first one (primary author)
+ * - Fallback: Look for author links in various formats
+ * 
+ * For BSR:
+ * - Search for "Best Sellers Rank:" text
+ * - Extract the number following "#" and before "in Books"
+ * - Remove commas and convert to integer
+ * - If multiple categories found, use the one for "Books"
+ */
