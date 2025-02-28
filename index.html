@@ -367,7 +367,7 @@
     </div>
 
     <footer style="text-align: center; padding: 20px; margin-top: 40px; color: #666; font-size: 12px;">
-        Copyright © &amp
+        Copyright © 2050
     </footer>
 
     <script>
@@ -519,6 +519,7 @@
         async function runCycle() {
             const cycleButton = document.getElementById('cycleButton');
             const progressDisplay = document.getElementById('scrapeProgress');
+            const cooldownDisplay = document.getElementById('cooldown-display');
             let eventSource = null;
             let lastMessage = null;
 
@@ -578,12 +579,8 @@
                                 eventSource.close();
                                 eventSource = null;
                             }
-                            // Re-enable cycle button
-                            cycleButton.disabled = false;
-                            // Auto-hide progress after 5 seconds
-                            setTimeout(() => {
-                                progressDisplay.className = 'scrape-progress';
-                            }, 5000);
+                            // Start cooldown timer
+                            startCooldown();
                             break;
                         case 'error':
                             progressDisplay.textContent = `❌ Error: ${data.message}`;
@@ -624,6 +621,26 @@
                 progressDisplay.textContent = `❌ Error: ${error.message}`;
                 progressDisplay.className = 'scrape-progress visible error';
                 cycleButton.disabled = false;
+            }
+
+            // Function to start cooldown
+            function startCooldown() {
+                const cooldownTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+                let remainingTime = cooldownTime;
+
+                // Update cooldown display every second
+                const interval = setInterval(() => {
+                    remainingTime -= 1000;
+                    const minutes = Math.floor(remainingTime / 60000);
+                    const seconds = Math.floor((remainingTime % 60000) / 1000);
+                    cooldownDisplay.textContent = `Cooldown: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                    if (remainingTime <= 0) {
+                        clearInterval(interval);
+                        cooldownDisplay.textContent = '';
+                        cycleButton.disabled = false;
+                    }
+                }, 1000);
             }
         }
 
