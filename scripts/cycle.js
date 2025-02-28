@@ -269,4 +269,4 @@ async function cycle() {
     }
 }
 
-module.exports = { cycle };
+module.exports = { cycle, isCycleLocked };

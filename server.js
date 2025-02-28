@@ -5,8 +5,9 @@ const { scrape } = require('./scripts/scraper');
 const { publish } = require('./scripts/publisher');
 const { purge } = require('./scripts/purger');
 const { cleanup } = require('./scripts/cleaner');
-const { cycle } = require('./scripts/cycle');
+const { cycle, isCycleLocked } = require('./scripts/cycle');
 const { initializeVolume } = require('./scripts/init-volume');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 // Configure data directory
