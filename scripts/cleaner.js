@@ -1,3 +1,35 @@
+/**
+ * Submission Cleaner
+ * ================
+ * 
+ * Maintains the health of the submission pool by removing invalid or consistently failing entries.
+ * Acts as the first line of defense in the update cycle.
+ * 
+ * Cleaning Rules:
+ * - Remove entries with invalid ASINs
+ * - Remove entries that fail scraping 3 times
+ * - Remove blacklisted entries
+ * - Keep successful entries (reset failure count)
+ * 
+ * Features:
+ * - Failure tracking with retry limits
+ * - Atomic file operations
+ * - Operation logging
+ * - Backup creation before modifications
+ * 
+ * File Dependencies:
+ * - input.json: Source of submissions
+ * - metadata.json: Book data and state
+ * - cleanup_log.json: Operation history
+ * 
+ * Safety Measures:
+ * - Atomic writes with rollback
+ * - Backup files before modifications
+ * - Validation before removal
+ * 
+ * @module cleaner
+ */
+
 const fs = require('fs').promises;
 const path = require('path');
 

@@ -1,3 +1,30 @@
+/**
+ * Amazon Book Scraper
+ * ==================
+ * 
+ * ⚠️ WARNING: This tool is sketchy and will break any moment. Amazon employs very strict anti-bot technology.
+ * Use at your own risk and with extreme caution. Getting blocked is not a matter of if, but when.
+ * 
+ * Key Features:
+ * - Batch processing with configurable delays
+ * - Browser simulation with rotating user agents
+ * - Compression handling (gzip, deflate, brotli)
+ * - CAPTCHA detection and avoidance
+ * - Safe time windows to avoid peak hours
+ * - Cookie management and session persistence
+ * - Atomic file operations with backups
+ * 
+ * Safety Measures:
+ * - MIN_REQUEST_DELAY: 90s between Amazon requests
+ * - MAX_REQUEST_DELAY: 240s maximum delay
+ * - Time window restrictions (avoid peak hours)
+ * - Random delays with jitter
+ * - Rotating user agents and viewport sizes
+ * - Cookie management
+ * 
+ * @module scraper
+ */
+
 const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');

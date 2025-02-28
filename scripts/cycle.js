@@ -1,3 +1,31 @@
+/**
+ * Leaderboard Update Cycle
+ * =======================
+ * 
+ * Orchestrates the complete update cycle for the leaderboard system.
+ * This is the main conductor that ensures all operations happen in the correct sequence.
+ * 
+ * Cycle Sequence:
+ * 1. Cleanup  - Remove invalid/failed submissions
+ * 2. Scrape   - Fetch latest data from Amazon
+ * 3. Purge    - Remove blacklisted entries
+ * 4. Publish  - Update the leaderboard
+ * 
+ * Features:
+ * - Atomic file operations with backups
+ * - Progress tracking and status updates
+ * - Error handling and recovery
+ * - Cycle state persistence
+ * 
+ * File Dependencies:
+ * - input.json: Source of Amazon URLs
+ * - metadata.json: Internal state and book data
+ * - books.json: Published leaderboard data
+ * - blacklist.json: Filtering patterns
+ * 
+ * @module cycle
+ */
+
 const fs = require('fs').promises;
 const path = require('path');
 const { scrape } = require('./scraper');

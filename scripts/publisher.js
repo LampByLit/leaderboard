@@ -1,3 +1,42 @@
+/**
+ * Leaderboard Publisher
+ * ===================
+ * 
+ * Transforms raw book data into a ranked leaderboard format.
+ * Handles the final stage of the update cycle, preparing data for public consumption.
+ * 
+ * Key Features:
+ * - BSR-based ranking system
+ * - Data validation and sanitization
+ * - HTML entity decoding
+ * - Atomic file operations
+ * 
+ * Validation Rules:
+ * - Required fields: title, author, cover_url, bsr, url
+ * - Valid BSR (numeric, > 0)
+ * - Valid URLs (must be Amazon links)
+ * - Sequential rank validation
+ * - No duplicate ranks
+ * 
+ * Output Format:
+ * {
+ *   version: string,
+ *   last_updated: ISO timestamp,
+ *   books: {
+ *     [asin]: {
+ *       rank: number,
+ *       title: string,
+ *       author: string,
+ *       cover_url: string,
+ *       bsr: number,
+ *       url: string
+ *     }
+ *   }
+ * }
+ * 
+ * @module publisher
+ */
+
 const fs = require('fs').promises;
 const path = require('path');
 
