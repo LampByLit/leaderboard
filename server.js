@@ -14,13 +14,25 @@ require('dotenv').config();
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 console.log(`Using data directory: ${DATA_DIR}`);
 
-// Keep track of connected clients
-let clients = [];
+// Track SSE clients
+const clients = new Set();
 
-// Helper function to send updates to all connected clients
+// Helper function to send progress to SSE clients
 function sendProgressToClients(data) {
+    console.log('📡 Broadcasting progress:', data.message || data.status);
+    
+    const payload = JSON.stringify({
+        ...data,
+        timestamp: new Date().toISOString()
+    });
+    
     clients.forEach(client => {
-        client.write(`data: ${JSON.stringify(data)}\n\n`);
+        try {
+            client.write(`data: ${payload}\n\n`);
+        } catch (error) {
+            console.error('❌ Error sending to client:', error);
+            clients.delete(client);
+        }
     });
 }
 
@@ -582,161 +594,186 @@ app.get('/cycle-status', async (req, res) => {
 
 // Handle cycle operation
 app.post('/cycle', async (req, res) => {
-    console.log('Starting cycle operation...');
-    const startTime = Date.now();
-    let currentStage = 'init';
-    let cycleStats = {
-        scrape: { successful: 0, failed: 0 },
-        purge: { removed: 0 },
-        cleanup: { removed: 0 }
-    };
+    console.log('\n🔄 Starting cycle operation...');
     
     try {
-        // Initialize cycle
-        sendProgressToClients({ 
-            status: 'starting', 
-            message: '🚀 Initializing cycle process...',
-            timestamp: new Date().toISOString()
-        });
-        
-        // Update metadata
-        const metadataPath = getDataPath('metadata.json');
-        let metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
-        metadata.cycle_status = {
-            state: 'running',
-            started_at: new Date().toISOString()
-        };
-        await safeWriteJSON(metadataPath, metadata);
-        
-        // Start scraping
-        currentStage = 'scraping';
-        sendProgressToClients({ 
-            status: 'scraping', 
-            message: '📚 Starting scrape process...',
-            timestamp: new Date().toISOString()
-        });
-        
-        const scrapeResult = await scrape((progress) => {
-            sendProgressToClients({ 
-                status: 'scraping',
-                timestamp: new Date().toISOString(),
-                ...progress 
+        // Check if cycle is already running
+        const isLocked = await isCycleLocked();
+        if (isLocked) {
+            console.log('❌ Cycle is already running');
+            return res.status(409).json({
+                success: false,
+                error: 'A cycle is already in progress'
             });
-        });
-        
-        if (!scrapeResult.success) {
-            throw new Error(`Scrape failed: ${scrapeResult.error}`);
-        }
-        cycleStats.scrape = scrapeResult.stats;
-        
-        // Run purge
-        currentStage = 'purging';
-        sendProgressToClients({ 
-            status: 'purging', 
-            message: '🧹 Running purge process...',
-            timestamp: new Date().toISOString()
-        });
-        const purgeResult = await purge();
-        if (!purgeResult.success) {
-            throw new Error(`Purge failed: ${purgeResult.error}`);
-        }
-        cycleStats.purge = purgeResult.stats;
-        sendProgressToClients({
-            status: 'purging',
-            message: '🧹 Purge process completed',
-            timestamp: new Date().toISOString(),
-            stats: purgeResult.stats
-        });
-        
-        // Run cleanup
-        currentStage = 'cleaning';
-        sendProgressToClients({ 
-            status: 'cleaning', 
-            message: '🗑️ Running cleanup process...',
-            timestamp: new Date().toISOString()
-        });
-        const cleanupResult = await cleanup();
-        if (!cleanupResult.success) {
-            throw new Error(`Cleanup failed: ${cleanupResult.error}`);
-        }
-        cycleStats.cleanup = cleanupResult.stats;
-        sendProgressToClients({
-            status: 'cleaning',
-            message: '🗑️ Cleanup process completed',
-            timestamp: new Date().toISOString(),
-            stats: cleanupResult.stats
-        });
-        
-        // Run publish
-        currentStage = 'publishing';
-        sendProgressToClients({ 
-            status: 'publishing', 
-            message: '📝 Publishing results...',
-            timestamp: new Date().toISOString()
-        });
-        const publishResult = await publish();
-        if (!publishResult.success) {
-            throw new Error(`Publish failed: ${publishResult.error}`);
         }
         
-        // Update metadata with completion status
-        const duration = Date.now() - startTime;
-        metadata.cycle_status = {
-            state: 'completed',
-            completed_at: new Date().toISOString(),
-            duration: duration,
-            stats: cycleStats
+        const startTime = Date.now();
+        let currentStage = 'init';
+        let cycleStats = {
+            scrape: { successful: 0, failed: 0 },
+            purge: { removed: 0 },
+            cleanup: { removed: 0 }
         };
-        await safeWriteJSON(metadataPath, metadata);
         
-        // Send completion message
-        sendProgressToClients({ 
-            status: 'complete', 
-            message: '✨ Cycle completed successfully',
-            timestamp: new Date().toISOString(),
-            stats: {
-                duration: `${(duration / 1000).toFixed(2)}s`,
-                successful_scrapes: cycleStats.scrape.successful_scrapes,
-                failed_scrapes: cycleStats.scrape.processed_urls - cycleStats.scrape.successful_scrapes,
-                purged: cycleStats.purge.removed || 0,
-                cleaned: cycleStats.cleanup.removed_submissions || 0,
-                total_remaining: cycleStats.cleanup.remaining_submissions || 0
-            }
-        });
-        
-        res.json({ success: true, stats: cycleStats });
-    } catch (error) {
-        console.error(`Cycle failed during ${currentStage}:`, error);
-        
-        // Update metadata with failure status
         try {
-            const duration = Date.now() - startTime;
-            const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            // Initialize cycle
+            console.log('🚀 Initializing cycle process...');
+            sendProgressToClients({ 
+                status: 'starting', 
+                message: '🚀 Initializing cycle process...',
+                timestamp: new Date().toISOString()
+            });
+            
+            // Update metadata
+            const metadataPath = getDataPath('metadata.json');
+            let metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
             metadata.cycle_status = {
-                state: 'failed',
-                stage: currentStage,
-                error: error.message,
-                failed_at: new Date().toISOString(),
-                duration: duration,
-                partial_stats: cycleStats
+                state: 'running',
+                started_at: new Date().toISOString()
             };
             await safeWriteJSON(metadataPath, metadata);
-        } catch (statusError) {
-            console.error('Failed to update cycle status:', statusError);
+            
+            // Start scraping
+            currentStage = 'scraping';
+            console.log('📚 Starting scrape process...');
+            sendProgressToClients({ 
+                status: 'scraping', 
+                message: '📚 Starting scrape process...',
+                timestamp: new Date().toISOString()
+            });
+            
+            const scrapeResult = await scrape((progress) => {
+                sendProgressToClients({ 
+                    status: 'scraping',
+                    timestamp: new Date().toISOString(),
+                    ...progress 
+                });
+            });
+            
+            if (!scrapeResult.success) {
+                throw new Error(`Scrape failed: ${scrapeResult.error}`);
+            }
+            cycleStats.scrape = scrapeResult.stats;
+            
+            // Run purge
+            currentStage = 'purging';
+            console.log('🧹 Running purge process...');
+            sendProgressToClients({ 
+                status: 'purging', 
+                message: '🧹 Running purge process...',
+                timestamp: new Date().toISOString()
+            });
+            const purgeResult = await purge();
+            if (!purgeResult.success) {
+                throw new Error(`Purge failed: ${purgeResult.error}`);
+            }
+            cycleStats.purge = purgeResult.stats;
+            sendProgressToClients({
+                status: 'purging',
+                message: '🧹 Purge process completed',
+                timestamp: new Date().toISOString(),
+                stats: purgeResult.stats
+            });
+            
+            // Run cleanup
+            currentStage = 'cleaning';
+            console.log('🗑️ Running cleanup process...');
+            sendProgressToClients({ 
+                status: 'cleaning', 
+                message: '🗑️ Running cleanup process...',
+                timestamp: new Date().toISOString()
+            });
+            const cleanupResult = await cleanup();
+            if (!cleanupResult.success) {
+                throw new Error(`Cleanup failed: ${cleanupResult.error}`);
+            }
+            cycleStats.cleanup = cleanupResult.stats;
+            sendProgressToClients({
+                status: 'cleaning',
+                message: '🗑️ Cleanup process completed',
+                timestamp: new Date().toISOString(),
+                stats: cleanupResult.stats
+            });
+            
+            // Run publish
+            currentStage = 'publishing';
+            console.log('📝 Publishing results...');
+            sendProgressToClients({ 
+                status: 'publishing', 
+                message: '📝 Publishing results...',
+                timestamp: new Date().toISOString()
+            });
+            const publishResult = await publish();
+            if (!publishResult.success) {
+                throw new Error(`Publish failed: ${publishResult.error}`);
+            }
+            
+            // Update metadata with completion status
+            const duration = Date.now() - startTime;
+            metadata.cycle_status = {
+                state: 'completed',
+                completed_at: new Date().toISOString(),
+                duration: duration,
+                stats: cycleStats
+            };
+            await safeWriteJSON(metadataPath, metadata);
+            
+            // Send completion message
+            console.log('✨ Cycle completed successfully');
+            sendProgressToClients({ 
+                status: 'complete', 
+                message: '✨ Cycle completed successfully',
+                timestamp: new Date().toISOString(),
+                stats: {
+                    duration: `${(duration / 1000).toFixed(2)}s`,
+                    successful_scrapes: cycleStats.scrape.successful_scrapes,
+                    failed_scrapes: cycleStats.scrape.processed_urls - cycleStats.scrape.successful_scrapes,
+                    purged: cycleStats.purge.removed || 0,
+                    cleaned: cycleStats.cleanup.removed_submissions || 0,
+                    total_remaining: cycleStats.cleanup.remaining_submissions || 0
+                }
+            });
+            
+            res.json({ success: true, stats: cycleStats });
+        } catch (error) {
+            console.error(`❌ Cycle failed during ${currentStage}:`, error);
+            
+            // Update metadata with failure status
+            try {
+                const duration = Date.now() - startTime;
+                const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+                metadata.cycle_status = {
+                    state: 'failed',
+                    stage: currentStage,
+                    error: error.message,
+                    failed_at: new Date().toISOString(),
+                    duration: duration,
+                    partial_stats: cycleStats
+                };
+                await safeWriteJSON(metadataPath, metadata);
+            } catch (statusError) {
+                console.error('Failed to update cycle status:', statusError);
+            }
+            
+            sendProgressToClients({ 
+                status: 'error', 
+                message: `Failed during ${currentStage}: ${error.message}`,
+                timestamp: new Date().toISOString(),
+                stage: currentStage
+            });
+            
+            res.status(500).json({ 
+                success: false, 
+                error: error.message,
+                stage: currentStage,
+                partial_stats: cycleStats
+            });
         }
-        
-        sendProgressToClients({ 
-            status: 'error', 
-            message: `Failed during ${currentStage}: ${error.message}`,
-            timestamp: new Date().toISOString(),
-            stage: currentStage
-        });
-        
-        res.status(500).json({ 
-            success: false, 
-            error: error.message,
-            stage: currentStage,
-            partial_stats: cycleStats
+    } catch (error) {
+        console.error('❌ Critical cycle error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Critical error occurred during cycle operation'
         });
     }
 });
@@ -764,31 +801,32 @@ process.on('SIGTERM', () => {
     console.log('SIGTERM received - Continuing to run');
 });
 
-// Add SSE endpoint
+// Handle SSE connections
 app.get('/progress', (req, res) => {
-    // Set SSE headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    console.log('📡 New SSE connection established');
     
-    // Send initial connection confirmation
-    res.write(`data: ${JSON.stringify({ status: 'connected', message: 'SSE connection established' })}\n\n`);
+    // Set headers for SSE
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+    });
     
-    // Add this client to our list
-    clients.push(res);
-    console.log(`Client connected. Total clients: ${clients.length}`);
+    // Send initial message
+    res.write('data: {"status":"connected","message":"SSE connection established"}\n\n');
     
-    // Set up heartbeat to keep connection alive
-    const heartbeat = setInterval(() => {
-        if (!res.finished) {
-            res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
-        }
-    }, 30000); // Send heartbeat every 30 seconds
+    // Add client to the set
+    clients.add(res);
     
     // Handle client disconnect
     req.on('close', () => {
-        clearInterval(heartbeat);
-        clients = clients.filter(client => client !== res);
-        console.log(`Client disconnected. Remaining clients: ${clients.length}`);
+        console.log('📡 SSE connection closed');
+        clients.delete(res);
+    });
+    
+    // Handle errors
+    res.on('error', (error) => {
+        console.error('❌ SSE connection error:', error);
+        clients.delete(res);
     });
 }); 

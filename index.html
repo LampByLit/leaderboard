@@ -590,8 +590,9 @@
                 eventSource.close();
             }
             
+            console.log('Connecting to SSE...');
             eventSource = new EventSource('/progress');
-            let lastMessage = '';
+            const progressDisplay = document.getElementById('scrapeProgress');
             
             eventSource.onopen = () => {
                 console.log('SSE connection established');
@@ -599,11 +600,17 @@
             
             eventSource.onerror = (error) => {
                 console.error('SSE connection error:', error);
-                // Attempt to reconnect after 2 seconds
-                setTimeout(connectEventSource, 2000);
+                progressDisplay.textContent = '❌ Lost connection to server. Please try again.';
+                progressDisplay.className = 'scrape-progress visible error';
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                document.getElementById('cycleButton').disabled = false;
             };
             
             eventSource.onmessage = (event) => {
+                console.log('SSE message received:', event.data);
                 const data = JSON.parse(event.data);
                 
                 // Prevent duplicate messages
@@ -665,28 +672,49 @@
             };
         }
 
-        // Initialize SSE connection when starting cycle
         async function startCycle() {
-            if (cycleButton.disabled) return;
+            const cycleButton = document.getElementById('cycleButton');
+            const progressDisplay = document.getElementById('scrapeProgress');
+            
+            if (cycleButton.disabled) {
+                console.log('Cycle button is disabled, ignoring click');
+                return;
+            }
+            
+            console.log('Starting cycle...');
             cycleButton.disabled = true;
             progressDisplay.className = 'scrape-progress visible';
+            progressDisplay.textContent = '🔄 Initializing cycle...';
             
             try {
-                // Start SSE connection
+                // Start SSE connection first
                 connectEventSource();
                 
-                const response = await fetch('/cycle', { method: 'POST' });
+                console.log('Sending cycle request...');
+                const response = await fetch('/cycle', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Cycle response received:', response.status);
                 const result = await response.json();
+                console.log('Cycle result:', result);
                 
                 if (!result.success) {
-                    progressDisplay.textContent = `❌ Error: ${result.error}`;
-                    progressDisplay.className = 'scrape-progress visible error';
-                    cycleButton.disabled = false;
+                    throw new Error(result.error || 'Unknown error occurred');
                 }
             } catch (error) {
+                console.error('Cycle error:', error);
                 progressDisplay.textContent = `❌ Error: ${error.message}`;
                 progressDisplay.className = 'scrape-progress visible error';
                 cycleButton.disabled = false;
+                
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
             }
         }
 
@@ -704,8 +732,8 @@
 
                 if (remainingTime <= 0) {
                     clearInterval(interval);
-                    cooldownDisplay.textContent = '';
-                    cycleButton.disabled = false;
+                cooldownDisplay.textContent = '';
+                cycleButton.disabled = false;
                 }
             }, 1000);
         }
