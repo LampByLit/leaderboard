@@ -5,15 +5,47 @@ const https = require('https');
 // Configure data directory
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 
+// Store cookies between requests
+let cookieJar = {};
+
+// Helper function to parse cookies from response
+function parseCookies(response) {
+    const cookies = {};
+    const cookieHeaders = response.headers['set-cookie'] || [];
+    cookieHeaders.forEach(cookie => {
+        const [keyValue] = cookie.split(';');
+        const [key, value] = keyValue.split('=');
+        cookies[key.trim()] = value;
+    });
+    return cookies;
+}
+
+// Helper function to format cookies for request
+function formatCookies(cookies) {
+    return Object.entries(cookies)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('; ');
+}
+
 // Configure batch processing
-const BATCH_SIZE = 3; // Process 3 books at a time
-const BATCH_DELAY = 8000; // 8 seconds between batches
-const MIN_REQUEST_DELAY = 3000; // Minimum 3 seconds between requests
-const MAX_REQUEST_DELAY = 5000; // Maximum 5 seconds between requests
+const BATCH_SIZE = 1; // Process 1 book at a time for gentler scraping
+const BATCH_DELAY = 12000; // 12 seconds between batches
+const MIN_REQUEST_DELAY = 8000; // Minimum 8 seconds between requests
+const MAX_REQUEST_DELAY = 15000; // Maximum 15 seconds between requests
 
 // Helper function to get data file paths
 function getDataPath(filename) {
     return path.join(DATA_DIR, filename);
+}
+
+// Add viewport dimensions for more realistic browser simulation
+const VIEWPORT_WIDTHS = [1366, 1440, 1536, 1920, 2560];
+const VIEWPORT_HEIGHTS = [768, 900, 864, 1080, 1440];
+
+function getRandomViewport() {
+    const width = VIEWPORT_WIDTHS[Math.floor(Math.random() * VIEWPORT_WIDTHS.length)];
+    const height = VIEWPORT_HEIGHTS[Math.floor(Math.random() * VIEWPORT_HEIGHTS.length)];
+    return { width, height };
 }
 
 // Add rotating user agents
@@ -39,22 +71,39 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Enhanced fetchPage with retry logic
-async function fetchPage(url, retryCount = 0, maxRetries = 3) {
-    const baseDelay = 3000; // 3 seconds base delay
+// Enhanced fetchPage with retry logic and cookie handling
+async function fetchPage(url, retryCount = 0, maxRetries = 5) {
+    const baseDelay = 5000; // 5 seconds base delay
+    const viewport = getRandomViewport();
     
     return new Promise((resolve, reject) => {
-        const request = https.get(url, {
-            timeout: 10000,
-            headers: {
-                'User-Agent': getRandomUserAgent(),
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Cache-Control': 'max-age=0'
-            }
-        }, async (res) => {
+        const headers = {
+            'User-Agent': getRandomUserAgent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+            'viewport-width': viewport.width.toString(),
+            'viewport-height': viewport.height.toString(),
+            'DNT': '1'
+        };
+
+        // Add cookies if we have any
+        if (Object.keys(cookieJar).length > 0) {
+            headers.Cookie = formatCookies(cookieJar);
+        }
+
+        const request = https.get(url, { timeout: 15000, headers }, async (res) => {
+            // Store new cookies
+            const newCookies = parseCookies(res);
+            cookieJar = { ...cookieJar, ...newCookies };
+
             // Handle redirects
             if (res.statusCode === 301 || res.statusCode === 302) {
                 if (res.headers.location) {

@@ -135,16 +135,26 @@ async function cleanup() {
                 return false;
             }
             
-            // If book exists in metadata and is active, keep it
+            // Initialize or increment failed attempts counter
+            submission.failed_attempts = (submission.failed_attempts || 0) + 1;
+            
+            // If book exists in metadata and is active, reset failed attempts and keep it
             if (metadata.books[asin]) {
+                submission.failed_attempts = 0;
                 return true;
             }
             
-            // If book doesn't exist in metadata, it failed scraping or was purged
-            removedCount++;
-            removedSubmissions.push({ ...submission, reason: 'failed_or_purged' });
-            console.log(`🗑️ Removed: ${submission.url} (Failed scraping or purged)`);
-            return false;
+            // Only remove if it has failed 3 or more times
+            if (submission.failed_attempts >= 3) {
+                removedCount++;
+                removedSubmissions.push({ ...submission, reason: 'failed_or_purged' });
+                console.log(`🗑️ Removed: ${submission.url} (Failed scraping ${submission.failed_attempts} times)`);
+                return false;
+            }
+            
+            // Keep it but increment the failed counter
+            console.log(`⚠️ Keeping: ${submission.url} (Failed attempt ${submission.failed_attempts}/3)`);
+            return true;
         });
         
         // Update input data
