@@ -1,181 +1,151 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// Utility function to normalize author names for comparison
-function normalizeAuthorName(author) {
-    if (!author) return '';
-    return author
-        .toLowerCase()                         // Convert to lowercase
-        .normalize('NFD')                      // Normalize unicode characters
-        .replace(/[\u0300-\u036f]/g, '')      // Remove diacritics
-        .replace(/[^\w\s\.-]/g, ' ')          // Convert special chars to spaces, keep dots for initials
-        .replace(/\s+/g, ' ')                 // Normalize whitespace
-        .replace(/\.\s*/g, '')                // Remove dots from initials
-        .trim();                              // Remove leading/trailing whitespace
+// Configure data directory
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+
+// Helper function to get data file paths
+function getDataPath(filename) {
+    return path.join(DATA_DIR, filename);
 }
 
-// Debug utility to test name normalization
-async function testNormalization(author) {
-    const normalized = normalizeAuthorName(author);
-    console.log(`Original: "${author}" → Normalized: "${normalized}"`);
-    return normalized;
-}
-
-// Logging utility
-async function logPurgedEntry(book) {
-    const logPath = path.join(__dirname, '..', 'purge_log.json');
+async function safeWriteJSON(filePath, data) {
+    const backupPath = `${filePath}.backup`;
     try {
-        // Read existing log
-        let log;
+        // Create backup of current file if it exists
         try {
-            log = JSON.parse(await fs.readFile(logPath, 'utf8'));
-        } catch (error) {
-            log = { purged_entries: [] };
+            const currentData = await fs.readFile(filePath, 'utf8');
+            await fs.writeFile(backupPath, currentData);
+        } catch (err) {
+            if (err.code !== 'ENOENT') throw err;
         }
 
-        // Add new entry with timestamp
-        log.purged_entries.push({
-            timestamp: new Date().toISOString(),
-            asin: book.asin,
-            title: book.title,
-            author: book.author,
-            reason: 'blacklisted_author'
-        });
-
-        // Save log
-        await fs.writeFile(logPath, JSON.stringify(log, null, 4));
+        // Write new data
+        await fs.writeFile(filePath, JSON.stringify(data, null, 4));
+        
+        // Remove backup after successful write
+        try {
+            await fs.unlink(backupPath);
+        } catch (err) {
+            if (err.code !== 'ENOENT') {
+                console.warn('Warning: Could not remove backup file:', err);
+            }
+        }
     } catch (error) {
-        console.error('Error logging purged entry:', error);
-        // Don't throw - we don't want logging failures to affect the purge
+        console.error('Error in safeWriteJSON:', error);
+        throw error;
     }
 }
 
-// Main purge function - removes books by blacklisted authors
+// Helper functions for blacklist matching
+function normalizeString(str) {
+    if (!str) return '';
+    return str.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function isAuthorMatch(bookAuthor, blacklistAuthor) {
+    if (!bookAuthor || !blacklistAuthor) return false;
+    const normalizedAuthor = normalizeString(bookAuthor);
+    const normalizedPattern = normalizeString(blacklistAuthor);
+    return normalizedAuthor === normalizedPattern;
+}
+
+function isBlacklisted(book, pattern) {
+    if (!book || !pattern) return false;
+    // Check for author match
+    if (isAuthorMatch(book.author, pattern)) {
+        console.log(`Blacklisted author match: ${book.author}`);
+        return true;
+    }
+    // Check for title match if pattern starts with "title:"
+    if (pattern.startsWith("title:") && book.title) {
+        const titlePattern = pattern.slice(6).trim();
+        const isMatch = book.title.toLowerCase().includes(titlePattern.toLowerCase());
+        if (isMatch) {
+            console.log(`Blacklisted title match: ${book.title}`);
+        }
+        return isMatch;
+    }
+    return false;
+}
+
 async function purge() {
     try {
-        // Load blacklist
-        const blacklistPath = path.join(__dirname, '..', 'blacklist.json');
-        const metadataPath = path.join(__dirname, '..', 'metadata.json');
-        const backupPath = `${metadataPath}.backup`;
-
-        // Load and validate blacklist
+        console.log('\n🧹 Starting purge process...');
+        
+        // Read metadata.json
+        const metadataPath = getDataPath('metadata.json');
+        console.log('📖 Reading metadata...');
+        const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        
+        // Read blacklist.json
+        const blacklistPath = getDataPath('blacklist.json');
         let blacklist;
         try {
             blacklist = JSON.parse(await fs.readFile(blacklistPath, 'utf8'));
-            if (!Array.isArray(blacklist.authors)) {
-                throw new Error('Invalid blacklist format: expected authors array');
-            }
-            if (blacklist.authors.some(author => !author || typeof author !== 'string')) {
-                throw new Error('Invalid blacklist: contains null, undefined, or non-string authors');
-            }
-            console.log(`Loaded blacklist with ${blacklist.authors.length} authors`);
+            console.log(`🚫 Loaded ${blacklist.authors.length} authors from blacklist`);
         } catch (error) {
-            console.error('Error loading blacklist:', error);
-            return { success: false, error: 'Failed to load blacklist' };
-        }
-
-        // Create Set of normalized blacklisted authors
-        const blacklistedAuthors = new Set(
-            blacklist.authors
-                .filter(author => author && author.trim()) // Extra safety: remove empty strings
-                .map(author => normalizeAuthorName(author))
-        );
-        console.log(`Normalized ${blacklistedAuthors.size} unique author names`);
-
-        // Load metadata
-        let metadata;
-        try {
-            // Create backup first
-            const currentMetadata = await fs.readFile(metadataPath, 'utf8');
-            await fs.writeFile(backupPath, currentMetadata);
-            
-            metadata = JSON.parse(currentMetadata);
-            console.log(`Loaded metadata with ${Object.keys(metadata.books).length} books`);
-        } catch (error) {
-            console.error('Error loading metadata:', error);
-            return { success: false, error: 'Failed to load metadata' };
-        }
-
-        // Track statistics
-        const stats = {
-            total_checked: 0,
-            purged: 0,
-            errors: 0
-        };
-
-        // Filter out blacklisted authors
-        const originalBookCount = Object.keys(metadata.books).length;
-        const purgedBooks = [];
-
-        for (const [asin, book] of Object.entries(metadata.books)) {
-            stats.total_checked++;
-            
-            // Skip books with missing author information
-            if (!book.author) {
-                console.warn(`Book ${book.title} (${asin}) has no author information`);
-                stats.errors++;
-                continue;
-            }
-
-            const normalizedAuthor = normalizeAuthorName(book.author);
-            
-            if (blacklistedAuthors.has(normalizedAuthor)) {
-                console.log(`Purging book: "${book.title}" by "${book.author}" (normalized: "${normalizedAuthor}")`);
-                // Log before removing
-                await logPurgedEntry(book);
-                purgedBooks.push(book);
-                delete metadata.books[asin];
-                stats.purged++;
+            if (error.code === 'ENOENT') {
+                console.log('⚠️ No blacklist.json found, using empty blacklist');
+                blacklist = { authors: [] };
+            } else {
+                console.error('❌ Error reading blacklist:', error);
+                throw error;
             }
         }
 
-        // Update metadata stats
-        metadata.stats.total_books = Object.keys(metadata.books).length;
-        metadata.stats.active_books = Object.values(metadata.books)
-            .filter(book => book.status === 'active').length;
-        metadata.stats.last_purge = {
-            timestamp: new Date().toISOString(),
-            books_checked: stats.total_checked,
-            books_purged: stats.purged,
-            errors: stats.errors
-        };
+        // Process books
+        console.log('\n📚 Checking books against blacklist...');
+        const totalBooks = Object.keys(metadata.books).length;
+        let checkedCount = 0;
+        let purgedCount = 0;
 
-        console.log(`Purge complete: ${stats.purged} books removed, ${stats.errors} errors`);
+        const purgedBooks = {};
+        Object.entries(metadata.books).forEach(([asin, book]) => {
+            checkedCount++;
+            const isBlacklisted = blacklist.authors.some(pattern => {
+                const regex = new RegExp(pattern, 'i');
+                return regex.test(book.author) || regex.test(book.title);
+            });
 
+            if (isBlacklisted) {
+                purgedCount++;
+                console.log(`🚫 [${checkedCount}/${totalBooks}] Purged: "${book.title}" by ${book.author}`);
+                purgedBooks[asin] = book;
+            }
+        });
+
+        // Remove purged books from metadata
+        Object.keys(purgedBooks).forEach(asin => {
+            delete metadata.books[asin];
+        });
+
+        console.log(`\n📊 Summary: Purged ${purgedCount} books out of ${totalBooks} total`);
+        
         // Save updated metadata
-        try {
-            await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 4));
-            // Remove backup after successful write
-            await fs.unlink(backupPath);
-            console.log('Successfully saved updated metadata');
-        } catch (error) {
-            console.error('Error saving metadata:', error);
-            // Try to restore from backup
-            try {
-                const backup = await fs.readFile(backupPath, 'utf8');
-                await fs.writeFile(metadataPath, backup);
-                return { 
-                    success: false, 
-                    error: 'Failed to save changes, restored from backup' 
-                };
-            } catch (restoreError) {
-                console.error('Critical error: Could not restore from backup:', restoreError);
-                return { 
-                    success: false, 
-                    error: 'Failed to save changes and restore from backup' 
-                };
+        console.log('💾 Saving updated metadata...');
+        await safeWriteJSON(metadataPath, metadata);
+        
+        console.log('✅ Purge process completed successfully\n');
+        return {
+            success: true,
+            stats: {
+                total_books: totalBooks,
+                purged_books: purgedCount,
+                remaining_books: totalBooks - purgedCount,
+                timestamp: new Date().toISOString()
             }
-        }
-
-        return { 
-            success: true, 
-            stats,
-            purged_books: purgedBooks
         };
     } catch (error) {
-        console.error('Purge error:', error);
-        return { success: false, error: error.message };
+        console.error('❌ Purge process failed:', error);
+        return {
+            success: false,
+            error: error.message || 'Unknown error during purge'
+        };
     }
 }
 
-module.exports = { purge, testNormalization }; 
+module.exports = { purge }; 

@@ -1,27 +1,28 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+// Configure data directory
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+
+// Helper function to get data file paths
+function getDataPath(filename) {
+    return path.join(DATA_DIR, filename);
+}
+
 // Helper function for safe atomic writes
 async function safeWriteJSON(filePath, data) {
     const backupPath = `${filePath}.backup`;
-    const tempPath = `${filePath}.temp`;
-    
     try {
         // Create backup of current file if it exists
         try {
             const currentData = await fs.readFile(filePath, 'utf8');
             await fs.writeFile(backupPath, currentData);
         } catch (err) {
-            if (err.code !== 'ENOENT') {
-                throw err;
-            }
+            if (err.code !== 'ENOENT') throw err;
         }
 
-        // Write new data to temp file first
-        await fs.writeFile(tempPath, JSON.stringify(data, null, 4));
-        
-        // Rename temp file to actual file (atomic operation)
-        await fs.rename(tempPath, filePath);
+        // Write new data
+        await fs.writeFile(filePath, JSON.stringify(data, null, 4));
         
         // Remove backup after successful write
         try {
@@ -32,39 +33,36 @@ async function safeWriteJSON(filePath, data) {
             }
         }
     } catch (error) {
-        // If anything went wrong, try to restore from backup
-        console.error('Error during safe write:', error);
-        
-        try {
-            if (await fs.access(backupPath).then(() => true).catch(() => false)) {
-                await fs.copyFile(backupPath, filePath);
-                console.log('Restored from backup');
-            }
-        } catch (restoreError) {
-            console.error('Critical error: Could not restore from backup:', restoreError);
-            throw restoreError;
-        }
-        
+        console.error('Error in safeWriteJSON:', error);
         throw error;
-    } finally {
-        // Cleanup temp file if it exists
-        try {
-            await fs.unlink(tempPath);
-        } catch (err) {
-            if (err.code !== 'ENOENT') {
-                console.warn('Warning: Could not remove temp file:', err);
-            }
-        }
     }
 }
 
 // Transform metadata into ranked output format
 function transformToOutput(metadata) {
+    // Helper function to decode HTML entities
+    function decodeHtmlEntities(text) {
+        if (!text) return '';
+        return text.replace(/&([^;]+);/g, (match, entity) => {
+            const entities = {
+                'amp': '&',
+                'apos': "'",
+                'quot': '"',
+                'lt': '<',
+                'gt': '>',
+                '#39': "'",
+                'nbsp': ' '
+            };
+            return entities[entity] || match;
+        });
+    }
+
     // Get books array and sort by BSR
     const sortedBooks = Object.entries(metadata.books)
         .map(([asin, book]) => ({
             asin,
-            ...book
+            ...book,
+            title: decodeHtmlEntities(book.title) // Decode title
         }))
         .sort((a, b) => {
             // Convert BSR strings to numbers and handle invalid values
@@ -213,58 +211,148 @@ function validateOutput(output) {
     };
 }
 
+// Helper functions for blacklist matching
+function normalizeString(str) {
+    if (!str) return '';
+    return str.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function isAuthorMatch(bookAuthor, blacklistAuthor) {
+    if (!bookAuthor || !blacklistAuthor) return false;
+    const normalizedAuthor = normalizeString(bookAuthor);
+    const normalizedPattern = normalizeString(blacklistAuthor);
+    return normalizedAuthor === normalizedPattern;
+}
+
+function isBlacklisted(book, pattern) {
+    if (!book || !pattern) return false;
+    // Check for author match
+    if (isAuthorMatch(book.author, pattern)) {
+        console.log(`Blacklisted author match: ${book.author}`);
+        return true;
+    }
+    // Check for title match if pattern starts with "title:"
+    if (pattern.startsWith("title:") && book.title) {
+        const titlePattern = pattern.slice(6).trim();
+        const isMatch = book.title.toLowerCase().includes(titlePattern.toLowerCase());
+        if (isMatch) {
+            console.log(`Blacklisted title match: ${book.title}`);
+        }
+        return isMatch;
+    }
+    return false;
+}
+
 // Main publish function
 async function publish() {
-    console.log('Starting publish operation...');
-    
     try {
-        // File paths
-        const metadataPath = path.join(__dirname, '..', 'metadata.json');
-        const booksPath = path.join(__dirname, '..', 'books.json');  // Changed to books.json
-
-        // Load metadata
-        let metadata;
+        console.log('\n🏆 Starting publish process...');
+        
+        // Read metadata.json
+        const metadataPath = getDataPath('metadata.json');
+        console.log('📖 Reading metadata...');
+        const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        
+        // Read blacklist.json
+        const blacklistPath = getDataPath('blacklist.json');
+        let blacklist;
         try {
-            const data = await fs.readFile(metadataPath, 'utf8');
-            metadata = JSON.parse(data);
-            console.log(`Loaded metadata with ${Object.keys(metadata.books).length} books`);
+            blacklist = JSON.parse(await fs.readFile(blacklistPath, 'utf8'));
+            const patterns = [];
+            
+            if (Array.isArray(blacklist.authors)) {
+                patterns.push(...blacklist.authors);
+                console.log(`🚫 Loaded ${patterns.length} authors from blacklist`);
+            }
+            
+            if (Array.isArray(blacklist.patterns)) {
+                patterns.push(...blacklist.patterns);
+                console.log(`🚫 Added ${blacklist.patterns.length} additional patterns`);
+            }
+            
+            blacklist = { patterns };
+            
         } catch (error) {
-            console.error('Error loading metadata:', error);
-            return { success: false, error: 'Failed to load metadata' };
-        }
-
-        // Transform metadata to output format
-        let output = transformToOutput(metadata);
-        console.log(`Transformed ${Object.keys(output.books).length} books with rankings`);
-
-        // Validate output before writing
-        try {
-            output = validateOutput(output);
-            console.log('Output validation successful');
-        } catch (error) {
-            console.error('Output validation failed:', error);
-            return { success: false, error: `Validation failed: ${error.message}` };
-        }
-
-        // Write output file
-        try {
-            await safeWriteJSON(booksPath, output);
-            console.log('Successfully wrote books.json');
-        } catch (error) {
-            console.error('Error writing output:', error);
-            return { success: false, error: 'Failed to write output file' };
+            if (error.code === 'ENOENT') {
+                console.log('⚠️ No blacklist.json found, using empty blacklist');
+                blacklist = { patterns: [] };
+            } else {
+                console.error('❌ Error reading blacklist:', error);
+                throw error;
+            }
         }
         
-        return { 
-            success: true, 
+        // Filter and sort books
+        console.log('\n📊 Processing books...');
+        const books = {};
+        const totalBooks = Object.keys(metadata.books).length;
+        let processedCount = 0;
+        let rankedCount = 0;
+
+        Object.entries(metadata.books)
+            .filter(([asin, book]) => {
+                processedCount++;
+                const hasRequired = book.bsr && book.title && book.author;
+                if (!hasRequired) {
+                    console.log(`⚠️ [${processedCount}/${totalBooks}] Skipping incomplete book: ${book.title || 'Unknown'}`);
+                }
+                return hasRequired;
+            })
+            .filter(([asin, book]) => {
+                const isBlacklistedBook = blacklist.patterns.some(pattern => isBlacklisted(book, pattern));
+                if (isBlacklistedBook) {
+                    console.log(`🚫 [${processedCount}/${totalBooks}] Filtered blacklisted book: ${book.title}`);
+                }
+                return !isBlacklistedBook;
+            })
+            .sort(([asin1, a], [asin2, b]) => a.bsr - b.bsr)
+            .forEach(([asin, book], index) => {
+                rankedCount++;
+                books[asin] = {
+                    rank: index + 1,
+                    title: book.title,
+                    author: book.author,
+                    cover_url: book.cover_url,
+                    bsr: book.bsr,
+                    url: book.url
+                };
+                if (index < 3) {
+                    console.log(`🏅 Rank #${index + 1}: "${book.title}" by ${book.author} (BSR: ${book.bsr})`);
+                }
+            });
+
+        console.log(`\n✨ Ranked ${rankedCount} books out of ${totalBooks} total`);
+        
+        // Create public books.json
+        const publicData = {
+            version: '1.0',
+            last_updated: new Date().toISOString(),
+            books
+        };
+        
+        // Write to books.json
+        console.log('💾 Saving leaderboard...');
+        const booksPath = getDataPath('books.json');
+        await safeWriteJSON(booksPath, publicData);
+        
+        console.log('✅ Publish process completed successfully\n');
+        return {
+            success: true,
             stats: {
-                total_books: Object.keys(output.books).length,
-                timestamp: output.last_updated
-            }
+                total_books: Object.keys(books).length,
+                timestamp: new Date().toISOString()
+            },
+            books: publicData
         };
     } catch (error) {
-        console.error('Publish error:', error);
-        return { success: false, error: error.message };
+        console.error('❌ Publish process failed:', error);
+        return {
+            success: false,
+            error: error.message || 'Unknown error during publish'
+        };
     }
 }
 

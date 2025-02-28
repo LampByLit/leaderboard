@@ -2,14 +2,32 @@ const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
 
+// Configure data directory
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+
+// Configure batch processing
+const BATCH_SIZE = 3; // Process 3 books at a time
+const BATCH_DELAY = 8000; // 8 seconds between batches
+const MIN_REQUEST_DELAY = 3000; // Minimum 3 seconds between requests
+const MAX_REQUEST_DELAY = 5000; // Maximum 5 seconds between requests
+
+// Helper function to get data file paths
+function getDataPath(filename) {
+    return path.join(DATA_DIR, filename);
+}
+
 // Add rotating user agents
 const USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Vivaldi/6.5.3206.53'
 ];
 
 function getRandomUserAgent() {
@@ -279,7 +297,6 @@ async function safeWriteJSON(filePath, data) {
             const currentData = await fs.readFile(filePath, 'utf8');
             await fs.writeFile(backupPath, currentData);
         } catch (err) {
-            // If file doesn't exist yet, that's fine
             if (err.code !== 'ENOENT') throw err;
         }
 
@@ -290,20 +307,13 @@ async function safeWriteJSON(filePath, data) {
         try {
             await fs.unlink(backupPath);
         } catch (err) {
-            // Ignore if backup doesn't exist
-            if (err.code !== 'ENOENT') console.warn('Warning: Could not remove backup file');
+            if (err.code !== 'ENOENT') {
+                console.warn('Warning: Could not remove backup file:', err);
+            }
         }
     } catch (error) {
-        // If writing failed and we have a backup, restore from backup
-        try {
-            const backup = await fs.readFile(backupPath, 'utf8');
-            await fs.writeFile(filePath, backup);
-            console.error('Error writing file, restored from backup:', error);
-            throw new Error('Failed to write file, restored from backup');
-        } catch (restoreError) {
-            console.error('Critical error: Could not restore from backup:', restoreError);
-            throw restoreError;
-        }
+        console.error('Error in safeWriteJSON:', error);
+        throw error;
     }
 }
 
@@ -341,15 +351,29 @@ async function scrapeBook(url) {
             };
         }
 
+        // Extract other metadata
+        const title = extractTitle(html);
+        const author = extractAuthor(html);
+        const cover_url = extractCoverUrl(html);
+
+        // Validate required fields
+        if (!title || !author || !cover_url) {
+            return {
+                success: false,
+                error: 'missing_metadata',
+                message: 'Missing required metadata'
+            };
+        }
+
         // Only proceed if we have all required fields
         return {
             success: true,
             data: {
                 url,
                 asin,
-                title: extractTitle(html),
-                author: extractAuthor(html),
-                cover_url: extractCoverUrl(html),
+                title,
+                author,
+                cover_url,
                 bsr,
                 last_checked: new Date().toISOString(),
                 status: 'active'
@@ -365,170 +389,142 @@ async function scrapeBook(url) {
     }
 }
 
-// Main scrape function
-async function scrape() {
-    try {
-        const startTime = Date.now();
-        
-        // Read input.json
-        const inputPath = path.join(__dirname, '..', 'input.json');
-        const metadataPath = path.join(__dirname, '..', 'metadata.json');
-        
-        let inputData;
+// Add batch processing helper
+async function processBatch(submissions, startIndex, batchSize, metadata) {
+    const results = [];
+    const batch = submissions.slice(startIndex, startIndex + batchSize);
+    
+    console.log(`\n=== Processing batch ${Math.floor(startIndex/batchSize) + 1} ===`);
+    console.log(`Books ${startIndex + 1}-${Math.min(startIndex + batchSize, submissions.length)} of ${submissions.length}`);
+    
+    for (let i = 0; i < batch.length; i++) {
+        const submission = batch[i];
         try {
-            inputData = await fs.readFile(inputPath, 'utf8');
-        } catch (error) {
-            console.error('Error reading input.json:', error);
-            return { success: false, error: 'Failed to read input file' };
-        }
-
-        let submissions;
-        try {
-            submissions = JSON.parse(inputData).submissions;
-        } catch (error) {
-            console.error('Error parsing input.json:', error);
-            return { success: false, error: 'Invalid input file format' };
-        }
-
-        // Read current metadata
-        let metadata;
-        try {
-            const metadataData = await fs.readFile(metadataPath, 'utf8');
-            metadata = JSON.parse(metadataData);
-        } catch (error) {
-            console.error('Error reading/parsing metadata.json:', error);
-            metadata = { books: {}, stats: {} };
-        }
-
-        console.log(`Starting scrape of ${submissions.length} URLs...`);
-        
-        let successCount = 0;
-        let failureCount = 0;
-        let currentBook = 0;
-        const totalBooks = submissions.length;
-        
-        // Track permanently failed submissions
-        const permanentlyFailed = new Set();
-        
-        // Add delay between requests to be nice to Amazon
-        for (const submission of submissions) {
-            try {
-                currentBook++;
-                console.log(`Progress: ${currentBook} of ${totalBooks} books - Scraping ${submission.url}...`);
-                
-                // Update progress in metadata
-                metadata.scraping_progress = {
-                    current: currentBook,
-                    total: totalBooks,
-                    current_url: submission.url,
+            const currentBook = startIndex + i + 1;
+            const progressBar = '='.repeat(Math.floor((currentBook/submissions.length) * 20)) + 
+                              '-'.repeat(20 - Math.floor((currentBook/submissions.length) * 20));
+            
+            console.log(`\n[${progressBar}] ${currentBook}/${submissions.length}`);
+            console.log(`🔍 Scraping: ${submission.url}`);
+            
+            const result = await scrapeBook(submission.url);
+            if (result && result.success) {
+                metadata.books[result.data.asin] = {
+                    ...result.data,
                     last_updated: new Date().toISOString()
                 };
-                
-                try {
-                    await safeWriteJSON(metadataPath, metadata);
-                } catch (error) {
-                    console.error('Error updating progress in metadata:', error);
-                }
-                
-                const result = await scrapeBook(submission.url);
-                
-                if (result.success && result.data.asin && result.data.bsr) {
-                    const { asin } = result.data;
-                    console.log(`Successfully scraped ${result.data.title} by ${result.data.author || 'Unknown Author'} (BSR: ${result.data.bsr.toLocaleString()})`);
-                    successCount++;
-                    
-                    // Update or create book entry
-                    if (!metadata.books[asin]) {
-                        metadata.books[asin] = {
-                            ...result.data,
-                            first_seen: new Date().toISOString(),
-                            leaderboard_rank: 0,
-                            history: []
-                        };
-                    } else {
-                        metadata.books[asin] = {
-                            ...metadata.books[asin],
-                            ...result.data,
-                            history: [
-                                ...metadata.books[asin].history,
-                                {
-                                    timestamp: new Date().toISOString(),
-                                    bsr: result.data.bsr
-                                }
-                            ]
-                        };
-                    }
-                } else {
-                    console.log(`Failed to scrape ${submission.url} - ${result.message}`);
-                    failureCount++;
-                    
-                    if (result.error === 'invalid_asin' || 
-                        result.error === 'not_paperback' || 
-                        result.error === 'missing_bsr') {
-                        permanentlyFailed.add(submission.url);
-                    }
-                }
-
-                try {
-                    await safeWriteJSON(metadataPath, metadata);
-                } catch (error) {
-                    console.error('Error updating metadata after book:', error);
-                }
-
-            } catch (error) {
-                console.error(`Error processing submission ${submission.url}:`, error);
-                failureCount++;
+                console.log(`✅ Success! BSR: ${result.data.bsr.toLocaleString()}`);
+                console.log(`📖 "${result.data.title}" by ${result.data.author}`);
+                results.push(result);
+            } else {
+                console.log(`❌ Failed: ${result.error}`);
             }
-
-            // Be nice to Amazon - wait 3 seconds between requests
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Update progress
+            metadata.scraping_progress.current = startIndex + i + 1;
+            await safeWriteJSON(getDataPath('metadata.json'), metadata);
+            
+            // Random delay between requests within a batch (2-4 seconds)
+            if (i < batch.length - 1) {
+                const delay = Math.random() * (MAX_REQUEST_DELAY - MIN_REQUEST_DELAY) + MIN_REQUEST_DELAY;
+                console.log(`⏳ Waiting ${(delay/1000).toFixed(1)}s before next book...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        } catch (error) {
+            console.error(`❌ Error scraping ${submission.url}:`, error);
         }
+    }
+    
+    return results;
+}
 
-        // Clean up input.json by removing permanently failed submissions
-        if (permanentlyFailed.size > 0) {
-            try {
-                console.log(`Removing ${permanentlyFailed.size} invalid submissions from input.json...`);
-                const cleanedSubmissions = submissions.filter(sub => !permanentlyFailed.has(sub.url));
-                await safeWriteJSON(inputPath, { submissions: cleanedSubmissions });
-                console.log('Successfully removed invalid submissions from input.json');
-            } catch (error) {
-                console.error('Error cleaning up input.json:', error);
-                // Don't throw - just log the error and continue
+// Main scrape function
+async function scrape(progressCallback = () => {}) {
+    console.log('\n🚀 Starting scrape process...\n');
+    
+    try {
+        // Read input.json
+        const inputPath = getDataPath('input.json');
+        const inputData = JSON.parse(await fs.readFile(inputPath, 'utf8'));
+        
+        // Read metadata.json
+        const metadataPath = getDataPath('metadata.json');
+        let metadata;
+        try {
+            metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                metadata = { books: {}, last_update: new Date().toISOString() };
+            } else {
+                throw error;
             }
         }
-
-        const endTime = Date.now();
-        const duration = ((endTime - startTime) / 1000).toFixed(1);
-
-        // Clear progress and update metadata stats
+        
+        // Initialize scraping progress
+        metadata.scraping_progress = {
+            current: 0,
+            total: inputData.submissions.length,
+            successful: 0
+        };
+        await safeWriteJSON(metadataPath, metadata);
+        
+        // Send initial progress
+        progressCallback({
+            current: 0,
+            total: inputData.submissions.length,
+            successful: 0
+        });
+        
+        console.log(`📚 Found ${inputData.submissions.length} books to scrape`);
+        console.log(`🔄 Processing in batches of ${BATCH_SIZE} with ${BATCH_DELAY/1000}s delay between batches\n`);
+        
+        // Process submissions in batches
+        const results = [];
+        let successfulScrapes = 0;
+        
+        for (let i = 0; i < inputData.submissions.length; i += BATCH_SIZE) {
+            const batchResults = await processBatch(inputData.submissions, i, BATCH_SIZE, metadata);
+            results.push(...batchResults);
+            
+            // Update successful scrapes count and send progress
+            successfulScrapes = results.filter(r => r.success).length;
+            progressCallback({
+                current: Math.min(i + BATCH_SIZE, inputData.submissions.length),
+                total: inputData.submissions.length,
+                successful: successfulScrapes
+            });
+            
+            // Add delay between batches if not the last batch
+            if (i + BATCH_SIZE < inputData.submissions.length) {
+                const nextBatch = Math.min(i + BATCH_SIZE + BATCH_SIZE, inputData.submissions.length);
+                console.log(`\n⏳ Waiting ${BATCH_DELAY/1000}s before processing next batch (${i + BATCH_SIZE + 1}-${nextBatch})...\n`);
+                await delay(BATCH_DELAY);
+            }
+        }
+        
+        // Clear scraping progress and update metadata
         delete metadata.scraping_progress;
-        metadata.last_updated = new Date().toISOString();
-        metadata.stats = {
-            total_books: Object.keys(metadata.books).length,
-            active_books: Object.values(metadata.books).filter(book => book.status === 'active').length,
-            last_scrape_duration: `${duration}s`,
-            scrape_success_rate: `${Math.round((successCount / submissions.length) * 100)}%`,
-            last_scrape_results: {
-                attempted: submissions.length,
-                succeeded: successCount,
-                failed: failureCount,
-                permanently_failed: permanentlyFailed.size
+        metadata.last_update = new Date().toISOString();
+        await safeWriteJSON(metadataPath, metadata);
+        
+        console.log('\n✨ Scrape process completed successfully');
+        console.log(`📊 Final Results: ${successfulScrapes}/${inputData.submissions.length} books scraped successfully\n`);
+        
+        return {
+            success: true,
+            stats: {
+                processed_urls: inputData.submissions.length,
+                successful_scrapes: successfulScrapes,
+                updated_books: Object.keys(metadata.books).length,
+                timestamp: new Date().toISOString()
             }
         };
-        
-        try {
-            await safeWriteJSON(metadataPath, metadata);
-        } catch (error) {
-            console.error('Error saving final metadata:', error);
-            // Don't throw - just log the error and continue
-        }
-        
-        console.log(`Scraping completed in ${duration} seconds`);
-        console.log(`Results: ${successCount} succeeded, ${failureCount} failed (${permanentlyFailed.size} permanent failures)`);
-        return { success: true };
     } catch (error) {
-        console.error('Scraper error:', error);
-        return { success: false, error: error.message };
+        console.error('\n❌ Scrape process failed:', error);
+        return {
+            success: false,
+            error: error.message || 'Unknown error during scrape'
+        };
     }
 }
 

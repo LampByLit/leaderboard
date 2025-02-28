@@ -1,124 +1,118 @@
 # Amazon Book Rankings Leaderboard
 
-A web application that tracks and displays Amazon book rankings in real-time. Built with Node.js, Express, and modern web technologies.
+A Node.js application that tracks Amazon book rankings and displays them in a leaderboard format.
 
 ## Features
 
-- Real-time tracking of Amazon book Best Seller Rankings (BSR)
-- Automated web scraping with anti-detection measures
-- Beautiful, responsive UI with dark theme
-- URL submission system with rate limiting
-- Automatic blacklist filtering
-- JSON data visualization
-- Cover image preview system
-- Cooldown-based update system
+- Scrapes Amazon book Best Seller Ranks (BSR)
+- Displays books sorted by BSR
+- Automatic data cleanup and maintenance
+- Rate-limited and Amazon-friendly scraping
+- Persistent data storage using Railway Volumes
 
-## Tech Stack
+## Deployment on Railway
 
-- **Backend**: Node.js, Express
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Data Storage**: JSON-based file system
-- **Web Scraping**: Puppeteer with stealth plugin
-- **UI Components**: Custom CSS with Material Design influence
-- **Security**: Rate limiting, input validation, URL sanitization
+### Prerequisites
+
+1. Install Railway CLI:
+```bash
+npm i -g @railway/cli
+```
+
+2. Login to Railway:
+```bash
+railway login
+```
+
+### Setup
+
+1. Create a new Railway project:
+```bash
+railway init
+```
+
+2. Create a volume for data storage:
+```bash
+railway volume create book-data
+```
+
+3. Link your project:
+```bash
+railway link
+```
+
+4. Set up environment variables:
+```bash
+railway variables set RAILWAY_VOLUME_MOUNT_PATH=/data
+```
+
+### Deploy
+
+1. Deploy your application:
+```bash
+railway up
+```
+
+2. Monitor your deployment:
+```bash
+railway logs
+```
+
+## Local Development
+
+1. Clone the repository:
+```bash
+git clone https://github.com/hxkm/amazon-book-ranker.git
+cd amazon-book-ranker
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a local data directory:
+```bash
+mkdir data
+```
+
+4. Start the server:
+```bash
+node server.js
+```
+
+The server will be available at `http://localhost:3000`.
 
 ## Project Structure
 
 ```
 ├── scripts/
-│   ├── cleaner.js      # Submission cleanup logic
-│   ├── cycle.js        # Full update cycle orchestration
-│   ├── publisher.js    # Leaderboard publishing logic
-│   ├── purger.js      # Blacklist filtering
-│   ├── scraper.js     # Amazon scraping logic
-│   └── utils/         # Utility functions
-├── public/
-│   └── index.html     # Main frontend interface
-├── server.js          # Express server and API endpoints
-├── input.json         # URL submissions storage
-├── books.json         # Processed book data
-├── metadata.json      # System metadata and state
-└── blacklist.json     # Filtered content rules
+│   ├── cleaner.js      # Cleans up old submissions
+│   ├── cycle.js        # Orchestrates the update cycle
+│   ├── init-volume.js  # Initializes data volume
+│   ├── publisher.js    # Publishes leaderboard data
+│   ├── purger.js       # Removes blacklisted entries
+│   └── scraper.js      # Scrapes Amazon data
+├── server.js           # Main server file
+├── index.html          # Frontend interface
+├── railway.toml        # Railway configuration
+└── package.json        # Project dependencies
 ```
 
-## Setup
+## Data Files
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/amazon-book-rankings.git
-   cd amazon-book-rankings
-   ```
+All data files are stored in the mounted volume at `/data`:
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+- `input.json`: Submitted Amazon URLs
+- `books.json`: Published leaderboard data
+- `metadata.json`: Internal metadata and state
+- `blacklist.json`: Filtering patterns
 
-3. Start the server:
-   ```bash
-   node server.js
-   ```
+## Environment Variables
 
-4. Access the application at `http://localhost:3000`
-
-## API Endpoints
-
-- `POST /submit-url`: Submit a new Amazon book URL
-- `POST /update-leaderboard`: Trigger leaderboard update
-- `POST /purge`: Run blacklist filtering
-- `POST /cleanup`: Clean old submissions
-- `POST /publish`: Update public leaderboard
-- `POST /cycle`: Run full update cycle
-
-## Features in Detail
-
-### URL Submission
-- Validates Amazon book URLs
-- Enforces URL length limits (max 150 characters)
-- Rate limiting per IP address
-- Daily submission limits
-
-### Scraping System
-- Respects Amazon's robots.txt
-- Implements random delays
-- Uses rotating user agents
-- Handles CAPTCHAs and blocks
-- Exponential backoff for retries
-
-### Data Management
-- Atomic file operations
-- Backup system for data safety
-- JSON validation
-- Duplicate detection
-- Error logging
-
-### Security Features
-- Input sanitization
-- Rate limiting
-- IP tracking
-- Error handling
-- Safe file operations
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- `RAILWAY_VOLUME_MOUNT_PATH`: Path to the mounted volume (default: `/data`)
+- `PORT`: Server port (set by Railway)
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Built with love for the /lit/ community
-- Thanks to all contributors and users
-
-## Important Notes
-
-- This is a tool for tracking legitimate book rankings
-- Please respect Amazon's terms of service
-- Use responsibly and ethically
-- Not for commercial use
+MIT License - see LICENSE file for details.

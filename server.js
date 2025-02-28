@@ -6,6 +6,26 @@ const { publish } = require('./scripts/publisher');
 const { purge } = require('./scripts/purger');
 const { cleanup } = require('./scripts/cleaner');
 const { cycle } = require('./scripts/cycle');
+const { initializeVolume } = require('./scripts/init-volume');
+
+// Configure data directory
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+console.log(`Using data directory: ${DATA_DIR}`);
+
+// Keep track of connected clients
+let clients = [];
+
+// Helper function to send updates to all connected clients
+function sendProgressToClients(data) {
+    clients.forEach(client => {
+        client.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+}
+
+// Helper function to get data file paths
+function getDataPath(filename) {
+    return path.join(DATA_DIR, filename);
+}
 
 // Add process-level error handlers
 process.on('uncaughtException', (err) => {
@@ -23,12 +43,70 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// Initialize volume before starting server
+async function startServer() {
+    try {
+        await initializeVolume();
+        console.log('Volume initialized successfully');
+
+        app.listen(PORT, () => {
+            console.log(`Server running at http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to initialize volume:', error);
+        process.exit(1);
+    }
+}
 
 // Middleware to parse JSON bodies
 app.use(express.json());
 // Serve static files from current directory
 app.use(express.static('./'));
+
+// Add new API endpoints
+app.get('/api/data/input', async (req, res) => {
+    try {
+        const filePath = getDataPath('input.json');
+        const data = await fs.readFile(filePath, 'utf8');
+        const jsonData = JSON.parse(data);
+        
+        // Filter out sensitive information
+        const sanitizedData = {
+            submissions: jsonData.submissions.map(sub => ({
+                url: sub.url,
+                submitted_at: sub.submitted_at
+            })),
+            last_cleanup: jsonData.last_cleanup
+        };
+        
+        res.json(sanitizedData);
+    } catch (error) {
+        console.error('Error reading input data:', error);
+        res.status(500).json({ error: 'Failed to read input data' });
+    }
+});
+
+app.get('/api/data/books', async (req, res) => {
+    try {
+        const filePath = getDataPath('books.json');
+        const data = await fs.readFile(filePath, 'utf8');
+        const jsonData = JSON.parse(data);
+        
+        // Filter out any sensitive information if needed
+        const sanitizedData = {
+            version: jsonData.version,
+            last_updated: jsonData.last_updated,
+            books: jsonData.books
+        };
+        
+        res.json(sanitizedData);
+    } catch (error) {
+        console.error('Error reading books data:', error);
+        res.status(500).json({ error: 'Failed to read books data' });
+    }
+});
 
 // Helper function for safe file writing with retries
 async function safeWriteJSON(filePath, data, retries = 3) {
@@ -89,7 +167,7 @@ async function safeWriteJSON(filePath, data, retries = 3) {
 // Helper function to check if user can submit today
 async function canUserSubmitToday(ip) {
     try {
-        const inputPath = path.join(__dirname, 'input.json');
+        const inputPath = getDataPath('input.json');
         const data = await fs.readFile(inputPath, 'utf8');
         const json = JSON.parse(data);
         
@@ -127,7 +205,7 @@ app.post('/toggle-limiter', async (req, res) => {
         
         // Update metadata to persist limiter state
         try {
-            const metadataPath = path.join(__dirname, 'metadata.json');
+            const metadataPath = getDataPath('metadata.json');
             const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
             metadata.limiter_enabled = enabled;
             await safeWriteJSON(metadataPath, metadata);
@@ -182,7 +260,7 @@ app.post('/submit-url', async (req, res) => {
         }
 
         // Read current submissions with retry logic
-        const inputPath = path.join(__dirname, 'input.json');
+        const inputPath = getDataPath('input.json');
         let json;
         try {
             const data = await fs.readFile(inputPath, 'utf8');
@@ -234,101 +312,61 @@ app.post('/submit-url', async (req, res) => {
     }
 });
 
+// Add cycle lock
+let cycleInProgress = false;
+
 // Handle update leaderboard
 app.post('/update-leaderboard', async (req, res) => {
+    if (cycleInProgress) {
+        return res.json({
+            success: false,
+            error: 'A cycle operation is in progress. Please wait for it to complete.'
+        });
+    }
+
     try {
         console.log('Starting leaderboard update...');
         
-        // Create a promise that resolves when scraping is done
-        const scrapePromise = new Promise(async (resolve) => {
-            try {
-                // Run scraper with error handling
-                let scrapeResult;
-                try {
-                    scrapeResult = await scrape();
-                } catch (error) {
-                    console.error('Scraper error:', error);
-                    resolve({ 
-                        success: false, 
-                        error: 'Scraper failed: ' + (error.message || 'Unknown error') 
-                    });
-                    return;
-                }
-
-                if (!scrapeResult || !scrapeResult.success) {
-                    resolve({ 
-                        success: false, 
-                        error: scrapeResult?.error || 'Scraper failed without error details'
-                    });
-                    return;
-                }
-
-                // Run publisher with error handling
-                let publishResult;
-                try {
-                    publishResult = await publish();
-                } catch (error) {
-                    console.error('Publisher error:', error);
-                    resolve({ 
-                        success: false, 
-                        error: 'Publisher failed: ' + (error.message || 'Unknown error')
-                    });
-                    return;
-                }
-
-                if (!publishResult || !publishResult.success) {
-                    resolve({ 
-                        success: false, 
-                        error: publishResult?.error || 'Publisher failed without error details'
-                    });
-                    return;
-                }
-
-                console.log('Leaderboard update completed successfully');
-                resolve({ success: true, books: publishResult.books });
-            } catch (error) {
-                console.error('Update error:', error);
-                resolve({ 
-                    success: false, 
-                    error: 'Update failed: ' + (error.message || 'Unknown error'),
-                    errorDetails: error.stack
-                });
-            }
-        }).catch(error => {
-            console.error('Unhandled promise rejection in scrape process:', error);
-            return {
-                success: false,
-                error: 'Internal server error during scraping'
-            };
-        });
-
-        // Set a timeout for the response
-        const timeoutPromise = new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    success: true,
-                    message: 'Scraping started in background. Check console for progress.'
-                });
-            }, 1000);
-        });
-
-        // Race between scrape completion and timeout
-        const result = await Promise.race([scrapePromise, timeoutPromise]);
-        res.json(result);
-
-        // Continue scraping in background if not completed
-        if (!result.books) {
-            // Wrap the background process in error handling
-            scrapePromise.then((finalResult) => {
-                if (finalResult.success) {
-                    console.log('Background scraping completed successfully');
-                } else {
-                    console.error('Background scraping failed:', finalResult.error);
-                }
-            }).catch(error => {
-                console.error('Unhandled error in background scraping:', error);
+        // Run scraper with error handling
+        let scrapeResult;
+        try {
+            scrapeResult = await scrape();
+        } catch (error) {
+            console.error('Scraper error:', error);
+            return res.json({ 
+                success: false, 
+                error: 'Scraper failed: ' + (error.message || 'Unknown error') 
             });
         }
+
+        if (!scrapeResult || !scrapeResult.success) {
+            return res.json({ 
+                success: false, 
+                error: scrapeResult?.error || 'Scraper failed without error details'
+            });
+        }
+
+        // Run publisher with error handling
+        let publishResult;
+        try {
+            publishResult = await publish();
+        } catch (error) {
+            console.error('Publisher error:', error);
+            return res.json({ 
+                success: false, 
+                error: 'Publisher failed: ' + (error.message || 'Unknown error')
+            });
+        }
+
+        if (!publishResult || !publishResult.success) {
+            return res.json({ 
+                success: false, 
+                error: publishResult?.error || 'Publisher failed without error details'
+            });
+        }
+
+        console.log('Leaderboard update completed successfully');
+        res.json({ success: true, books: publishResult.books });
     } catch (error) {
         console.error('Update error:', error);
         res.json({ 
@@ -520,31 +558,147 @@ app.post('/cleanup', async (req, res) => {
 // Handle cycle operation
 app.post('/cycle', async (req, res) => {
     console.log('Starting cycle operation...');
+    const startTime = Date.now();
+    let currentStage = 'init';
+    let cycleStats = {
+        scrape: { successful: 0, failed: 0 },
+        purge: { removed: 0 },
+        cleanup: { removed: 0 }
+    };
     
     try {
-        const result = await cycle();
-        
-        if (!result.success) {
-            console.error('Cycle failed:', result.error);
-            return res.status(500).json({ 
-                success: false, 
-                error: result.error,
-                duration: result.duration
-            });
-        }
-
-        console.log('Cycle completed successfully. Stats:', result.stats);
-        
-        res.json({ 
-            success: true, 
-            stats: result.stats,
-            message: `Complete cycle finished successfully in ${result.stats.duration}`
+        // Initialize cycle
+        sendProgressToClients({ 
+            status: 'starting', 
+            message: '🚀 Initializing cycle process...',
+            timestamp: new Date().toISOString()
         });
+        
+        // Update metadata
+        const metadataPath = getDataPath('metadata.json');
+        let metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        metadata.cycle_status = {
+            state: 'running',
+            started_at: new Date().toISOString()
+        };
+        await safeWriteJSON(metadataPath, metadata);
+        
+        // Start scraping
+        currentStage = 'scraping';
+        sendProgressToClients({ 
+            status: 'scraping', 
+            message: '📚 Starting scrape process...',
+            timestamp: new Date().toISOString()
+        });
+        
+        const scrapeResult = await scrape((progress) => {
+            sendProgressToClients({ 
+                status: 'scraping',
+                timestamp: new Date().toISOString(),
+                ...progress 
+            });
+        });
+        
+        if (!scrapeResult.success) {
+            throw new Error(`Scrape failed: ${scrapeResult.error}`);
+        }
+        cycleStats.scrape = scrapeResult.stats;
+        
+        // Run purge
+        currentStage = 'purging';
+        sendProgressToClients({ 
+            status: 'purging', 
+            message: '🧹 Running purge process...',
+            timestamp: new Date().toISOString()
+        });
+        const purgeResult = await purge();
+        if (!purgeResult.success) {
+            throw new Error(`Purge failed: ${purgeResult.error}`);
+        }
+        cycleStats.purge = purgeResult.stats;
+        
+        // Run cleanup
+        currentStage = 'cleaning';
+        sendProgressToClients({ 
+            status: 'cleaning', 
+            message: '🗑️ Running cleanup process...',
+            timestamp: new Date().toISOString()
+        });
+        const cleanupResult = await cleanup();
+        if (!cleanupResult.success) {
+            throw new Error(`Cleanup failed: ${cleanupResult.error}`);
+        }
+        cycleStats.cleanup = cleanupResult.stats;
+        
+        // Run publish
+        currentStage = 'publishing';
+        sendProgressToClients({ 
+            status: 'publishing', 
+            message: '📝 Publishing results...',
+            timestamp: new Date().toISOString()
+        });
+        const publishResult = await publish();
+        if (!publishResult.success) {
+            throw new Error(`Publish failed: ${publishResult.error}`);
+        }
+        
+        // Update metadata with completion status
+        const duration = Date.now() - startTime;
+        metadata.cycle_status = {
+            state: 'completed',
+            completed_at: new Date().toISOString(),
+            duration: duration,
+            stats: cycleStats
+        };
+        await safeWriteJSON(metadataPath, metadata);
+        
+        // Send completion message
+        sendProgressToClients({ 
+            status: 'complete', 
+            message: '✨ Cycle completed successfully',
+            timestamp: new Date().toISOString(),
+            stats: {
+                duration: `${(duration / 1000).toFixed(2)}s`,
+                successful_scrapes: cycleStats.scrape.successful,
+                failed_scrapes: cycleStats.scrape.failed,
+                purged: cycleStats.purge.removed,
+                cleaned: cycleStats.cleanup.removed
+            }
+        });
+        
+        res.json({ success: true, stats: cycleStats });
     } catch (error) {
-        console.error('Unexpected error during cycle:', error);
+        console.error(`Cycle failed during ${currentStage}:`, error);
+        
+        // Update metadata with failure status
+        try {
+            const duration = Date.now() - startTime;
+            const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            metadata.cycle_status = {
+                state: 'failed',
+                stage: currentStage,
+                error: error.message,
+                failed_at: new Date().toISOString(),
+                duration: duration,
+                partial_stats: cycleStats
+            };
+            await safeWriteJSON(metadataPath, metadata);
+        } catch (statusError) {
+            console.error('Failed to update cycle status:', statusError);
+        }
+        
+        sendProgressToClients({ 
+            status: 'error', 
+            message: `Failed during ${currentStage}: ${error.message}`,
+            timestamp: new Date().toISOString(),
+            stage: currentStage
+        });
+        
         res.status(500).json({ 
             success: false, 
-            error: 'Internal server error during cycle operation' 
+            error: error.message,
+            stage: currentStage,
+            partial_stats: cycleStats
         });
     }
 });
@@ -556,20 +710,11 @@ app.use((err, req, res, next) => {
 });
 
 // Enhance server error handling
-const server = app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-}).on('error', (error) => {
-    console.error('Server error:', error);
-    // Keep the server running unless it's a fatal error
-    if (error.code === 'EADDRINUSE') {
-        console.error('Port is already in use. Please choose a different port or wait a moment.');
-        process.exit(1);
-    }
-});
+startServer();
 
 // Keep the server running
-server.keepAliveTimeout = 60000; // 60 seconds
-server.headersTimeout = 65000; // 65 seconds
+app.keepAliveTimeout = 65000; // 65 seconds
+app.headersTimeout = 66000; // 66 seconds
 
 // Ignore SIGINT to keep server running
 process.on('SIGINT', () => {
@@ -579,4 +724,33 @@ process.on('SIGINT', () => {
 // Only handle SIGTERM for docker/deployment scenarios
 process.on('SIGTERM', () => {
     console.log('SIGTERM received - Continuing to run');
+});
+
+// Add SSE endpoint
+app.get('/progress', (req, res) => {
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // Send initial connection confirmation
+    res.write(`data: ${JSON.stringify({ status: 'connected', message: 'SSE connection established' })}\n\n`);
+    
+    // Add this client to our list
+    clients.push(res);
+    console.log(`Client connected. Total clients: ${clients.length}`);
+    
+    // Set up heartbeat to keep connection alive
+    const heartbeat = setInterval(() => {
+        if (!res.finished) {
+            res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
+        }
+    }, 30000); // Send heartbeat every 30 seconds
+    
+    // Handle client disconnect
+    req.on('close', () => {
+        clearInterval(heartbeat);
+        clients = clients.filter(client => client !== res);
+        console.log(`Client disconnected. Remaining clients: ${clients.length}`);
+    });
 }); 

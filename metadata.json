@@ -1,4 +1,5 @@
 {
+    "limiter_enabled": true,
     "books": {
         "1922427586": {
             "url": "https://www.amazon.com/Remembering-Other-Stories-Lewis-Woolston/dp/1922427586",
@@ -6,61 +7,10 @@
             "title": "Remembering the Dead and Other Stories",
             "author": "Lewis Woolston",
             "cover_url": "https://m.media-amazon.com/images/I/611yH2-BvNL._SY522_.jpg",
-            "bsr": 5360589,
-            "last_checked": "2025-02-27T12:19:57.507Z",
+            "bsr": 5364459,
+            "last_checked": "2025-02-28T00:01:58.155Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:10:31.435Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T08:43:16.804Z",
-                    "bsr": 5360289
-                },
-                {
-                    "timestamp": "2025-02-27T08:44:38.782Z",
-                    "bsr": 5360289
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:22.429Z",
-                    "bsr": 5360289
-                },
-                {
-                    "timestamp": "2025-02-27T09:06:44.094Z",
-                    "bsr": 5360289
-                },
-                {
-                    "timestamp": "2025-02-27T09:24:43.002Z",
-                    "bsr": 5360557
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:05.696Z",
-                    "bsr": 5360557
-                },
-                {
-                    "timestamp": "2025-02-27T10:11:45.244Z",
-                    "bsr": 5360557
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:07.380Z",
-                    "bsr": 5360557
-                },
-                {
-                    "timestamp": "2025-02-27T11:50:45.901Z",
-                    "bsr": 5360589
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:07.733Z",
-                    "bsr": 5360589
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:35.884Z",
-                    "bsr": 5360589
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:57.507Z",
-                    "bsr": 5360589
-                }
-            ]
+            "last_updated": "2025-02-28T00:01:58.155Z"
         },
         "1925536882": {
             "url": "https://www.amazon.com/Last-Free-Man-Other-Stories/dp/1925536882",
@@ -68,67 +18,10 @@
             "title": "The Last Free Man and Other Stories",
             "author": "Lewis Woolston",
             "cover_url": "https://m.media-amazon.com/images/I/71TPgME7cpL._SY522_.jpg",
-            "bsr": 4818989,
-            "last_checked": "2025-02-27T12:19:52.467Z",
+            "bsr": 4820413,
+            "last_checked": "2025-02-28T00:00:26.654Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:33.762Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:39.088Z",
-                    "bsr": 4819196
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:00.608Z",
-                    "bsr": 4819283
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:02.408Z",
-                    "bsr": 4819283
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:02.724Z",
-                    "bsr": 4818989
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:52.468Z",
-                    "bsr": 4818989
-                }
-            ]
-        },
-        "1957599006": {
-            "url": "https://www.amazon.com/dp/1957599006",
-            "asin": "1957599006",
-            "title": "Five to Four",
-            "author": "James Krake",
-            "cover_url": "https://m.media-amazon.com/images/I/61ra9mvilSL._SY522_.jpg",
-            "bsr": 5582460,
-            "last_checked": "2025-02-27T12:20:33.088Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:19.728Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:19.832Z",
-                    "bsr": 5582267
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:41.299Z",
-                    "bsr": 5582267
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:43.127Z",
-                    "bsr": 5582523
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:43.991Z",
-                    "bsr": 5582460
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:33.089Z",
-                    "bsr": 5582460
-                }
-            ]
+            "last_updated": "2025-02-28T00:00:26.655Z"
         },
         "1957599022": {
             "url": "https://www.amazon.com/dp/1957599022",
@@ -136,33 +29,10 @@
             "title": "Faceless",
             "author": "James Krake",
             "cover_url": "https://m.media-amazon.com/images/I/61hIGnVOy4L._SY522_.jpg",
-            "bsr": 4169353,
-            "last_checked": "2025-02-27T12:20:17.667Z",
+            "bsr": 4168592,
+            "last_checked": "2025-02-28T00:01:06.436Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:45:04.353Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:04.530Z",
-                    "bsr": 4169487
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:26.028Z",
-                    "bsr": 4169487
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:27.599Z",
-                    "bsr": 4169643
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:28.706Z",
-                    "bsr": 4169353
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:17.669Z",
-                    "bsr": 4169353
-                }
-            ]
+            "last_updated": "2025-02-28T00:01:06.436Z"
         },
         "1957599030": {
             "url": "https://www.amazon.com/dp/1957599030",
@@ -170,33 +40,10 @@
             "title": "Gamma Coin",
             "author": "James Krake",
             "cover_url": "https://m.media-amazon.com/images/I/710761zZlLL._SY522_.jpg",
-            "bsr": 7252154,
-            "last_checked": "2025-02-27T12:20:22.877Z",
+            "bsr": 7253208,
+            "last_checked": "2025-02-28T00:01:13.163Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:45:09.454Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:09.612Z",
-                    "bsr": 7251656
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:31.147Z",
-                    "bsr": 7251656
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:32.921Z",
-                    "bsr": 7251950
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:33.803Z",
-                    "bsr": 7252154
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:22.878Z",
-                    "bsr": 7252154
-                }
-            ]
+            "last_updated": "2025-02-28T00:01:13.163Z"
         },
         "1957599065": {
             "url": "https://www.amazon.com/dp/1957599065",
@@ -204,67 +51,10 @@
             "title": "Ship of Fuls",
             "author": "James Krake",
             "cover_url": "https://m.media-amazon.com/images/I/71riYYAiG5L._SY522_.jpg",
-            "bsr": 4847492,
-            "last_checked": "2025-02-27T12:20:27.920Z",
+            "bsr": 4846869,
+            "last_checked": "2025-02-28T00:01:24.129Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:45:14.567Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:14.670Z",
-                    "bsr": 4847576
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:36.222Z",
-                    "bsr": 4847576
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:37.998Z",
-                    "bsr": 4847693
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:38.855Z",
-                    "bsr": 4847492
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:27.921Z",
-                    "bsr": 4847492
-                }
-            ]
-        },
-        "1957599103": {
-            "url": "https://www.amazon.com/dp/1957599103",
-            "asin": "1957599103",
-            "title": "Low Key Connections",
-            "author": "James Krake",
-            "cover_url": "https://m.media-amazon.com/images/I/61jRXT0WGcL._SY522_.jpg",
-            "bsr": 6019960,
-            "last_checked": "2025-02-27T12:20:37.868Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:24.610Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:24.659Z",
-                    "bsr": 6018630
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:46.102Z",
-                    "bsr": 6018630
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:47.884Z",
-                    "bsr": 6019453
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:48.850Z",
-                    "bsr": 6019960
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:37.874Z",
-                    "bsr": 6019960
-                }
-            ]
+            "last_updated": "2025-02-28T00:01:24.129Z"
         },
         "B0DRT5T927": {
             "url": "https://www.amazon.com/dp/B0DRT5T927",
@@ -272,45 +62,10 @@
             "title": "Harry Potter Trivia Book",
             "author": "Amanda Hopkins",
             "cover_url": "https://m.media-amazon.com/images/I/71F562RlHAL._SY522_.jpg",
-            "bsr": 2132084,
-            "last_checked": "2025-02-27T12:18:21.993Z",
+            "bsr": 2171430,
+            "last_checked": "2025-02-28T00:01:45.716Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:07:11.652Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T08:08:36.456Z",
-                    "bsr": 2121289
-                },
-                {
-                    "timestamp": "2025-02-27T08:10:06.334Z",
-                    "bsr": 2121289
-                },
-                {
-                    "timestamp": "2025-02-27T08:43:03.278Z",
-                    "bsr": 2121289
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:08.469Z",
-                    "bsr": 2121289
-                },
-                {
-                    "timestamp": "2025-02-27T09:24:29.050Z",
-                    "bsr": 2121289
-                },
-                {
-                    "timestamp": "2025-02-27T10:11:31.404Z",
-                    "bsr": 2127435
-                },
-                {
-                    "timestamp": "2025-02-27T11:50:30.484Z",
-                    "bsr": 2132084
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:21.993Z",
-                    "bsr": 2132084
-                }
-            ]
+            "last_updated": "2025-02-28T00:01:45.716Z"
         },
         "B0B9265BPY": {
             "url": "https://www.amazon.com/Savage-Green-Zulu-Alitspa/dp/B0B9265BPY",
@@ -318,61 +73,10 @@
             "title": "The Savage Green",
             "author": "Zulu Alitspa",
             "cover_url": "https://m.media-amazon.com/images/I/71TbYqEmBxL._SY522_.jpg",
-            "bsr": 2725339,
-            "last_checked": "2025-02-27T12:19:12.269Z",
+            "bsr": 2751570,
+            "last_checked": "2025-02-28T00:01:51.885Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:10:15.053Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T08:43:11.654Z",
-                    "bsr": 2717900
-                },
-                {
-                    "timestamp": "2025-02-27T08:43:53.243Z",
-                    "bsr": 2717900
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:17.141Z",
-                    "bsr": 2717900
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:58.557Z",
-                    "bsr": 2722211
-                },
-                {
-                    "timestamp": "2025-02-27T09:24:37.749Z",
-                    "bsr": 2722211
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:19.889Z",
-                    "bsr": 2722211
-                },
-                {
-                    "timestamp": "2025-02-27T10:11:40.087Z",
-                    "bsr": 2722211
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:22.368Z",
-                    "bsr": 2722211
-                },
-                {
-                    "timestamp": "2025-02-27T11:50:39.425Z",
-                    "bsr": 2725339
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:22.453Z",
-                    "bsr": 2725339
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:30.620Z",
-                    "bsr": 2725339
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:12.270Z",
-                    "bsr": 2725339
-                }
-            ]
+            "last_updated": "2025-02-28T00:01:51.885Z"
         },
         "B0DCS1X54Z": {
             "url": "https://www.amazon.com/SILKWORM-Ogden-Nesmer/dp/B0DCS1X54Z",
@@ -380,61 +84,10 @@
             "title": "SILKWORM",
             "author": "Ogden Nesmer",
             "cover_url": "https://m.media-amazon.com/images/I/71g7j2pCt5L._SY522_.jpg",
-            "bsr": 4091418,
-            "last_checked": "2025-02-27T12:19:07.110Z",
+            "bsr": 4091778,
+            "last_checked": "2025-02-28T00:02:08.425Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:10:43.094Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T08:43:21.954Z",
-                    "bsr": 4092397
-                },
-                {
-                    "timestamp": "2025-02-27T08:43:48.005Z",
-                    "bsr": 4092397
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:27.613Z",
-                    "bsr": 4092397
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:53.522Z",
-                    "bsr": 4092397
-                },
-                {
-                    "timestamp": "2025-02-27T09:24:48.100Z",
-                    "bsr": 4092397
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:14.878Z",
-                    "bsr": 4092106
-                },
-                {
-                    "timestamp": "2025-02-27T10:11:50.492Z",
-                    "bsr": 4092106
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:17.129Z",
-                    "bsr": 4092106
-                },
-                {
-                    "timestamp": "2025-02-27T11:50:51.174Z",
-                    "bsr": 4091418
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:17.512Z",
-                    "bsr": 4091418
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:41.122Z",
-                    "bsr": 4091418
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:07.110Z",
-                    "bsr": 4091418
-                }
-            ]
+            "last_updated": "2025-02-28T00:02:08.425Z"
         },
         "B0CJLCZVCG": {
             "url": "https://www.amazon.com/INCEL-Novel-ARX-Han/dp/B0CJLCZVCG",
@@ -442,61 +95,10 @@
             "title": "INCEL",
             "author": "ARX-Han",
             "cover_url": "https://m.media-amazon.com/images/I/81DwGA83SgL._SY522_.jpg",
-            "bsr": 639583,
-            "last_checked": "2025-02-27T12:20:07.427Z",
+            "bsr": 687902,
+            "last_checked": "2025-02-28T00:02:15.222Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:10:48.454Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T08:43:27.307Z",
-                    "bsr": 626801
-                },
-                {
-                    "timestamp": "2025-02-27T08:44:53.992Z",
-                    "bsr": 626801
-                },
-                {
-                    "timestamp": "2025-02-27T09:05:33.098Z",
-                    "bsr": 626801
-                },
-                {
-                    "timestamp": "2025-02-27T09:06:54.221Z",
-                    "bsr": 626801
-                },
-                {
-                    "timestamp": "2025-02-27T09:24:53.383Z",
-                    "bsr": 626801
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:15.712Z",
-                    "bsr": 626801
-                },
-                {
-                    "timestamp": "2025-02-27T10:11:55.790Z",
-                    "bsr": 636116
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:17.364Z",
-                    "bsr": 636116
-                },
-                {
-                    "timestamp": "2025-02-27T11:50:56.468Z",
-                    "bsr": 639583
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:18.299Z",
-                    "bsr": 639583
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:46.458Z",
-                    "bsr": 639583
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:07.427Z",
-                    "bsr": 639583
-                }
-            ]
+            "last_updated": "2025-02-28T00:02:15.222Z"
         },
         "B0CWCF7J13": {
             "url": "https://www.amazon.com/Improvidence-David-Herod/dp/B0CWCF7J13",
@@ -504,33 +106,10 @@
             "title": "Improvidence",
             "author": "David Herod",
             "cover_url": "https://m.media-amazon.com/images/I/61EhziObbuL._SY522_.jpg",
-            "bsr": 1053381,
-            "last_checked": "2025-02-27T12:18:51.590Z",
+            "bsr": 1087599,
+            "last_checked": "2025-02-28T00:02:22.064Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:43:32.523Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:05:38.232Z",
-                    "bsr": 1042087
-                },
-                {
-                    "timestamp": "2025-02-27T09:24:58.656Z",
-                    "bsr": 1042087
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:01.559Z",
-                    "bsr": 1049699
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:01.652Z",
-                    "bsr": 1053381
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:51.591Z",
-                    "bsr": 1053381
-                }
-            ]
+            "last_updated": "2025-02-28T00:02:22.064Z"
         },
         "B09MJBNL7X": {
             "url": "https://www.amazon.com/Eggplant-Ogden-Nesmer/dp/B09MJBNL7X",
@@ -538,33 +117,10 @@
             "title": "Eggplant",
             "author": "Ogden Nesmer",
             "cover_url": "https://m.media-amazon.com/images/I/71sQQGkR2TL._SY522_.jpg",
-            "bsr": 3357099,
-            "last_checked": "2025-02-27T12:18:56.873Z",
+            "bsr": 3355914,
+            "last_checked": "2025-02-28T00:02:33.187Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:43:37.802Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:05:43.408Z",
-                    "bsr": 3357957
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:03.981Z",
-                    "bsr": 3357957
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:06.902Z",
-                    "bsr": 3357798
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:07.334Z",
-                    "bsr": 3357099
-                },
-                {
-                    "timestamp": "2025-02-27T12:18:56.873Z",
-                    "bsr": 3357099
-                }
-            ]
+            "last_updated": "2025-02-28T00:02:33.187Z"
         },
         "B0BMJMP3GK": {
             "url": "https://www.amazon.com/Pray-Hungry-God-Ogden-Nesmer/dp/B0BMJMP3GK",
@@ -572,33 +128,10 @@
             "title": "I Pray to the Hungry God",
             "author": "Ogden Nesmer",
             "cover_url": "https://m.media-amazon.com/images/I/619K8gFdVVL._SY522_.jpg",
-            "bsr": 4469064,
-            "last_checked": "2025-02-27T12:19:02.050Z",
+            "bsr": 4471029,
+            "last_checked": "2025-02-28T00:02:39.157Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:43:42.965Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:05:48.535Z",
-                    "bsr": 4469258
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:09.755Z",
-                    "bsr": 4469258
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:12.095Z",
-                    "bsr": 4469258
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:12.411Z",
-                    "bsr": 4469064
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:02.051Z",
-                    "bsr": 4469064
-                }
-            ]
+            "last_updated": "2025-02-28T00:02:39.157Z"
         },
         "B0B6LBBJ3S": {
             "url": "https://www.amazon.com/Modem-Waves-Zulu-Alitspa/dp/B0B6LBBJ3S",
@@ -606,33 +139,10 @@
             "title": "Modem Waves",
             "author": "Zulu Alitspa",
             "cover_url": "https://m.media-amazon.com/images/I/71DxACNamhL._SY522_.jpg",
-            "bsr": 5174575,
-            "last_checked": "2025-02-27T12:19:17.413Z",
+            "bsr": 5175498,
+            "last_checked": "2025-02-27T23:59:31.607Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:43:58.423Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:03.622Z",
-                    "bsr": 5174766
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:24.984Z",
-                    "bsr": 5174766
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:27.490Z",
-                    "bsr": 5174772
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:27.570Z",
-                    "bsr": 5174575
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:17.414Z",
-                    "bsr": 5174575
-                }
-            ]
+            "last_updated": "2025-02-27T23:59:31.607Z"
         },
         "B0BTJ6JV1D": {
             "url": "https://www.amazon.com/Panther-Pride-Zulu-Alitspa/dp/B0BTJ6JV1D",
@@ -640,33 +150,10 @@
             "title": "Panther Pride",
             "author": "Zulu Alitspa",
             "cover_url": "https://m.media-amazon.com/images/I/71+NPJOyl3L._SY522_.jpg",
-            "bsr": 6559203,
-            "last_checked": "2025-02-27T12:19:22.241Z",
+            "bsr": 6560484,
+            "last_checked": "2025-02-27T23:59:38.398Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:03.237Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:08.336Z",
-                    "bsr": 6559466
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:29.803Z",
-                    "bsr": 6559466
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:32.230Z",
-                    "bsr": 6559368
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:32.417Z",
-                    "bsr": 6559203
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:22.242Z",
-                    "bsr": 6559203
-                }
-            ]
+            "last_updated": "2025-02-27T23:59:38.398Z"
         },
         "B0BW31G7MG": {
             "url": "https://www.amazon.com/Cephalopology-narrative-recounting-humanitys-intelligence/dp/B0BW31G7MG",
@@ -674,33 +161,10 @@
             "title": "Cephalopology",
             "author": "Zulu Alitspa",
             "cover_url": "https://m.media-amazon.com/images/I/717tTvRYggL._SY522_.jpg",
-            "bsr": 3971340,
-            "last_checked": "2025-02-27T12:19:27.262Z",
+            "bsr": 3982174,
+            "last_checked": "2025-02-27T23:59:48.674Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:08.685Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:13.401Z",
-                    "bsr": 3968941
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:34.957Z",
-                    "bsr": 3968941
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:37.269Z",
-                    "bsr": 3968941
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:37.450Z",
-                    "bsr": 3971340
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:27.263Z",
-                    "bsr": 3971340
-                }
-            ]
+            "last_updated": "2025-02-27T23:59:48.674Z"
         },
         "B0BW32CX2G": {
             "url": "https://www.amazon.com/Mixtape-Hyperborea-Adem-Luz-Rienspects/dp/B0BW32CX2G",
@@ -708,33 +172,10 @@
             "title": "Mixtape Hyperborea",
             "author": "Adem Luz Rienspects",
             "cover_url": "https://m.media-amazon.com/images/I/71Z6dEF6rBL._SY522_.jpg",
-            "bsr": 207419,
-            "last_checked": "2025-02-27T12:19:32.624Z",
+            "bsr": 344840,
+            "last_checked": "2025-02-27T23:59:55.448Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:13.861Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:18.635Z",
-                    "bsr": 164724
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:40.394Z",
-                    "bsr": 164724
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:42.524Z",
-                    "bsr": 164724
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:42.769Z",
-                    "bsr": 207419
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:32.625Z",
-                    "bsr": 207419
-                }
-            ]
+            "last_updated": "2025-02-27T23:59:55.448Z"
         },
         "B0DLGLKGFB": {
             "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB",
@@ -742,33 +183,10 @@
             "title": "Shards",
             "author": "Robert James Cross",
             "cover_url": "https://m.media-amazon.com/images/I/41Nr6CfHZUL._SY522_.jpg",
-            "bsr": 9207271,
-            "last_checked": "2025-02-27T12:19:37.638Z",
+            "bsr": 9211996,
+            "last_checked": "2025-02-28T00:00:03.509Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:18.931Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:23.698Z",
-                    "bsr": 9206280
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:45.441Z",
-                    "bsr": 9206280
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:47.523Z",
-                    "bsr": 9206280
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:47.788Z",
-                    "bsr": 9207271
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:37.638Z",
-                    "bsr": 9207271
-                }
-            ]
+            "last_updated": "2025-02-28T00:00:03.509Z"
         },
         "B0BYRNM6Z5": {
             "url": "https://www.amazon.com/dp/B0BYRNM6Z5",
@@ -776,33 +194,10 @@
             "title": "Chicken World",
             "author": "K. R. Hartley",
             "cover_url": "https://m.media-amazon.com/images/I/61SRpyydboL._SY522_.jpg",
-            "bsr": 5108049,
-            "last_checked": "2025-02-27T12:19:42.563Z",
+            "bsr": 5107856,
+            "last_checked": "2025-02-28T00:00:13.527Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:23.827Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:29.052Z",
-                    "bsr": 5108697
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:50.360Z",
-                    "bsr": 5108697
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:52.484Z",
-                    "bsr": 5108697
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:52.730Z",
-                    "bsr": 5108049
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:42.563Z",
-                    "bsr": 5108049
-                }
-            ]
+            "last_updated": "2025-02-28T00:00:13.527Z"
         },
         "B0B477N8ZG": {
             "url": "https://www.amazon.com/People-Mover-John-David-Card/dp/B0B477N8ZG",
@@ -810,33 +205,10 @@
             "title": "People Mover",
             "author": "John David Card",
             "cover_url": "https://m.media-amazon.com/images/I/715C3sWJR6L._SY522_.jpg",
-            "bsr": 10917694,
-            "last_checked": "2025-02-27T12:19:47.363Z",
+            "bsr": 10920379,
+            "last_checked": "2025-02-28T00:00:20.297Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:28.628Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:33.925Z",
-                    "bsr": 10917402
-                },
-                {
-                    "timestamp": "2025-02-27T09:25:55.392Z",
-                    "bsr": 10917402
-                },
-                {
-                    "timestamp": "2025-02-27T10:12:57.314Z",
-                    "bsr": 10917345
-                },
-                {
-                    "timestamp": "2025-02-27T11:51:57.598Z",
-                    "bsr": 10917694
-                },
-                {
-                    "timestamp": "2025-02-27T12:19:47.366Z",
-                    "bsr": 10917694
-                }
-            ]
+            "last_updated": "2025-02-28T00:00:20.297Z"
         },
         "B09JJFF82K": {
             "url": "https://www.amazon.com/Book-Void-Sun-Lion-Serpent-feet-Christ/dp/B09JJFF82K",
@@ -844,33 +216,10 @@
             "title": "The Book of the Void-Sun and the Lion-Serpent at the feet of Christ",
             "author": "Frater Asemlen",
             "cover_url": "https://m.media-amazon.com/images/I/719juUMCMrL._SY522_.jpg",
-            "bsr": 4979141,
-            "last_checked": "2025-02-27T12:20:02.290Z",
+            "bsr": 4978534,
+            "last_checked": "2025-02-28T00:00:43.275Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:43.909Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:48.805Z",
-                    "bsr": 4979434
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:10.416Z",
-                    "bsr": 4979434
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:12.198Z",
-                    "bsr": 4979434
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:12.497Z",
-                    "bsr": 4979141
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:02.291Z",
-                    "bsr": 4979141
-                }
-            ]
+            "last_updated": "2025-02-28T00:00:43.275Z"
         },
         "195759912X": {
             "url": "https://www.amazon.com/dp/195759912X",
@@ -878,529 +227,20 @@
             "title": "Take Down Request",
             "author": "James Krake",
             "cover_url": "https://m.media-amazon.com/images/I/61May26C-iL._SY522_.jpg",
-            "bsr": 6655348,
-            "last_checked": "2025-02-27T12:20:12.507Z",
+            "bsr": 6672824,
+            "last_checked": "2025-02-28T00:00:59.620Z",
             "status": "active",
-            "first_seen": "2025-02-27T08:44:59.106Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:06:59.381Z",
-                    "bsr": 6650816
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:20.875Z",
-                    "bsr": 6650816
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:22.439Z",
-                    "bsr": 6650816
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:23.450Z",
-                    "bsr": 6655348
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:12.507Z",
-                    "bsr": 6655348
-                }
-            ]
-        },
-        "B0BRC7Z2Q9": {
-            "url": "https://www.amazon.com/Fedbook-John-Jay-Stancliff/dp/B0BRC7Z2Q9/",
-            "asin": "B0BRC7Z2Q9",
-            "title": "Fedbook",
-            "author": "John Jay Stancliff",
-            "cover_url": "https://m.media-amazon.com/images/I/41q8CLN+x6L._SY522_.jpg",
-            "bsr": 1268159,
-            "last_checked": "2025-02-27T12:20:43.036Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:29.913Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:29.871Z",
-                    "bsr": 1260827
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:51.246Z",
-                    "bsr": 1260827
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:53.025Z",
-                    "bsr": 1265929
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:54.079Z",
-                    "bsr": 1268159
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:43.037Z",
-                    "bsr": 1268159
-                }
-            ]
-        },
-        "B0B5KVDCR6": {
-            "url": "https://www.amazon.com/Egregore-Gothic-Horror-Spencer-Weedman/dp/B0B5KVDCR6",
-            "asin": "B0B5KVDCR6",
-            "title": "Egregore",
-            "author": "Spencer Weedman",
-            "cover_url": "https://m.media-amazon.com/images/I/71HhSPmoZEL._SY522_.jpg",
-            "bsr": 3383285,
-            "last_checked": "2025-02-27T12:20:48.382Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:35.112Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:34.934Z",
-                    "bsr": 3384334
-                },
-                {
-                    "timestamp": "2025-02-27T09:26:56.409Z",
-                    "bsr": 3384334
-                },
-                {
-                    "timestamp": "2025-02-27T10:13:58.047Z",
-                    "bsr": 3384334
-                },
-                {
-                    "timestamp": "2025-02-27T11:52:59.649Z",
-                    "bsr": 3383285
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:48.382Z",
-                    "bsr": 3383285
-                }
-            ]
-        },
-        "B08KHDJQZW": {
-            "url": "https://www.amazon.com/Baby-Alex-Book-Club/dp/B08KHDJQZW/",
-            "asin": "B08KHDJQZW",
-            "title": "Baby Alex",
-            "author": "The Book Club",
-            "cover_url": "https://m.media-amazon.com/images/I/51d-NEAHkbL._SY522_.jpg",
-            "bsr": 1405390,
-            "last_checked": "2025-02-27T12:20:53.406Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:40.211Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:39.984Z",
-                    "bsr": 1394752
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:01.468Z",
-                    "bsr": 1394752
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:03.429Z",
-                    "bsr": 1401437
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:04.676Z",
-                    "bsr": 1405390
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:53.407Z",
-                    "bsr": 1405390
-                }
-            ]
-        },
-        "B08XR19N6X": {
-            "url": "https://www.amazon.com/Six-Days-Life-David-Vallejo/dp/B08XR19N6X",
-            "asin": "B08XR19N6X",
-            "title": "Six Days in the Life of David Vallejo",
-            "author": "K. D. Walter",
-            "cover_url": "https://m.media-amazon.com/images/I/71-G6+ZNqWL._SY522_.jpg",
-            "bsr": 5318830,
-            "last_checked": "2025-02-27T12:20:58.520Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:45.438Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:45.077Z",
-                    "bsr": 5318943
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:06.660Z",
-                    "bsr": 5318943
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:08.408Z",
-                    "bsr": 5318943
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:09.869Z",
-                    "bsr": 5318830
-                },
-                {
-                    "timestamp": "2025-02-27T12:20:58.521Z",
-                    "bsr": 5318830
-                }
-            ]
-        },
-        "B09ZCJN9CT": {
-            "url": "https://www.amazon.com/2084-Book-Kadon-Landon-Peterson/dp/B09ZCJN9CT",
-            "asin": "B09ZCJN9CT",
-            "title": "2084",
-            "author": "Kadon Landon Peterson",
-            "cover_url": "https://m.media-amazon.com/images/I/511e71j6LUL._SY522_.jpg",
-            "bsr": 10688116,
-            "last_checked": "2025-02-27T12:21:03.304Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:45:55.547Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:50.002Z",
-                    "bsr": 10687770
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:11.636Z",
-                    "bsr": 10687770
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:13.304Z",
-                    "bsr": 10687752
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:14.808Z",
-                    "bsr": 10688116
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:03.304Z",
-                    "bsr": 10688116
-                }
-            ]
-        },
-        "B09NGZ2R9W": {
-            "url": "https://www.amazon.com/2084-Book-Kadon-Landon-Peterson/dp/B09NGZ2R9W",
-            "asin": "B09NGZ2R9W",
-            "title": "2084",
-            "author": "Kadon Landon Peterson",
-            "cover_url": "https://m.media-amazon.com/images/I/61IuG16vRKL._SY522_.jpg",
-            "bsr": 5629495,
-            "last_checked": "2025-02-27T12:21:08.479Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:00.976Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:55.218Z",
-                    "bsr": 5629661
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:16.853Z",
-                    "bsr": 5629661
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:18.521Z",
-                    "bsr": 5629626
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:20.042Z",
-                    "bsr": 5629495
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:08.480Z",
-                    "bsr": 5629495
-                }
-            ]
-        },
-        "B0BTRTBP5H": {
-            "url": "https://www.amazon.com/Beautiful-Kingdom-K-K-Wing/dp/B0BTRTBP5H",
-            "asin": "B0BTRTBP5H",
-            "title": "The Beautiful Kingdom",
-            "author": "K.K. Wing",
-            "cover_url": "https://m.media-amazon.com/images/I/71ZjCe3Kb1L._SY522_.jpg",
-            "bsr": 5919168,
-            "last_checked": "2025-02-27T12:21:13.313Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:05.727Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:07:59.943Z",
-                    "bsr": 5919208
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:21.638Z",
-                    "bsr": 5919208
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:23.368Z",
-                    "bsr": 5919215
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:24.834Z",
-                    "bsr": 5919168
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:13.313Z",
-                    "bsr": 5919168
-                }
-            ]
-        },
-        "B0CCCNBQ3M": {
-            "url": "https://www.amazon.com/Knight-Valora-Serenity-K-K-Wing/dp/B0CCCNBQ3M",
-            "asin": "B0CCCNBQ3M",
-            "title": "A Knight of Valora",
-            "author": "K.K. Wing",
-            "cover_url": "https://m.media-amazon.com/images/I/71Q1xpwtBnL._SY522_.jpg",
-            "bsr": 5799385,
-            "last_checked": "2025-02-27T12:21:18.431Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:10.588Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:04.995Z",
-                    "bsr": 5791241
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:26.424Z",
-                    "bsr": 5791241
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:28.293Z",
-                    "bsr": 5791241
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:29.592Z",
-                    "bsr": 5799385
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:18.431Z",
-                    "bsr": 5799385
-                }
-            ]
-        },
-        "B0BZF9QYLF": {
-            "url": "https://www.amazon.com/dp/B0BZF9QYLF",
-            "asin": "B0BZF9QYLF",
-            "title": "Kabbalah of the Crocodile",
-            "author": "F. Gardner",
-            "cover_url": "https://m.media-amazon.com/images/I/715VCASMqWL._SY522_.jpg",
-            "bsr": 2607589,
-            "last_checked": "2025-02-27T12:21:23.643Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:15.838Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:10.400Z",
-                    "bsr": 2607611
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:31.669Z",
-                    "bsr": 2607611
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:33.477Z",
-                    "bsr": 2607611
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:34.829Z",
-                    "bsr": 2607589
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:23.644Z",
-                    "bsr": 2607589
-                }
-            ]
-        },
-        "B098G8XF6Q": {
-            "url": "https://www.amazon.com/dp/B098G8XF6Q",
-            "asin": "B098G8XF6Q",
-            "title": "Reptilian Odyssey",
-            "author": "F. Gardner",
-            "cover_url": "https://m.media-amazon.com/images/I/512rf6-1W7S._SY522_.jpg",
-            "bsr": 5162399,
-            "last_checked": "2025-02-27T12:21:28.815Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:21.142Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:15.457Z",
-                    "bsr": 5162434
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:36.906Z",
-                    "bsr": 5162434
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:38.681Z",
-                    "bsr": 5162434
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:40.024Z",
-                    "bsr": 5162399
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:28.816Z",
-                    "bsr": 5162399
-                }
-            ]
-        },
-        "B0DJ6T6SCY": {
-            "url": "https://www.amazon.com/dp/B0DJ6T6SCY",
-            "asin": "B0DJ6T6SCY",
-            "title": "Frazzledrip",
-            "author": "F. Gardner",
-            "cover_url": "https://m.media-amazon.com/images/I/61i4Qzc5SUL._SY522_.jpg",
-            "bsr": 1470582,
-            "last_checked": "2025-02-27T12:21:33.951Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:26.433Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:20.667Z",
-                    "bsr": 1461704
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:42.256Z",
-                    "bsr": 1461704
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:43.824Z",
-                    "bsr": 1467354
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:45.171Z",
-                    "bsr": 1470582
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:33.952Z",
-                    "bsr": 1470582
-                }
-            ]
-        },
-        "B0863V2KCT": {
-            "url": "https://www.amazon.com/ESKETIT-quindelin-_/dp/B0863V2KCT",
-            "asin": "B0863V2KCT",
-            "title": "ESKETIT",
-            "author": "quindelin _",
-            "cover_url": "https://m.media-amazon.com/images/I/61cyE-0cRvL._SY522_.jpg",
-            "bsr": 3408636,
-            "last_checked": "2025-02-27T12:21:38.686Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:31.278Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:25.507Z",
-                    "bsr": 3396948
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:47.051Z",
-                    "bsr": 3396948
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:48.538Z",
-                    "bsr": 3403145
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:49.997Z",
-                    "bsr": 3408636
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:38.687Z",
-                    "bsr": 3408636
-                }
-            ]
-        },
-        "B0DK7T1HYD": {
-            "url": "https://www.amazon.com/Cherno-Caster-Cyberpunk-LitRPG-Akaso/dp/B0DK7T1HYD",
-            "asin": "B0DK7T1HYD",
-            "title": "Cherno Caster",
-            "author": "Akaso",
-            "cover_url": "https://m.media-amazon.com/images/I/61jqsD7cBeL._SY522_.jpg",
-            "bsr": 9433034,
-            "last_checked": "2025-02-27T12:21:43.851Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:36.730Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:30.769Z",
-                    "bsr": 9432412
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:52.414Z",
-                    "bsr": 9432412
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:53.750Z",
-                    "bsr": 9432412
-                },
-                {
-                    "timestamp": "2025-02-27T11:53:55.374Z",
-                    "bsr": 9433034
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:43.851Z",
-                    "bsr": 9433034
-                }
-            ]
-        },
-        "B0BF2XBBLX": {
-            "url": "https://www.amazon.com/Orators-Pseudo-Bulkington/dp/B0BF2XBBLX",
-            "asin": "B0BF2XBBLX",
-            "title": "The Orators",
-            "author": "Pseudo Bulkington",
-            "cover_url": "https://m.media-amazon.com/images/I/613bu5-d1kL._SY522_.jpg",
-            "bsr": 8379547,
-            "last_checked": "2025-02-27T12:21:48.977Z",
-            "status": "active",
-            "first_seen": "2025-02-27T08:46:46.301Z",
-            "leaderboard_rank": 0,
-            "history": [
-                {
-                    "timestamp": "2025-02-27T09:08:35.502Z",
-                    "bsr": 8378993
-                },
-                {
-                    "timestamp": "2025-02-27T09:27:57.156Z",
-                    "bsr": 8378993
-                },
-                {
-                    "timestamp": "2025-02-27T10:14:58.477Z",
-                    "bsr": 8379197
-                },
-                {
-                    "timestamp": "2025-02-27T11:54:00.121Z",
-                    "bsr": 8379547
-                },
-                {
-                    "timestamp": "2025-02-27T12:21:48.978Z",
-                    "bsr": 8379547
-                }
-            ]
+            "last_updated": "2025-02-28T00:00:59.620Z"
         }
     },
-    "stats": {
-        "total_books": 37,
-        "active_books": 37,
-        "last_scrape_duration": "217.9s",
-        "scrape_success_rate": "95%",
-        "last_scrape_results": {
-            "attempted": 43,
-            "succeeded": 41,
-            "failed": 2,
-            "permanently_failed": 1
-        },
-        "last_purge": {
-            "timestamp": "2025-02-27T12:22:00.552Z",
-            "books_checked": 37,
-            "books_purged": 0,
-            "errors": 0
-        }
+    "last_update": "2025-02-27T23:40:43.166Z",
+    "cycle_status": {
+        "state": "running",
+        "started_at": "2025-02-28T00:01:43.191Z"
     },
-    "limiter_enabled": false,
-    "last_updated": "2025-02-27T12:21:57.342Z"
+    "scraping_progress": {
+        "current": 8,
+        "total": 44,
+        "successful": 0
+    }
 }

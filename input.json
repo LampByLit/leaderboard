@@ -245,6 +245,25 @@
             "submitted_at": "2025-02-27T08:15:03.800Z",
             "submitter_ip": "::1",
             "limiter_bypassed": true
+        },
+        {
+            "url": "https://www.amazon.com/Mystery-Real-Live-Dead-Person/dp/B0B19CDW4N",
+            "submitted_at": "2025-02-27T20:00:04.370Z",
+            "submitter_ip": "::1",
+            "limiter_bypassed": true
+        },
+        {
+            "url": "https://www.amazon.com/Playtimes-Consequences-Steven-Boswell/dp/B09HG2T8R7",
+            "submitted_at": "2025-02-27T20:10:48.077Z",
+            "submitter_ip": "::1",
+            "limiter_bypassed": true
+        },
+        {
+            "url": "https://www.amazon.com/Zombie-Pandemic-Stephen-Rush/dp/B09JJGWSZ7/",
+            "submitted_at": "2025-02-27T20:44:39.923Z",
+            "submitter_ip": "::1",
+            "limiter_bypassed": true
         }
-    ]
+    ],
+    "last_cleanup": "2025-02-27T23:46:34.446Z"
 }
