@@ -90,11 +90,22 @@ async function purge() {
         let blacklist;
         try {
             blacklist = JSON.parse(await fs.readFile(blacklistPath, 'utf8'));
-            console.log(`🚫 Loaded ${blacklist.authors.length} authors from blacklist`);
+            const patterns = [];
+            
+            // Handle both old format (authors) and new format (patterns)
+            if (Array.isArray(blacklist.authors)) {
+                patterns.push(...blacklist.authors);
+            }
+            if (Array.isArray(blacklist.patterns)) {
+                patterns.push(...blacklist.patterns);
+            }
+            
+            blacklist = { patterns };
+            console.log(`🚫 Loaded ${patterns.length} patterns from blacklist`);
         } catch (error) {
             if (error.code === 'ENOENT') {
                 console.log('⚠️ No blacklist.json found, using empty blacklist');
-                blacklist = { authors: [] };
+                blacklist = { patterns: [] };
             } else {
                 console.error('❌ Error reading blacklist:', error);
                 throw error;
@@ -110,11 +121,11 @@ async function purge() {
         const purgedBooks = {};
         Object.entries(metadata.books).forEach(([asin, book]) => {
             checkedCount++;
-            const isBlacklisted = blacklist.authors.some(blacklistedAuthor => 
-                isAuthorMatch(book.author, blacklistedAuthor)
+            const isBookBlacklisted = blacklist.patterns.some(pattern => 
+                isBlacklisted(book, pattern)
             );
 
-            if (isBlacklisted) {
+            if (isBookBlacklisted) {
                 purgedCount++;
                 console.log(`🚫 [${checkedCount}/${totalBooks}] Purged: "${book.title}" by ${book.author}`);
                 purgedBooks[asin] = book;
