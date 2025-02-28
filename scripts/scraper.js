@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
+const zlib = require('zlib');
 
 // Configure data directory
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
@@ -101,7 +102,7 @@ function isWithinSafeTimeWindow() {
     return hour < 14 || hour > 21; // Assuming server is in UTC
 }
 
-// Enhanced fetchPage function with time window check
+// Enhanced fetchPage function with time window check and compression handling
 async function fetchPage(url, retryCount = 0) {
     // Check if we're in a safe time window
     if (!isWithinSafeTimeWindow()) {
@@ -127,7 +128,8 @@ async function fetchPage(url, retryCount = 0) {
             'viewport-width': viewport.width.toString(),
             'viewport-height': viewport.height.toString(),
             'Referer': 'https://www.amazon.com/',
-            'User-Agent': getRandomUserAgent() // Use rotating user agents
+            'User-Agent': getRandomUserAgent(), // Use rotating user agents
+            'Accept-Encoding': 'gzip, deflate, br' // Explicitly accept compression
         };
 
         // Add cookies if we have any
@@ -183,9 +185,22 @@ async function fetchPage(url, retryCount = 0) {
                 return reject(new Error(`HTTP status code ${res.statusCode}`));
             }
 
+            // Handle compressed responses
+            let stream = res;
+            const contentEncoding = res.headers['content-encoding'];
+            if (contentEncoding) {
+                if (contentEncoding.includes('gzip')) {
+                    stream = res.pipe(zlib.createGunzip());
+                } else if (contentEncoding.includes('deflate')) {
+                    stream = res.pipe(zlib.createInflate());
+                } else if (contentEncoding.includes('br')) {
+                    stream = res.pipe(zlib.createBrotliDecompress());
+                }
+            }
+
             let data = '';
-            res.on('data', (chunk) => data += chunk);
-            res.on('end', async () => {
+            stream.on('data', (chunk) => data += chunk);
+            stream.on('end', async () => {
                 // Check for CAPTCHA/robot check with more patterns
                 if (data.includes('Type the characters you see in this image') || 
                     data.includes('Enter the characters you see below') ||
@@ -212,6 +227,10 @@ async function fetchPage(url, retryCount = 0) {
                     return reject(new Error('CAPTCHA detected after max retries'));
                 }
                 resolve(data);
+            });
+
+            stream.on('error', (err) => {
+                reject(new Error(`Error decompressing response: ${err.message}`));
             });
         });
 
