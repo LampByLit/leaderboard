@@ -386,6 +386,39 @@
     <script>
         let isLimiterEnabled = true;
         let progressSource = null;
+        let cycleStatusInterval = null;
+
+        // Function to check cycle status
+        async function checkCycleStatus() {
+            try {
+                const response = await fetch('/cycle-status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const cycleButton = document.getElementById('cycleButton');
+                    const progressDisplay = document.getElementById('scrapeProgress');
+                    
+                    // Disable button if cycle is running
+                    if (data.is_running) {
+                        cycleButton.disabled = true;
+                        
+                        // Show progress message if not already visible
+                        if (!progressDisplay.classList.contains('visible')) {
+                            progressDisplay.textContent = '🔄 A cycle is currently running...';
+                            progressDisplay.className = 'scrape-progress visible';
+                        }
+                    } else if (data.cycle_status?.state === 'completed') {
+                        // Only enable if not in cooldown
+                        if (!cycleButton.disabled || document.getElementById('cooldown-display').textContent === '') {
+                            cycleButton.disabled = false;
+                            progressDisplay.className = 'scrape-progress';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking cycle status:', error);
+            }
+        }
 
         // Function to toggle submission limiter
         async function toggleLimiter() {
@@ -560,6 +593,17 @@
             let lastMessage = null;
 
             try {
+                // Check if cycle is already running
+                const statusResponse = await fetch('/cycle-status');
+                const statusData = await statusResponse.json();
+                
+                if (statusData.success && statusData.is_running) {
+                    progressDisplay.textContent = '⚠️ Another cycle is currently running. Please wait.';
+                    progressDisplay.className = 'scrape-progress visible';
+                    cycleButton.disabled = true;
+                    return;
+                }
+
                 // Disable the button while cycling
                 cycleButton.disabled = true;
 
@@ -693,6 +737,17 @@
             
             // Add cycle button listener
             document.getElementById('cycleButton').addEventListener('click', runCycle);
+
+            // Start periodic cycle status check
+            checkCycleStatus(); // Initial check
+            cycleStatusInterval = setInterval(checkCycleStatus, 5000); // Check every 5 seconds
+        });
+
+        // Cleanup interval when page is unloaded
+        window.addEventListener('beforeunload', () => {
+            if (cycleStatusInterval) {
+                clearInterval(cycleStatusInterval);
+            }
         });
 
         // Add syntax highlighting styles

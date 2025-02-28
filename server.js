@@ -556,6 +556,29 @@ app.post('/cleanup', async (req, res) => {
     }
 });
 
+// Get cycle status
+app.get('/cycle-status', async (req, res) => {
+    try {
+        const metadataPath = getDataPath('metadata.json');
+        const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        
+        // Check if cycle is currently running
+        const isLocked = await isCycleLocked();
+        
+        res.json({
+            success: true,
+            is_running: isLocked,
+            cycle_status: metadata.cycle_status || { state: 'idle' }
+        });
+    } catch (error) {
+        console.error('Error getting cycle status:', error);
+        res.json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Handle cycle operation
 app.post('/cycle', async (req, res) => {
     console.log('Starting cycle operation...');
