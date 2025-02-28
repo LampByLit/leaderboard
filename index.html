@@ -669,6 +669,70 @@
             .key { color: #9cdcfe; }
         `;
         document.head.appendChild(style);
+
+        // Function to handle book submissions
+        async function submitBook(event) {
+            event.preventDefault();
+            
+            const urlInput = document.getElementById('amazon-url');
+            const feedbackDisplay = document.getElementById('feedback-display');
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            
+            // Disable form while submitting
+            urlInput.disabled = true;
+            submitButton.disabled = true;
+            
+            try {
+                // Show loading state
+                feedbackDisplay.textContent = '📚 Submitting book...';
+                feedbackDisplay.style.color = '#1a73e8';
+                
+                // Submit URL to server
+                const response = await fetch('/submit-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: urlInput.value,
+                        bypassLimiter: !isLimiterEnabled
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    feedbackDisplay.textContent = '✅ Book submitted successfully!';
+                    feedbackDisplay.style.color = '#4caf50';
+                    
+                    // Clear input
+                    urlInput.value = '';
+                    
+                    // Reload JSON data to show updated input
+                    await loadJsonFiles();
+                } else {
+                    // Show error message
+                    feedbackDisplay.textContent = `❌ ${data.error}`;
+                    feedbackDisplay.style.color = '#f44336';
+                }
+            } catch (error) {
+                console.error('Error submitting book:', error);
+                feedbackDisplay.textContent = '❌ Failed to submit book. Please try again.';
+                feedbackDisplay.style.color = '#f44336';
+            } finally {
+                // Re-enable form
+                urlInput.disabled = false;
+                submitButton.disabled = false;
+                
+                // Clear feedback after 5 seconds
+                setTimeout(() => {
+                    feedbackDisplay.textContent = '';
+                }, 5000);
+            }
+            
+            return false;
+        }
     </script>
 </body>
 </html> 

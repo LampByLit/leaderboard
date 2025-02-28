@@ -256,73 +256,47 @@ async function publish() {
         console.log('📖 Reading metadata...');
         const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
         
-        // Read blacklist.json
-        const blacklistPath = getDataPath('blacklist.json');
-        let blacklist;
-        try {
-            blacklist = JSON.parse(await fs.readFile(blacklistPath, 'utf8'));
-            const patterns = [];
-            
-            if (Array.isArray(blacklist.authors)) {
-                patterns.push(...blacklist.authors);
-                console.log(`🚫 Loaded ${patterns.length} authors from blacklist`);
-            }
-            
-            if (Array.isArray(blacklist.patterns)) {
-                patterns.push(...blacklist.patterns);
-                console.log(`🚫 Added ${blacklist.patterns.length} additional patterns`);
-            }
-            
-            blacklist = { patterns };
-            
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                console.log('⚠️ No blacklist.json found, using empty blacklist');
-                blacklist = { patterns: [] };
-            } else {
-                console.error('❌ Error reading blacklist:', error);
-                throw error;
-            }
-        }
-        
-        // Filter and sort books
+        // Process books
         console.log('\n📊 Processing books...');
-        const books = {};
         const totalBooks = Object.keys(metadata.books).length;
         let processedCount = 0;
         let rankedCount = 0;
 
-        Object.entries(metadata.books)
-            .filter(([asin, book]) => {
+        // Convert books object to array and sort by BSR
+        const sortedBooks = Object.entries(metadata.books)
+            .map(([asin, book]) => ({
+                asin,
+                ...book,
+                title: book.title ? book.title.trim() : '',
+                author: book.author ? book.author.trim() : '',
+                bsr: parseInt(String(book.bsr).replace(/,/g, ''), 10)
+            }))
+            .filter(book => {
                 processedCount++;
-                const hasRequired = book.bsr && book.title && book.author;
-                if (!hasRequired) {
-                    console.log(`⚠️ [${processedCount}/${totalBooks}] Skipping incomplete book: ${book.title || 'Unknown'}`);
+                const isValid = !isNaN(book.bsr) && book.title && book.author && book.cover_url;
+                if (!isValid) {
+                    console.log(`⚠️ [${processedCount}/${totalBooks}] Skipping invalid book: ${book.title || 'Unknown'}`);
                 }
-                return hasRequired;
+                return isValid;
             })
-            .filter(([asin, book]) => {
-                const isBlacklistedBook = blacklist.patterns.some(pattern => isBlacklisted(book, pattern));
-                if (isBlacklistedBook) {
-                    console.log(`🚫 [${processedCount}/${totalBooks}] Filtered blacklisted book: ${book.title}`);
-                }
-                return !isBlacklistedBook;
-            })
-            .sort(([asin1, a], [asin2, b]) => a.bsr - b.bsr)
-            .forEach(([asin, book], index) => {
-                rankedCount++;
-                books[asin] = {
-                    rank: index + 1,
-                    title: book.title,
-                    author: book.author,
-                    cover_url: book.cover_url,
-                    bsr: book.bsr,
-                    url: book.url
-                };
-                if (index < 3) {
-                    console.log(`🏅 Rank #${index + 1}: "${book.title}" by ${book.author} (BSR: ${book.bsr})`);
-                }
-            });
+            .sort((a, b) => a.bsr - b.bsr);
+
+        // Create ranked output
+        const books = {};
+        sortedBooks.forEach((book, index) => {
+            rankedCount++;
+            books[book.asin] = {
+                rank: index + 1,
+                title: book.title,
+                author: book.author,
+                cover_url: book.cover_url,
+                bsr: book.bsr,
+                url: book.url
+            };
+            if (index < 3) {
+                console.log(`🏅 Rank #${index + 1}: "${book.title}" by ${book.author} (BSR: ${book.bsr.toLocaleString()})`);
+            }
+        });
 
         console.log(`\n✨ Ranked ${rankedCount} books out of ${totalBooks} total`);
         
@@ -342,7 +316,8 @@ async function publish() {
         return {
             success: true,
             stats: {
-                total_books: Object.keys(books).length,
+                total_books: totalBooks,
+                ranked_books: rankedCount,
                 timestamp: new Date().toISOString()
             },
             books: publicData

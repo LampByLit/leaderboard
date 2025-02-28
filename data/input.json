@@ -257,13 +257,7 @@
             "submitted_at": "2025-02-27T20:10:48.077Z",
             "submitter_ip": "::1",
             "limiter_bypassed": true
-        },
-        {
-            "url": "https://www.amazon.com/Zombie-Pandemic-Stephen-Rush/dp/B09JJGWSZ7/",
-            "submitted_at": "2025-02-27T20:44:39.923Z",
-            "submitter_ip": "::1",
-            "limiter_bypassed": true
         }
     ],
-    "last_cleanup": "2025-02-28T04:39:48.231Z"
+    "last_cleanup": "2025-02-28T05:10:03.741Z"
 }
