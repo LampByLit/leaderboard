@@ -328,41 +328,41 @@ app.post('/update-leaderboard', async (req, res) => {
     try {
         console.log('Starting leaderboard update...');
         
-        // Run scraper with error handling
-        let scrapeResult;
-        try {
-            scrapeResult = await scrape();
-        } catch (error) {
-            console.error('Scraper error:', error);
+                // Run scraper with error handling
+                let scrapeResult;
+                try {
+                    scrapeResult = await scrape();
+                } catch (error) {
+                    console.error('Scraper error:', error);
             return res.json({ 
-                success: false, 
-                error: 'Scraper failed: ' + (error.message || 'Unknown error') 
-            });
-        }
+                        success: false, 
+                        error: 'Scraper failed: ' + (error.message || 'Unknown error') 
+                    });
+                }
 
-        if (!scrapeResult || !scrapeResult.success) {
+                if (!scrapeResult || !scrapeResult.success) {
             return res.json({ 
-                success: false, 
-                error: scrapeResult?.error || 'Scraper failed without error details'
-            });
-        }
+                        success: false, 
+                        error: scrapeResult?.error || 'Scraper failed without error details'
+                    });
+                }
 
-        // Run publisher with error handling
-        let publishResult;
-        try {
-            publishResult = await publish();
-        } catch (error) {
-            console.error('Publisher error:', error);
+                // Run publisher with error handling
+                let publishResult;
+                try {
+                    publishResult = await publish();
+                } catch (error) {
+                    console.error('Publisher error:', error);
             return res.json({ 
-                success: false, 
-                error: 'Publisher failed: ' + (error.message || 'Unknown error')
-            });
-        }
+                        success: false, 
+                        error: 'Publisher failed: ' + (error.message || 'Unknown error')
+                    });
+                }
 
-        if (!publishResult || !publishResult.success) {
+                if (!publishResult || !publishResult.success) {
             return res.json({ 
-                success: false, 
-                error: publishResult?.error || 'Publisher failed without error details'
+                        success: false, 
+                        error: publishResult?.error || 'Publisher failed without error details'
             });
         }
 

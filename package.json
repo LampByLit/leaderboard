@@ -10,8 +10,7 @@
     "dependencies": {
         "dotenv": "^16.4.5",
         "express": "^4.18.2",
-        "express-rate-limit": "^7.1.5",
-        "node-fetch": "^2.7.0"
+        "express-rate-limit": "^7.1.5"
     },
     "devDependencies": {
         "nodemon": "^3.0.3"
@@ -21,7 +20,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/hxkm/amazon-book-ranker.git"
+        "url": "https://github.com/hxkm/railwayleaderboard.git"
     },
     "author": "",
     "license": "MIT"

@@ -27,11 +27,33 @@ function formatCookies(cookies) {
         .join('; ');
 }
 
-// Configure batch processing
-const BATCH_SIZE = 1; // Process 1 book at a time for gentler scraping
-const BATCH_DELAY = 12000; // 12 seconds between batches
-const MIN_REQUEST_DELAY = 8000; // Minimum 8 seconds between requests
-const MAX_REQUEST_DELAY = 15000; // Maximum 15 seconds between requests
+// Configure batch processing with more conservative delays
+const BATCH_SIZE = 1; // Process only 1 book at a time
+const BATCH_DELAY = 180000; // 3 minutes between batches
+const MIN_REQUEST_DELAY = 90000; // 1.5 minutes minimum between requests
+const MAX_REQUEST_DELAY = 240000; // 4 minutes maximum between requests
+const MAX_RETRIES = 3; // Maximum number of retries
+const INITIAL_RETRY_DELAY = 300000; // 5 minutes initial retry delay
+
+// Enhanced browser headers
+const BROWSER_HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'DNT': '1',
+    'Pragma': 'no-cache',
+    'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+};
 
 // Helper function to get data file paths
 function getDataPath(filename) {
@@ -48,50 +70,64 @@ function getRandomViewport() {
     return { width, height };
 }
 
-// Add rotating user agents
+// Add more realistic user agents
 const USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0',
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Vivaldi/6.5.3206.53'
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0'
 ];
 
 function getRandomUserAgent() {
     return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
-// Add delay helper with exponential backoff
+// Add time-based request throttling
+let lastRequestTime = 0;
+const MIN_TIME_BETWEEN_REQUESTS = 60000; // 1 minute minimum between requests
+
+// Enhanced delay function with random jitter
 function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    const jitter = Math.floor(Math.random() * 30000); // Add up to 30 seconds of random jitter
+    return new Promise(resolve => setTimeout(resolve, ms + jitter));
 }
 
-// Enhanced fetchPage with retry logic and cookie handling
-async function fetchPage(url, retryCount = 0, maxRetries = 5) {
-    const baseDelay = 5000; // 5 seconds base delay
-    const viewport = getRandomViewport();
-    
-    return new Promise((resolve, reject) => {
+// Add time window restrictions (avoid peak hours)
+function isWithinSafeTimeWindow() {
+    const hour = new Date().getHours();
+    // Avoid peak shopping hours (roughly 9 AM to 9 PM EST)
+    return hour < 14 || hour > 21; // Assuming server is in UTC
+}
+
+// Enhanced fetchPage function with time window check
+async function fetchPage(url, retryCount = 0) {
+    // Check if we're in a safe time window
+    if (!isWithinSafeTimeWindow()) {
+        console.log('Outside safe time window, waiting for next window...');
+        await delay(3600000); // Wait an hour
+    }
+
+    // Ensure minimum time between requests
+    const timeSinceLastRequest = Date.now() - lastRequestTime;
+    if (timeSinceLastRequest < MIN_TIME_BETWEEN_REQUESTS) {
+        await delay(MIN_TIME_BETWEEN_REQUESTS - timeSinceLastRequest);
+    }
+
+    // Update last request time
+    lastRequestTime = Date.now();
+
+    return new Promise(async (resolve, reject) => {
+        const viewport = getRandomViewport();
+        
+        // Combine default browser headers with dynamic ones
         const headers = {
-            'User-Agent': getRandomUserAgent(),
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Cache-Control': 'max-age=0',
+            ...BROWSER_HEADERS,
             'viewport-width': viewport.width.toString(),
             'viewport-height': viewport.height.toString(),
-            'DNT': '1'
+            'Referer': 'https://www.amazon.com/',
+            'User-Agent': getRandomUserAgent() // Use rotating user agents
         };
 
         // Add cookies if we have any
@@ -99,7 +135,13 @@ async function fetchPage(url, retryCount = 0, maxRetries = 5) {
             headers.Cookie = formatCookies(cookieJar);
         }
 
-        const request = https.get(url, { timeout: 15000, headers }, async (res) => {
+        // Configure request options
+        const options = {
+            timeout: 30000,
+            headers
+        };
+
+        const request = https.get(url, options, async (res) => {
             // Store new cookies
             const newCookies = parseCookies(res);
             cookieJar = { ...cookieJar, ...newCookies };
@@ -109,7 +151,7 @@ async function fetchPage(url, retryCount = 0, maxRetries = 5) {
                 if (res.headers.location) {
                     console.log(`Redirecting to: ${res.headers.location}`);
                     try {
-                        const result = await fetchPage(res.headers.location, retryCount, maxRetries);
+                        const result = await fetchPage(res.headers.location, retryCount);
                         resolve(result);
                     } catch (err) {
                         reject(err);
@@ -120,12 +162,15 @@ async function fetchPage(url, retryCount = 0, maxRetries = 5) {
 
             // Handle rate limiting and other error status codes
             if (res.statusCode === 429 || res.statusCode === 503) {
-                if (retryCount < maxRetries) {
-                    const delayTime = Math.pow(2, retryCount) * baseDelay;
-                    console.log(`Rate limited. Retrying in ${delayTime/1000} seconds...`);
+                if (retryCount < MAX_RETRIES) {
+                    const delayTime = Math.max(
+                        INITIAL_RETRY_DELAY * Math.pow(2, retryCount),
+                        MIN_REQUEST_DELAY
+                    );
+                    console.log(`Rate limited. Retrying in ${delayTime/1000} seconds... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
                     await delay(delayTime);
                     try {
-                        const result = await fetchPage(url, retryCount + 1, maxRetries);
+                        const result = await fetchPage(url, retryCount + 1);
                         resolve(result);
                     } catch (err) {
                         reject(err);
@@ -141,17 +186,23 @@ async function fetchPage(url, retryCount = 0, maxRetries = 5) {
             let data = '';
             res.on('data', (chunk) => data += chunk);
             res.on('end', async () => {
-                // Check for CAPTCHA/robot check
+                // Check for CAPTCHA/robot check with more patterns
                 if (data.includes('Type the characters you see in this image') || 
                     data.includes('Enter the characters you see below') ||
-                    data.includes('Sorry, we just need to make sure you\'re not a robot')) {
+                    data.includes('Sorry, we just need to make sure you\'re not a robot') ||
+                    data.includes('To discuss automated access to Amazon data please contact') ||
+                    data.includes('Bot Check') ||
+                    data.includes('captcha')) {
                     
-                    if (retryCount < maxRetries) {
-                        const delayTime = Math.pow(2, retryCount) * baseDelay;
-                        console.log(`CAPTCHA detected. Retrying in ${delayTime/1000} seconds...`);
+                    if (retryCount < MAX_RETRIES) {
+                        const delayTime = Math.max(
+                            INITIAL_RETRY_DELAY * Math.pow(2, retryCount),
+                            MIN_REQUEST_DELAY
+                        );
+                        console.log(`CAPTCHA detected. Retrying in ${delayTime/1000} seconds... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
                         await delay(delayTime);
                         try {
-                            const result = await fetchPage(url, retryCount + 1, maxRetries);
+                            const result = await fetchPage(url, retryCount + 1);
                             resolve(result);
                         } catch (err) {
                             reject(err);
@@ -165,12 +216,15 @@ async function fetchPage(url, retryCount = 0, maxRetries = 5) {
         });
 
         request.on('error', async (err) => {
-            if (retryCount < maxRetries) {
-                const delayTime = Math.pow(2, retryCount) * baseDelay;
-                console.log(`Network error. Retrying in ${delayTime/1000} seconds...`);
+            if (retryCount < MAX_RETRIES) {
+                const delayTime = Math.max(
+                    INITIAL_RETRY_DELAY * Math.pow(2, retryCount),
+                    MIN_REQUEST_DELAY
+                );
+                console.log(`Network error. Retrying in ${delayTime/1000} seconds... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
                 await delay(delayTime);
                 try {
-                    const result = await fetchPage(url, retryCount + 1, maxRetries);
+                    const result = await fetchPage(url, retryCount + 1);
                     resolve(result);
                 } catch (retryErr) {
                     reject(retryErr);
@@ -178,23 +232,6 @@ async function fetchPage(url, retryCount = 0, maxRetries = 5) {
             } else {
                 console.error(`Error fetching ${url}:`, err);
                 reject(err);
-            }
-        });
-
-        request.on('timeout', async () => {
-            request.destroy();
-            if (retryCount < maxRetries) {
-                const delayTime = Math.pow(2, retryCount) * baseDelay;
-                console.log(`Request timed out. Retrying in ${delayTime/1000} seconds...`);
-                await delay(delayTime);
-                try {
-                    const result = await fetchPage(url, retryCount + 1, maxRetries);
-                    resolve(result);
-                } catch (retryErr) {
-                    reject(retryErr);
-                }
-            } else {
-                reject(new Error('Request timed out after max retries'));
             }
         });
     });
@@ -268,10 +305,52 @@ function extractAuthor(html) {
 }
 
 function verifyPaperback(html) {
-    // Check both methods of paperback verification
-    const subtitleCheck = html.includes('id="productSubtitle"') && html.includes('Paperback');
-    const formatCheck = html.includes('aria-label="Paperback Format:">Paperback<');
-    return subtitleCheck || formatCheck;
+    // Debug: Log the first 1000 characters of HTML for inspection
+    console.log('Debug - First 1000 chars of HTML:', html.substring(0, 1000));
+
+    // Multiple patterns to check for paperback format
+    const paperbackIndicators = [
+        // Standard product subtitle
+        html.includes('id="productSubtitle"') && html.includes('Paperback'),
+        // Format selection button
+        html.includes('aria-label="Paperback Format:">Paperback<'),
+        // Product details section
+        html.includes('>Paperback</span>'),
+        // Alternative format indicators
+        html.includes('>Format:</th>') && html.includes('>Paperback<'),
+        // Product title containing format
+        html.includes('title="Paperback:'),
+        // Binding type in product details
+        html.includes('>Binding</th>') && html.includes('>Paperback<'),
+        // Format selector
+        html.includes('data-a-html-content="Paperback"'),
+        // Price block format
+        html.includes('class="a-size-base a-color-secondary">Paperback</span>'),
+        // Alternative product details
+        html.includes('>Format:</td>') && html.includes('>Paperback<'),
+        // Additional paperback indicators
+        html.includes('Paperback – '),
+        html.includes('Paperback:'),
+        html.includes('"binding":"Paperback"'),
+        html.includes('"format":"Paperback"'),
+        // ISBN check (Kindle editions don't have ISBN)
+        html.includes('ISBN-13') || html.includes('ISBN-10'),
+        // Dimensions check (Kindle editions don't have physical dimensions)
+        html.includes('Dimensions') && html.includes('inches')
+    ];
+
+    // Log which indicators were found
+    paperbackIndicators.forEach((indicator, index) => {
+        if (indicator) {
+            console.log(`Debug - Found paperback indicator ${index + 1}`);
+        }
+    });
+
+    // Return true if any paperback indicator is found
+    const isPaperback = paperbackIndicators.some(indicator => indicator === true);
+    console.log('Debug - Final paperback determination:', isPaperback);
+    
+    return isPaperback;
 }
 
 function extractCoverUrl(html) {
@@ -369,10 +448,14 @@ async function safeWriteJSON(filePath, data) {
 // Main scraping function
 async function scrapeBook(url) {
     try {
+        console.log('\nDebug - Starting scrape for URL:', url);
         const html = await fetchPage(url);
+        console.log('Debug - Successfully fetched page HTML');
         
         // Extract ASIN first
         const asin = extractASIN(url);
+        console.log('Debug - Extracted ASIN:', asin);
+        
         if (!asin) {
             return {
                 success: false,
@@ -382,13 +465,26 @@ async function scrapeBook(url) {
         }
 
         // Verify it's a paperback
-        if (!verifyPaperback(html)) {
+        console.log('\nDebug - Checking if paperback...');
+        const isPaperback = verifyPaperback(html);
+        if (!isPaperback) {
+            // Extract some context to understand why it failed
+            const productDetails = html.includes('productDetails') ? 
+                html.substring(html.indexOf('productDetails'), html.indexOf('productDetails') + 500) : 
+                'Product details section not found';
+            
             return {
                 success: false,
                 error: 'not_paperback',
-                message: 'Not a paperback'
+                message: 'Not a paperback',
+                debug: {
+                    foundProductDetails: html.includes('productDetails'),
+                    foundPaperbackWord: html.includes('Paperback'),
+                    productDetailsSnippet: productDetails
+                }
             };
         }
+        console.log('Debug - Paperback verification passed');
 
         // Extract BSR
         const bsr = extractBSR(html);
