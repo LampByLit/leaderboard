@@ -851,7 +851,7 @@
                 if (!result.success) {
                     progressElement.textContent = '❌ Error: ' + (result.error || 'Unknown error');
                     progressElement.className = 'scrape-progress visible error';
-                    cycleButton.disabled = false;
+                cycleButton.disabled = false;
                 }
             } catch (error) {
                 progressElement.textContent = '❌ Error: ' + error.message;

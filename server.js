@@ -17,34 +17,55 @@ console.log(`Using data directory: ${DATA_DIR}`);
 // Track SSE clients with metadata
 const clients = new Map();
 
-// Enhanced logging system
-function enhancedLog(message) {
-    // Handle objects and arrays
-    if (typeof message === 'object') {
-        message = JSON.stringify(message, null, 2);
+// Message history system
+const messageHistory = {
+    messages: [],
+    maxSize: 100, // Keep last 100 messages
+    add(message) {
+        this.messages.push(message);
+        if (this.messages.length > this.maxSize) {
+            this.messages.shift(); // Remove oldest message
+        }
     }
+};
 
-    // Handle multi-line messages
-    const formattedMessage = String(message).split('\n')
+// Store original console.log before any modifications
+const originalConsoleLog = console.log.bind(console);
+
+// Enhanced logging system
+function enhancedLog(...args) {
+    // Convert all arguments to strings and join them
+    let message = args.map(arg => {
+        if (typeof arg === 'object') {
+            return JSON.stringify(arg, null, 2);
+        }
+        return String(arg);
+    }).join(' ');
+
+    // Format multi-line messages
+    const formattedMessage = message.split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0)
         .join(' | ');
 
-    // Log to console using the original console.log
-    console.logOrig(message);
+    // Log to console using the original function
+    originalConsoleLog.apply(console, args);
 
-    // Broadcast to all clients
-    broadcastToClients({
+    // Create broadcast message
+    const broadcastMessage = {
         status: 'log',
         message: formattedMessage,
         timestamp: new Date().toISOString()
-    });
+    };
+
+    // Add to history and broadcast
+    messageHistory.add(broadcastMessage);
+    broadcastToClients(broadcastMessage);
 }
 
-// Store original console.log before overriding
-console.logOrig = console.log;
 // Override console.log with enhanced version
 console.log = enhancedLog;
+
 // Make enhancedLog available globally
 global.enhancedLog = enhancedLog;
 
@@ -55,6 +76,11 @@ function broadcastToClients(data) {
         timestamp: new Date().toISOString(),
         connected_clients: clients.size
     });
+    
+    // Add to history if not already a historical message
+    if (!data.type || data.type !== 'history') {
+        messageHistory.add(data);
+    }
     
     for (const [id, client] of clients.entries()) {
         try {
@@ -675,7 +701,7 @@ app.post('/cycle', async (req, res) => {
         if (isLocked) {
             console.log('❌ Cycle is already running');
             return res.status(409).json({
-                success: false,
+                success: false, 
                 error: 'A cycle is already in progress'
             });
         }
@@ -844,8 +870,8 @@ app.post('/cycle', async (req, res) => {
         }
     } catch (error) {
         console.error('❌ Critical cycle error:', error);
-        res.status(500).json({
-            success: false,
+        res.status(500).json({ 
+            success: false, 
             error: 'Critical error occurred during cycle operation'
         });
     }
@@ -893,11 +919,19 @@ app.get('/progress', (req, res) => {
         lastPing: Date.now()
     });
     
-    // Send welcome message to the new client
+    // Send welcome message
     sendProgressToClient(clientId, {
         status: 'connected',
         message: `Connected as client ${clientId}`,
         type: 'welcome'
+    });
+    
+    // Send message history
+    messageHistory.messages.forEach(message => {
+        sendProgressToClient(clientId, {
+            ...message,
+            type: 'history'
+        });
     });
     
     // Notify all clients about the new connection
@@ -937,7 +971,7 @@ app.get('/progress', (req, res) => {
         } else {
             clearInterval(pingInterval);
         }
-    }, 30000); // Ping every 30 seconds
+    }, 30000);
     
     // Clean up interval on disconnect
     req.on('close', () => {

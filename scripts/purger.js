@@ -235,7 +235,7 @@ async function purge() {
         
         console.log('✅ Purge process completed successfully\n');
         return { 
-            success: true,
+            success: true, 
             stats: {
                 total_books: totalBooks,
                 purged_books: purgedCount,
