@@ -588,120 +588,94 @@
             };
         }
 
-        function connectEventSource() {
+        function setupEventSource() {
             if (eventSource) {
                 eventSource.close();
             }
-            
-            console.log('Connecting to SSE...');
-            eventSource = new EventSource('/progress');
-            const progressDisplay = document.getElementById('scrapeProgress');
-            
-            eventSource.onopen = () => {
-                console.log('SSE connection established');
-            };
-            
-            eventSource.onerror = (error) => {
-                console.error('SSE connection error:', error);
-                progressDisplay.textContent = '❌ Lost connection to server. Please try again.';
-                progressDisplay.className = 'scrape-progress visible error';
-                if (eventSource) {
-                    eventSource.close();
-                    eventSource = null;
-                }
-                document.getElementById('cycleButton').disabled = false;
-            };
-            
-            eventSource.onmessage = (event) => {
-                console.log('SSE message received:', event.data);
-                const data = JSON.parse(event.data);
-                
-                // Prevent duplicate messages
-                if (lastMessage === event.data) return;
-                lastMessage = event.data;
 
-                // Update progress display based on stage
-                switch (data.status) {
-                    case 'log':
-                        // Display console message directly
-                        progressDisplay.textContent = data.message;
-                        progressDisplay.className = 'scrape-progress visible';
-                        break;
+            eventSource = new EventSource('/progress');
+            const progressElement = document.querySelector('.scrape-progress');
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                progressElement.classList.add('visible');
+                
+                switch(data.status) {
                     case 'starting':
-                        progressDisplay.textContent = '🚀 Starting cycle process...';
-                        progressDisplay.className = 'scrape-progress visible';
+                        progressElement.textContent = data.message;
+                        progressElement.className = 'scrape-progress visible';
+                        cycleButton.disabled = true;
                         break;
+                        
+                    case 'scraping':
+                    case 'purging':
+                    case 'cleaning':
+                    case 'publishing':
+                        progressElement.textContent = data.message;
+                        if (data.stats) {
+                            progressElement.textContent += '\n' + JSON.stringify(data.stats, null, 2);
+                        }
+                        break;
+                        
+                    case 'log':
+                        // Append new log message
+                        progressElement.textContent += '\n' + data.message;
+                        // Auto-scroll to bottom
+                        progressElement.scrollTop = progressElement.scrollHeight;
+                        break;
+                        
                     case 'error':
-                        progressDisplay.textContent = `❌ Error: ${data.message}`;
-                        progressDisplay.className = 'scrape-progress visible error';
-                        // Re-enable cycle button on error
+                        progressElement.textContent = '❌ Error: ' + data.message;
+                        progressElement.className = 'scrape-progress visible error';
                         cycleButton.disabled = false;
                         break;
+                        
                     case 'complete':
-                        progressDisplay.textContent = '✨ Cycle completed successfully!';
-                        progressDisplay.className = 'scrape-progress visible complete';
-                        // Reload JSON data after completion
+                        progressElement.textContent = '✅ ' + data.message;
+                        if (data.stats) {
+                            progressElement.textContent += '\n\nStats:\n' + JSON.stringify(data.stats, null, 2);
+                        }
+                        progressElement.className = 'scrape-progress visible complete';
+                        cycleButton.disabled = false;
+                        // Reload the table after completion
                         loadJsonFiles();
-                        // Close EventSource after completion
-                        if (eventSource) {
-                            eventSource.close();
-                            eventSource = null;
-                        }
-                        // Start cooldown timer
-                        startCooldown();
                         break;
-                    default:
-                        if (data.message) {
-                            progressDisplay.textContent = data.message;
-                            progressDisplay.className = 'scrape-progress visible';
-                        }
                 }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('SSE Error:', error);
+                progressElement.textContent = '❌ Connection lost. Retrying...';
+                progressElement.className = 'scrape-progress visible error';
+                // The browser will automatically try to reconnect
             };
         }
 
+        // Set up SSE connection when page loads
+        setupEventSource();
+
+        // Function to start cycle
         async function startCycle() {
-            const cycleButton = document.getElementById('cycleButton');
-            const progressDisplay = document.getElementById('scrapeProgress');
-            
-            if (cycleButton.disabled) {
-                console.log('Cycle button is disabled, ignoring click');
-                return;
-            }
-            
-            console.log('Starting cycle...');
+            const progressElement = document.querySelector('.scrape-progress');
+            progressElement.textContent = '🚀 Initializing cycle...';
+            progressElement.className = 'scrape-progress visible';
             cycleButton.disabled = true;
-            progressDisplay.className = 'scrape-progress visible';
-            progressDisplay.textContent = '🔄 Initializing cycle...';
-            
+
             try {
-                // Start SSE connection first
-                connectEventSource();
-                
-                console.log('Sending cycle request...');
-                const response = await fetch('/cycle', { 
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                const response = await fetch('/cycle', {
+                    method: 'POST'
                 });
-                
-                console.log('Cycle response received:', response.status);
                 const result = await response.json();
-                console.log('Cycle result:', result);
                 
                 if (!result.success) {
-                    throw new Error(result.error || 'Unknown error occurred');
+                    progressElement.textContent = '❌ Error: ' + (result.error || 'Unknown error');
+                    progressElement.className = 'scrape-progress visible error';
+                    cycleButton.disabled = false;
                 }
             } catch (error) {
-                console.error('Cycle error:', error);
-                progressDisplay.textContent = `❌ Error: ${error.message}`;
-                progressDisplay.className = 'scrape-progress visible error';
+                progressElement.textContent = '❌ Error: ' + error.message;
+                progressElement.className = 'scrape-progress visible error';
                 cycleButton.disabled = false;
-                
-                if (eventSource) {
-                    eventSource.close();
-                    eventSource = null;
-                }
             }
         }
 
