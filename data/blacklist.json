@@ -1,4 +1,17 @@
 {
+    "title_patterns": [
+        "adult",
+        "xxx",
+        "erotic",
+        "cock",
+        "cuckold",
+        "sex",
+        "porn",
+        "explicit",
+        "mature content",
+        "18+",
+        "nsfw"
+    ],
     "authors": [
       "Randall Kennedy",
       "I. M. Telling",
@@ -613,5 +626,8 @@
       "Katherine Paterson",
       "Norton Juster",
       "Bret Easton Ellis"
-    ]
-  }
+    ],
+    "patterns": [],
+    "last_updated": "2024-03-21T00:00:00.000Z",
+    "version": "2.0.0"
+}

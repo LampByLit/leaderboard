@@ -625,28 +625,35 @@
                         break;
                     case 'scraping':
                         if (data.current && data.total) {
-                            progressDisplay.textContent = `📚 Book ${data.current}/${data.total}: ${data.message || 'Processing...'}`;
+                            const message = data.message || 'Processing...';
+                            const progress = `${data.current}/${data.total}`;
+                            const successful = data.successful || 0;
+                            progressDisplay.textContent = `📚 Processing book ${progress} (${successful} successful)`;
                         } else {
                             progressDisplay.textContent = '🔍 Scraping books...';
                         }
+                        progressDisplay.className = 'scrape-progress visible';
                         break;
                     case 'purging':
                         progressDisplay.textContent = data.stats ? 
                             `🧹 Removing blacklisted entries... (${data.stats.removed || 0} removed)` :
                             '🧹 Removing blacklisted entries...';
+                        progressDisplay.className = 'scrape-progress visible';
                         break;
                     case 'cleaning':
                         progressDisplay.textContent = data.stats ? 
                             `🗑️ Cleaning up submissions... (${data.stats.removed_submissions || 0} removed)` :
                             '🗑️ Cleaning up submissions...';
+                        progressDisplay.className = 'scrape-progress visible';
                         break;
                     case 'publishing':
                         progressDisplay.textContent = '📝 Publishing updated leaderboard...';
+                        progressDisplay.className = 'scrape-progress visible';
                         break;
                     case 'complete':
-                        progressDisplay.textContent = `✨ Cycle completed! ${data.stats ? 
-                            `${data.stats.successful_scrapes || 0} books processed, ${data.stats.purged || 0} purged, ${data.stats.cleaned || 0} cleaned in ${data.stats.duration}` : 
-                            ''}`;
+                        progressDisplay.textContent = data.stats ? 
+                            `✨ Cycle completed! ${data.stats.successful_scrapes || 0} books processed, ${data.stats.purged || 0} purged, ${data.stats.cleaned || 0} cleaned in ${data.stats.duration}` : 
+                            '✨ Cycle completed successfully!';
                         progressDisplay.className = 'scrape-progress visible complete';
                         // Reload JSON data after completion
                         loadJsonFiles();
@@ -667,6 +674,7 @@
                     default:
                         if (data.message) {
                             progressDisplay.textContent = data.message;
+                            progressDisplay.className = 'scrape-progress visible';
                         }
                 }
             };
