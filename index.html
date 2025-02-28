@@ -182,6 +182,18 @@
             color: #5f6368;
         }
 
+        /* Book title link styles */
+        td a {
+            color: #1a73e8;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        td a:hover {
+            color: #1557b0;
+            text-decoration: underline;
+        }
+
         /* Cover image styles */
         .cover-img {
             width: 40px;
@@ -304,7 +316,7 @@
         <p>This tool is sketchy and will break any moment.</p>
         <p>If you want to add your book to the leaderboard, please use the submission form below. PLEASE ONLY ENTER VALID AMAZON PAPERBACK URLs. Please submit <span class="secret-toggle" onclick="toggleLimiter(isLimiterEnabled = !isLimiterEnabled)">one book per day</span>. Please only submit books that you yourself have written or published. Please respect this tool, it is fragile.</p>
         <p>To update the leaderboard, press the Cycle button.</p>
-        <p>A stable version of this tool can be downloaded from <a href="https://github.com/hxkm/amazon-book-ranker" target="_blank">GitHub</a>.</p>
+        <p>A stable version of this tool can be downloaded from <a href="https://github.com/hxkm/railwayleaderboard" target="_blank">GitHub</a>.</p>
     </div>
 
     <div class="card">
@@ -472,7 +484,7 @@
                     row.innerHTML = `
                         <td>${hasInvalidRanks ? `${book.rank} (${book.bsr.toLocaleString()})` : book.rank}</td>
                         <td><img src="${book.cover_url}" alt="Book cover" class="cover-img" onclick="expandCover('${book.cover_url}')"></td>
-                        <td>${book.title}</td>
+                        <td><a href="${book.url}" target="_blank" style="color: #1a73e8; text-decoration: none; hover: { color: #1557b0; }">${book.title}</a></td>
                         <td>${book.author}</td>
                         <td>${book.bsr.toLocaleString()}</td>
                     `;
