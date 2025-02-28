@@ -133,14 +133,18 @@
             display: none;
             margin: 10px 0;
             padding: 12px 16px;
-            background: #e8f5e9;
+            background: #1e1e1e;
             border-left: 4px solid #4caf50;
             border-radius: 4px;
             font-family: 'Roboto Mono', monospace;
             font-size: 14px;
             line-height: 1.4;
-            color: #2e7d32;
+            color: #e0e0e0;
             transition: opacity 0.3s ease;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .scrape-progress.visible {
@@ -148,16 +152,15 @@
         }
 
         .scrape-progress.error {
-            background: #ffebee;
+            background: #1e1e1e;
             border-left-color: #f44336;
-            color: #c62828;
+            color: #ff8a80;
         }
 
         .scrape-progress.complete {
-            background: #e3f2fd;
+            background: #1e1e1e;
             border-left-color: #2196f3;
-            color: #1565c0;
-            opacity: 1;
+            color: #90caf9;
         }
 
         /* Table styles */
@@ -619,41 +622,23 @@
 
                 // Update progress display based on stage
                 switch (data.status) {
+                    case 'log':
+                        // Display console message directly
+                        progressDisplay.textContent = data.message;
+                        progressDisplay.className = 'scrape-progress visible';
+                        break;
                     case 'starting':
                         progressDisplay.textContent = '🚀 Starting cycle process...';
                         progressDisplay.className = 'scrape-progress visible';
                         break;
-                    case 'scraping':
-                        if (data.current && data.total) {
-                            const message = data.message || 'Processing...';
-                            const progress = `${data.current}/${data.total}`;
-                            const successful = data.successful || 0;
-                            progressDisplay.textContent = `📚 Processing book ${progress} (${successful} successful)`;
-                        } else {
-                            progressDisplay.textContent = '🔍 Scraping books...';
-                        }
-                        progressDisplay.className = 'scrape-progress visible';
-                        break;
-                    case 'purging':
-                        progressDisplay.textContent = data.stats ? 
-                            `🧹 Removing blacklisted entries... (${data.stats.removed || 0} removed)` :
-                            '🧹 Removing blacklisted entries...';
-                        progressDisplay.className = 'scrape-progress visible';
-                        break;
-                    case 'cleaning':
-                        progressDisplay.textContent = data.stats ? 
-                            `🗑️ Cleaning up submissions... (${data.stats.removed_submissions || 0} removed)` :
-                            '🗑️ Cleaning up submissions...';
-                        progressDisplay.className = 'scrape-progress visible';
-                        break;
-                    case 'publishing':
-                        progressDisplay.textContent = '📝 Publishing updated leaderboard...';
-                        progressDisplay.className = 'scrape-progress visible';
+                    case 'error':
+                        progressDisplay.textContent = `❌ Error: ${data.message}`;
+                        progressDisplay.className = 'scrape-progress visible error';
+                        // Re-enable cycle button on error
+                        cycleButton.disabled = false;
                         break;
                     case 'complete':
-                        progressDisplay.textContent = data.stats ? 
-                            `✨ Cycle completed! ${data.stats.successful_scrapes || 0} books processed, ${data.stats.purged || 0} purged, ${data.stats.cleaned || 0} cleaned in ${data.stats.duration}` : 
-                            '✨ Cycle completed successfully!';
+                        progressDisplay.textContent = '✨ Cycle completed successfully!';
                         progressDisplay.className = 'scrape-progress visible complete';
                         // Reload JSON data after completion
                         loadJsonFiles();
@@ -664,12 +649,6 @@
                         }
                         // Start cooldown timer
                         startCooldown();
-                        break;
-                    case 'error':
-                        progressDisplay.textContent = `❌ Error: ${data.message}`;
-                        progressDisplay.className = 'scrape-progress visible error';
-                        // Re-enable cycle button on error
-                        cycleButton.disabled = false;
                         break;
                     default:
                         if (data.message) {

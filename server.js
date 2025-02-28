@@ -17,10 +17,37 @@ console.log(`Using data directory: ${DATA_DIR}`);
 // Track SSE clients
 const clients = new Set();
 
+// Enhanced logging system
+function enhancedLog(message) {
+    // Handle objects and arrays
+    if (typeof message === 'object') {
+        message = JSON.stringify(message, null, 2);
+    }
+
+    // Handle multi-line messages
+    const formattedMessage = String(message).split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join(' | ');
+
+    // Log to console
+    console.log(message);
+
+    // Send to all clients
+    sendProgressToClients({
+        status: 'log',
+        message: formattedMessage,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// Expose globally
+global.enhancedLog = enhancedLog;
+console.logOrig = console.log;
+console.log = enhancedLog;
+
 // Helper function to send progress to SSE clients
 function sendProgressToClients(data) {
-    console.log('📡 Broadcasting progress:', data.message || data.status);
-    
     const payload = JSON.stringify({
         ...data,
         timestamp: new Date().toISOString()
