@@ -124,9 +124,11 @@ function delay(ms) {
 
 // Add time window restrictions (avoid peak hours)
 function isWithinSafeTimeWindow() {
-    const hour = new Date().getHours();
-    // Avoid peak shopping hours (roughly 9 AM to 9 PM EST)
-    return hour < 14 || hour > 21; // Assuming server is in UTC
+    // Temporarily disable time window restrictions
+    return true;
+    
+    // const hour = new Date().getHours();
+    // return hour < 14 || hour > 21; // Old restrictive check
 }
 
 // Enhanced fetchPage function with time window check and compression handling
