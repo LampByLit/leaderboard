@@ -9,6 +9,7 @@ yarn-error.log*
 *.json
 *.backup
 *.temp
+!data/blacklist.json
 
 # Environment variables
 .env

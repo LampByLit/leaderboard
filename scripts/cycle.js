@@ -36,6 +36,40 @@ const { cleanup } = require('./cleaner');
 // Configure data directory
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
 
+// Add lock file path constant
+const LOCK_FILE = path.join(DATA_DIR, 'cycle.lock');
+
+// Helper function to check if cycle is running
+async function isCycleLocked() {
+    try {
+        await fs.access(LOCK_FILE);
+        // Check if lock is stale (older than 1 hour)
+        const stats = await fs.stat(LOCK_FILE);
+        const lockAge = Date.now() - stats.mtime;
+        if (lockAge > 3600000) { // 1 hour in milliseconds
+            await fs.unlink(LOCK_FILE);
+            return false;
+        }
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Helper function to create lock
+async function createLock() {
+    await fs.writeFile(LOCK_FILE, new Date().toISOString());
+}
+
+// Helper function to release lock
+async function releaseLock() {
+    try {
+        await fs.unlink(LOCK_FILE);
+    } catch (error) {
+        console.warn('Warning: Could not remove lock file:', error);
+    }
+}
+
 // Helper function to get data file paths
 function getDataPath(filename) {
     return path.join(DATA_DIR, filename);
@@ -77,85 +111,132 @@ async function safeWriteJSON(filePath, data) {
  * 4. Publish - Updates the leaderboard
  */
 async function cycle() {
-    const startTime = Date.now();
-    const stats = {
-        scrape: null,
-        purge: null,
-        cleanup: null,
-        publish: null
-    };
-    
     try {
-        console.log('Starting cycle process...');
+        // Check if another cycle is running
+        if (await isCycleLocked()) {
+            console.log('Another cycle is currently running. Please wait.');
+            return {
+                success: false,
+                error: 'CYCLE_LOCKED',
+                message: 'Another cycle is currently running'
+            };
+        }
+
+        // Create lock
+        await createLock();
+
+        const startTime = Date.now();
+        const stats = {
+            scrape: null,
+            purge: null,
+            cleanup: null,
+            publish: null
+        };
         
-        // Update cycle status
-        const metadataPath = getDataPath('metadata.json');
-        let metadata;
         try {
-            metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            console.log('Starting cycle process...');
+            
+            // Update cycle status
+            const metadataPath = getDataPath('metadata.json');
+            let metadata;
+            try {
+                metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            } catch (error) {
+                if (error.code === 'ENOENT') {
+                    metadata = { books: {}, last_update: new Date().toISOString() };
+                } else {
+                    throw error;
+                }
+            }
+            
+            metadata.cycle_status = {
+                state: 'running',
+                started_at: new Date().toISOString()
+            };
+            await safeWriteJSON(metadataPath, metadata);
+            
+            // Run each process in sequence and collect stats
+            console.log('Running scrape...');
+            const scrapeResult = await scrape();
+            if (!scrapeResult.success) {
+                throw new Error(`Scrape failed: ${scrapeResult.error}`);
+            }
+            stats.scrape = scrapeResult.stats;
+            
+            console.log('Running purge...');
+            const purgeResult = await purge();
+            if (!purgeResult.success) {
+                throw new Error(`Purge failed: ${purgeResult.error}`);
+            }
+            stats.purge = purgeResult.stats;
+            
+            console.log('Running cleanup...');
+            const cleanupResult = await cleanup();
+            if (!cleanupResult.success) {
+                throw new Error(`Cleanup failed: ${cleanupResult.error}`);
+            }
+            stats.cleanup = cleanupResult.stats;
+            
+            console.log('Running publish...');
+            const publishResult = await publish();
+            if (!publishResult.success) {
+                throw new Error(`Publish failed: ${publishResult.error}`);
+            }
+            stats.publish = publishResult.stats;
+            
+            // Calculate total duration
+            const duration = Date.now() - startTime;
+            
+            // Update cycle status
+            metadata.cycle_status = {
+                state: 'completed',
+                completed_at: new Date().toISOString(),
+                duration: duration
+            };
+            await safeWriteJSON(metadataPath, metadata);
+            
+            console.log('Cycle process completed successfully');
+            return {
+                success: true,
+                stats: {
+                    ...stats,
+                    duration: `${(duration / 1000).toFixed(2)}s`,
+                    timestamp: new Date().toISOString()
+                }
+            };
         } catch (error) {
-            if (error.code === 'ENOENT') {
-                metadata = { books: {}, last_update: new Date().toISOString() };
-            } else {
-                throw error;
+            console.error('Cycle process failed:', error);
+            
+            // Calculate duration even for failed cycles
+            const duration = Date.now() - startTime;
+            
+            // Update cycle status on failure
+            try {
+                const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+                metadata.cycle_status = {
+                    state: 'failed',
+                    error: error.message,
+                    failed_at: new Date().toISOString(),
+                    duration: duration
+                };
+                await safeWriteJSON(metadataPath, metadata);
+            } catch (statusError) {
+                console.error('Failed to update cycle status:', statusError);
             }
+            
+            return {
+                success: false,
+                error: error.message || 'Unknown error during cycle',
+                stats: {
+                    ...stats,
+                    duration: `${(duration / 1000).toFixed(2)}s`,
+                    timestamp: new Date().toISOString()
+                }
+            };
+        } finally {
+            // Always release the lock when done
+            await releaseLock();
         }
-        
-        metadata.cycle_status = {
-            state: 'running',
-            started_at: new Date().toISOString()
-        };
-        await safeWriteJSON(metadataPath, metadata);
-        
-        // Run each process in sequence and collect stats
-        console.log('Running scrape...');
-        const scrapeResult = await scrape();
-        if (!scrapeResult.success) {
-            throw new Error(`Scrape failed: ${scrapeResult.error}`);
-        }
-        stats.scrape = scrapeResult.stats;
-        
-        console.log('Running purge...');
-        const purgeResult = await purge();
-        if (!purgeResult.success) {
-            throw new Error(`Purge failed: ${purgeResult.error}`);
-        }
-        stats.purge = purgeResult.stats;
-        
-        console.log('Running cleanup...');
-        const cleanupResult = await cleanup();
-        if (!cleanupResult.success) {
-            throw new Error(`Cleanup failed: ${cleanupResult.error}`);
-        }
-        stats.cleanup = cleanupResult.stats;
-        
-        console.log('Running publish...');
-        const publishResult = await publish();
-        if (!publishResult.success) {
-            throw new Error(`Publish failed: ${publishResult.error}`);
-        }
-        stats.publish = publishResult.stats;
-        
-        // Calculate total duration
-        const duration = Date.now() - startTime;
-        
-        // Update cycle status
-        metadata.cycle_status = {
-            state: 'completed',
-            completed_at: new Date().toISOString(),
-            duration: duration
-        };
-        await safeWriteJSON(metadataPath, metadata);
-        
-        console.log('Cycle process completed successfully');
-        return {
-            success: true,
-            stats: {
-                ...stats,
-                duration: `${(duration / 1000).toFixed(2)}s`,
-                timestamp: new Date().toISOString()
-            }
-        };
     } catch (error) {
         console.error('Cycle process failed:', error);
         
