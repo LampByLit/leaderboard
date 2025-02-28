@@ -495,139 +495,115 @@ async function safeWriteJSON(filePath, data) {
 
 // Main scraping function
 async function scrapeBook(url) {
+    console.log(`\n📖 Processing book: ${url}`);
+    console.log('🔍 Extracting ASIN...');
+    
+    const asin = extractASIN(url);
+    if (!asin) {
+        console.log('❌ Invalid ASIN in URL');
+        return { success: false, error: 'Invalid ASIN in URL' };
+    }
+    console.log(`✅ Found ASIN: ${asin}`);
+
     try {
-        console.log('\nDebug - Starting scrape for URL:', url);
+        console.log('🌐 Fetching page...');
         const html = await fetchPage(url);
-        console.log('Debug - Successfully fetched page HTML');
-        
-        // Extract ASIN first
-        const asin = extractASIN(url);
-        console.log('Debug - Extracted ASIN:', asin);
-        
-        if (!asin) {
-            return {
-                success: false,
-                error: 'invalid_asin',
-                message: 'Invalid or missing ASIN'
-            };
+        if (!html) {
+            console.log('❌ Failed to fetch page');
+            return { success: false, error: 'Failed to fetch page' };
         }
+        console.log('✅ Page fetched successfully');
+
+        console.log('🔍 Extracting book details...');
+        
+        // Extract and validate title
+        const title = extractTitle(html);
+        if (!title) {
+            console.log('❌ Could not extract title');
+            return { success: false, error: 'Could not extract title' };
+        }
+        console.log(`📚 Title: "${title}"`);
+
+        // Extract and validate author
+        const author = extractAuthor(html);
+        if (!author) {
+            console.log('❌ Could not extract author');
+            return { success: false, error: 'Could not extract author' };
+        }
+        console.log(`✍️ Author: ${author}`);
 
         // Verify it's a paperback
-        console.log('\nDebug - Checking if paperback...');
-        const isPaperback = verifyPaperback(html);
-        if (!isPaperback) {
-            // Extract some context to understand why it failed
-            const productDetails = html.includes('productDetails') ? 
-                html.substring(html.indexOf('productDetails'), html.indexOf('productDetails') + 500) : 
-                'Product details section not found';
-            
-            return {
-                success: false,
-                error: 'not_paperback',
-                message: 'Not a paperback',
-                debug: {
-                    foundProductDetails: html.includes('productDetails'),
-                    foundPaperbackWord: html.includes('Paperback'),
-                    productDetailsSnippet: productDetails
-                }
-            };
+        console.log('📑 Verifying format...');
+        if (!verifyPaperback(html)) {
+            console.log('❌ Not a paperback listing');
+            return { success: false, error: 'Not a paperback listing' };
         }
-        console.log('Debug - Paperback verification passed');
+        console.log('✅ Verified paperback format');
+
+        // Extract cover URL
+        console.log('🖼️ Extracting cover image...');
+        const coverUrl = extractCoverUrl(html);
+        if (!coverUrl) {
+            console.log('⚠️ Could not extract cover image');
+            // Don't fail for missing cover
+        } else {
+            console.log('✅ Cover image found');
+        }
 
         // Extract BSR
+        console.log('📊 Extracting Best Sellers Rank...');
         const bsr = extractBSR(html);
         if (!bsr) {
-            return {
-                success: false,
-                error: 'missing_bsr',
-                message: 'Missing Best Sellers Rank'
-            };
+            console.log('❌ Could not extract BSR');
+            return { success: false, error: 'Could not extract BSR' };
         }
+        console.log(`📈 BSR: ${bsr.toLocaleString()}`);
 
-        // Extract other metadata
-        const title = extractTitle(html);
-        const author = extractAuthor(html);
-        const cover_url = extractCoverUrl(html);
-
-        // Validate required fields
-        if (!title || !author || !cover_url) {
-            return {
-                success: false,
-                error: 'missing_metadata',
-                message: 'Missing required metadata'
-            };
-        }
-
-        // Only proceed if we have all required fields
+        // Return successful result
+        console.log('✅ Book processed successfully\n');
         return {
             success: true,
-            data: {
-                url,
+            book: {
                 asin,
                 title,
                 author,
-                cover_url,
+                cover_url: coverUrl || '',
                 bsr,
-                last_checked: new Date().toISOString(),
-                status: 'active'
+                url
             }
         };
     } catch (error) {
-        console.error(`Error scraping ${url}:`, error.message);
-        return {
-            success: false,
-            error: 'network_error',
-            message: error.message
-        };
+        console.error('❌ Error processing book:', error);
+        return { success: false, error: error.message };
     }
 }
 
 // Add batch processing helper
 async function processBatch(submissions, startIndex, batchSize, metadata) {
+    console.log(`\n📚 Processing batch of ${batchSize} submissions starting at index ${startIndex}`);
+    console.log('⏳ Adding delays between requests to avoid rate limiting...\n');
+
     const results = [];
-    const batch = submissions.slice(startIndex, startIndex + batchSize);
+    const endIndex = Math.min(startIndex + batchSize, submissions.length);
     
-    console.log(`\n=== Processing batch ${Math.floor(startIndex/batchSize) + 1} ===`);
-    console.log(`Books ${startIndex + 1}-${Math.min(startIndex + batchSize, submissions.length)} of ${submissions.length}`);
-    
-    for (let i = 0; i < batch.length; i++) {
-        const submission = batch[i];
-        try {
-            const currentBook = startIndex + i + 1;
-            const progressBar = '='.repeat(Math.floor((currentBook/submissions.length) * 20)) + 
-                              '-'.repeat(20 - Math.floor((currentBook/submissions.length) * 20));
-            
-            console.log(`\n[${progressBar}] ${currentBook}/${submissions.length}`);
-            console.log(`🔍 Scraping: ${submission.url}`);
-            
-            const result = await scrapeBook(submission.url);
-            if (result && result.success) {
-                metadata.books[result.data.asin] = {
-                    ...result.data,
-                    last_updated: new Date().toISOString()
-                };
-                console.log(`✅ Success! BSR: ${result.data.bsr.toLocaleString()}`);
-                console.log(`📖 "${result.data.title}" by ${result.data.author}`);
-                results.push(result);
-            } else {
-                console.log(`❌ Failed: ${result.error}`);
-            }
-            
-            // Update progress
-            metadata.scraping_progress.current = startIndex + i + 1;
-            await safeWriteJSON(getDataPath('metadata.json'), metadata);
-            
-            // Random delay between requests within a batch (2-4 seconds)
-            if (i < batch.length - 1) {
-                const delay = Math.random() * (MAX_REQUEST_DELAY - MIN_REQUEST_DELAY) + MIN_REQUEST_DELAY;
-                console.log(`⏳ Waiting ${(delay/1000).toFixed(1)}s before next book...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        } catch (error) {
-            console.error(`❌ Error scraping ${submission.url}:`, error);
+    for (let i = startIndex; i < endIndex; i++) {
+        const submission = submissions[i];
+        console.log(`🔄 [${i + 1}/${submissions.length}] Processing submission...`);
+        
+        // Add random delay between requests
+        const delayTime = Math.floor(Math.random() * 7000) + 3000; // 3-10 seconds
+        console.log(`⏰ Waiting ${(delayTime/1000).toFixed(1)} seconds before next request...`);
+        await delay(delayTime);
+
+        const result = await scrapeBook(submission.url);
+        results.push(result);
+
+        if (result.success) {
+            metadata.books[result.book.asin] = result.book;
+            console.log('📝 Updated metadata with new book information');
         }
     }
-    
+
     return results;
 }
 

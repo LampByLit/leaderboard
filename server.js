@@ -14,8 +14,8 @@ require('dotenv').config();
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 console.log(`Using data directory: ${DATA_DIR}`);
 
-// Track SSE clients
-const clients = new Set();
+// Track SSE clients with metadata
+const clients = new Map();
 
 // Enhanced logging system
 function enhancedLog(message) {
@@ -33,8 +33,8 @@ function enhancedLog(message) {
     // Log to console using the original console.log
     console.logOrig(message);
 
-    // Send to all clients
-    sendProgressToClients({
+    // Broadcast to all clients
+    broadcastToClients({
         status: 'log',
         message: formattedMessage,
         timestamp: new Date().toISOString()
@@ -48,22 +48,66 @@ console.log = enhancedLog;
 // Make enhancedLog available globally
 global.enhancedLog = enhancedLog;
 
-// Helper function to send progress to SSE clients
-function sendProgressToClients(data) {
+// Helper function to broadcast to all SSE clients
+function broadcastToClients(data) {
     const payload = JSON.stringify({
         ...data,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        connected_clients: clients.size
     });
     
-    clients.forEach(client => {
+    for (const [id, client] of clients.entries()) {
         try {
-            client.write(`data: ${payload}\n\n`);
+            client.res.write(`data: ${payload}\n\n`);
         } catch (error) {
-            console.error('❌ Error sending to client:', error);
-            clients.delete(client);
+            console.error(`❌ Error sending to client ${id}:`, error);
+            disconnectClient(id);
         }
-    });
+    }
 }
+
+// Helper function to disconnect a client
+function disconnectClient(id) {
+    const client = clients.get(id);
+    if (client) {
+        try {
+            client.res.end();
+        } catch (error) {
+            console.error(`Error ending client ${id} connection:`, error);
+        }
+        clients.delete(id);
+        console.log(`📡 Client ${id} disconnected (${clients.size} clients remaining)`);
+        
+        // Notify remaining clients about the disconnection
+        broadcastToClients({
+            status: 'system',
+            message: `Client disconnected (${clients.size} connected)`,
+            type: 'connection'
+        });
+    }
+}
+
+// Helper function to send progress to specific client
+function sendProgressToClient(clientId, data) {
+    const client = clients.get(clientId);
+    if (client) {
+        try {
+            const payload = JSON.stringify({
+                ...data,
+                timestamp: new Date().toISOString(),
+                client_id: clientId,
+                connected_clients: clients.size
+            });
+            client.res.write(`data: ${payload}\n\n`);
+        } catch (error) {
+            console.error(`❌ Error sending to client ${clientId}:`, error);
+            disconnectClient(clientId);
+        }
+    }
+}
+
+// Alias for backward compatibility
+const sendProgressToClients = broadcastToClients;
 
 // Helper function to get data file paths
 function getDataPath(filename) {
@@ -832,7 +876,8 @@ process.on('SIGTERM', () => {
 
 // Handle SSE connections
 app.get('/progress', (req, res) => {
-    console.log('📡 New SSE connection established');
+    const clientId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    console.log(`📡 New SSE connection established (Client ${clientId})`);
     
     // Set headers for SSE
     res.writeHead(200, {
@@ -841,21 +886,61 @@ app.get('/progress', (req, res) => {
         'Connection': 'keep-alive'
     });
     
-    // Send initial message
-    res.write('data: {"status":"connected","message":"SSE connection established"}\n\n');
+    // Add client to the map with metadata
+    clients.set(clientId, {
+        res,
+        connectedAt: new Date(),
+        lastPing: Date.now()
+    });
     
-    // Add client to the set
-    clients.add(res);
+    // Send welcome message to the new client
+    sendProgressToClient(clientId, {
+        status: 'connected',
+        message: `Connected as client ${clientId}`,
+        type: 'welcome'
+    });
+    
+    // Notify all clients about the new connection
+    broadcastToClients({
+        status: 'system',
+        message: `New client connected (${clients.size} total)`,
+        type: 'connection'
+    });
     
     // Handle client disconnect
     req.on('close', () => {
-        console.log('📡 SSE connection closed');
-        clients.delete(res);
+        disconnectClient(clientId);
     });
     
     // Handle errors
     res.on('error', (error) => {
-        console.error('❌ SSE connection error:', error);
-        clients.delete(res);
+        console.error(`❌ SSE connection error for client ${clientId}:`, error);
+        disconnectClient(clientId);
+    });
+    
+    // Set up ping interval for this client
+    const pingInterval = setInterval(() => {
+        const client = clients.get(clientId);
+        if (client) {
+            try {
+                sendProgressToClient(clientId, {
+                    status: 'ping',
+                    timestamp: new Date().toISOString(),
+                    type: 'heartbeat'
+                });
+                client.lastPing = Date.now();
+            } catch (error) {
+                console.error(`❌ Ping failed for client ${clientId}:`, error);
+                clearInterval(pingInterval);
+                disconnectClient(clientId);
+            }
+        } else {
+            clearInterval(pingInterval);
+        }
+    }, 30000); // Ping every 30 seconds
+    
+    // Clean up interval on disconnect
+    req.on('close', () => {
+        clearInterval(pingInterval);
     });
 }); 

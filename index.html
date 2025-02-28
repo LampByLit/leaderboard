@@ -133,10 +133,12 @@
             background-color: #1e1e1e;
             color: #e0e0e0;
             font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 10px;
+            line-height: 1.2;
             padding: 12px;
             margin: 10px 0;
             border-radius: 6px;
-            height: 150px;
+            height: 200px;
             width: 100%;
             max-width: 800px;
             overflow-y: auto;
@@ -148,6 +150,75 @@
             box-sizing: border-box;
         }
 
+        /* Console animation keyframes */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+            50% { text-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+            100% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+        }
+
+        /* Console message type styles */
+        .msg-system {
+            color: #00ff00 !important;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .msg-core {
+            color: #ff00ff !important;
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+        }
+
+        .msg-scan {
+            color: #00ffff !important;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+
+        .msg-data {
+            color: #ffaa00 !important;
+            text-shadow: 0 0 5px rgba(255, 170, 0, 0.5);
+        }
+
+        .msg-alert {
+            color: #ff0000 !important;
+            animation: blink 1s infinite;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+        }
+
+        .msg-success {
+            color: #33ff33 !important;
+            animation: glow 2s infinite;
+        }
+
+        .msg-progress {
+            color: #ffff00 !important;
+            text-shadow: 0 0 5px rgba(255, 255, 0, 0.5);
+        }
+
+        .msg-network {
+            color: #00ccff !important;
+            text-shadow: 0 0 5px rgba(0, 204, 255, 0.5);
+        }
+
+        .msg-error {
+            color: #ff3333 !important;
+            animation: blink 0.5s infinite;
+            text-shadow: 0 0 5px rgba(255, 51, 51, 0.5);
+        }
+
+        .msg-matrix {
+            color: #00ff00 !important;
+            font-family: 'Consolas', monospace;
+            letter-spacing: 1px;
+            animation: glow 2s infinite;
+        }
+
+        /* Hide the display when empty */
         .scrape-progress:empty {
             display: none;
         }
@@ -306,6 +377,29 @@
             background: #1e1e1e;
             padding: 8px;
             border-radius: 4px;
+        }
+
+        /* Add connection status styles */
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .connection-status.visible {
+            display: block;
+        }
+
+        .connection-status.error {
+            color: #ff3333;
         }
     </style>
 </head>
@@ -591,67 +685,151 @@
             };
         }
 
+        function formatConsoleMessage(type, message, data = null) {
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+            let formattedMessage = '';
+            
+            switch(type) {
+                case 'starting':
+                    formattedMessage = `<span class="msg-system">⚡ [${timestamp}] SYSTEM: Initializing quantum core...</span>\n`;
+                    formattedMessage += `<span class="msg-core">🔮 [${timestamp}] CORE: ${message}</span>`;
+                    break;
+                case 'scraping':
+                    formattedMessage = `<span class="msg-scan">🔍 [${timestamp}] SCAN: ${message}</span>`;
+                    break;
+                case 'purging':
+                    formattedMessage = `<span class="msg-data">🧹 [${timestamp}] PURGE: ${message}</span>`;
+                    break;
+                case 'cleaning':
+                    formattedMessage = `<span class="msg-progress">🧬 [${timestamp}] CLEAN: ${message}</span>`;
+                    break;
+                case 'publishing':
+                    formattedMessage = `<span class="msg-network">📡 [${timestamp}] SYNC: ${message}</span>`;
+                    break;
+                case 'error':
+                    formattedMessage = `<span class="msg-error">💀 [${timestamp}] ERROR: ${message}</span>`;
+                    break;
+                case 'complete':
+                    formattedMessage = `<span class="msg-success">✨ [${timestamp}] SUCCESS: ${message}</span>`;
+                    break;
+                default:
+                    formattedMessage = `<span class="msg-matrix">📊 [${timestamp}] INFO: ${message}</span>`;
+            }
+            
+            if (data) {
+                formattedMessage += `\n<span class="msg-data">📊 [${timestamp}] STATS:\n${JSON.stringify(data, null, 2)}</span>`;
+            }
+            
+            return formattedMessage;
+        }
+
         function setupEventSource() {
             if (eventSource) {
                 eventSource.close();
             }
 
+            // Create connection status element if it doesn't exist
+            let statusElement = document.querySelector('.connection-status');
+            if (!statusElement) {
+                statusElement = document.createElement('div');
+                statusElement.className = 'connection-status';
+                document.body.appendChild(statusElement);
+            }
+
             eventSource = new EventSource('/progress');
             const progressElement = document.querySelector('.scrape-progress');
 
+            // Update connection status
+            function updateConnectionStatus(status, message) {
+                statusElement.textContent = message;
+                statusElement.className = `connection-status visible ${status}`;
+            }
+
+            eventSource.onopen = function() {
+                updateConnectionStatus('connected', '🟢 Connected to server');
+            };
+
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
-                progressElement.classList.add('visible');
                 
-                switch(data.status) {
-                    case 'starting':
-                        progressElement.textContent = data.message;
-                        progressElement.className = 'scrape-progress visible';
-                        cycleButton.disabled = true;
-                        break;
-                        
-                    case 'scraping':
-                    case 'purging':
-                    case 'cleaning':
-                    case 'publishing':
-                        progressElement.textContent = data.message;
-                        if (data.stats) {
-                            progressElement.textContent += '\n' + JSON.stringify(data.stats, null, 2);
-                        }
-                        break;
-                        
-                    case 'log':
-                        // Append new log message
-                        progressElement.textContent += '\n' + data.message;
-                        // Auto-scroll to bottom
-                        progressElement.scrollTop = progressElement.scrollHeight;
-                        break;
-                        
-                    case 'error':
-                        progressElement.textContent = '❌ Error: ' + data.message;
-                        progressElement.className = 'scrape-progress visible error';
-                        cycleButton.disabled = false;
-                        break;
-                        
-                    case 'complete':
-                        progressElement.textContent = '✅ ' + data.message;
-                        if (data.stats) {
-                            progressElement.textContent += '\n\nStats:\n' + JSON.stringify(data.stats, null, 2);
-                        }
-                        progressElement.className = 'scrape-progress visible complete';
-                        cycleButton.disabled = false;
-                        // Reload the table after completion
-                        loadJsonFiles();
-                        break;
+                // Update connection status with client count
+                if (data.connected_clients) {
+                    updateConnectionStatus('connected', `🟢 Connected (${data.connected_clients} active)`);
                 }
+
+                // Handle different message types
+                switch(data.type) {
+                    case 'welcome':
+                        console.log('Connected as:', data.client_id);
+                        break;
+                    case 'connection':
+                        // System message about connections
+                        progressElement.innerHTML += '\n' + formatConsoleMessage('system', data.message);
+                        break;
+                    case 'heartbeat':
+                        // Silent ping response
+                        break;
+                    default:
+                        // Handle regular status messages
+                        progressElement.classList.add('visible');
+                        
+                        switch(data.status) {
+                            case 'starting':
+                                progressElement.innerHTML = formatConsoleMessage('starting', data.message);
+                                progressElement.className = 'scrape-progress visible';
+                                cycleButton.disabled = true;
+                                break;
+                                
+                            case 'scraping':
+                            case 'purging':
+                            case 'cleaning':
+                            case 'publishing':
+                                const newMessage = formatConsoleMessage(data.status, data.message, data.stats);
+                                progressElement.innerHTML += '\n' + newMessage;
+                                break;
+                                
+                            case 'log':
+                                const logMessage = formatConsoleMessage('log', data.message);
+                                progressElement.innerHTML += '\n' + logMessage;
+                                break;
+                                
+                            case 'error':
+                                progressElement.innerHTML += '\n' + formatConsoleMessage('error', data.message);
+                                progressElement.className = 'scrape-progress visible error';
+                                cycleButton.disabled = false;
+                                break;
+                                
+                            case 'complete':
+                                const completeMessage = formatConsoleMessage('complete', data.message, data.stats);
+                                progressElement.innerHTML += '\n' + completeMessage;
+                                progressElement.className = 'scrape-progress visible complete';
+                                cycleButton.disabled = false;
+                                loadJsonFiles();
+                                break;
+                        }
+                }
+                
+                // Auto-scroll to bottom
+                progressElement.scrollTop = progressElement.scrollHeight;
             };
 
             eventSource.onerror = function(error) {
                 console.error('SSE Error:', error);
-                progressElement.textContent = '❌ Connection lost. Retrying...';
+                updateConnectionStatus('error', '🔴 Connection lost. Retrying...');
+                const errorMessage = formatConsoleMessage('error', 'Connection lost. Retrying...');
+                progressElement.innerHTML += '\n' + errorMessage;
                 progressElement.className = 'scrape-progress visible error';
-                // The browser will automatically try to reconnect
             };
+
+            // Handle page visibility changes
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    eventSource.close();
+                    updateConnectionStatus('error', '🟡 Connection paused');
+                } else {
+                    setupEventSource(); // Reconnect when page becomes visible
+                }
+            });
         }
 
         // Set up SSE connection when page loads
