@@ -30,8 +30,8 @@ function enhancedLog(message) {
         .filter(line => line.length > 0)
         .join(' | ');
 
-    // Log to console
-    console.log(message);
+    // Log to console using the original console.log
+    console.logOrig(message);
 
     // Send to all clients
     sendProgressToClients({
@@ -41,10 +41,12 @@ function enhancedLog(message) {
     });
 }
 
-// Expose globally
-global.enhancedLog = enhancedLog;
+// Store original console.log before overriding
 console.logOrig = console.log;
+// Override console.log with enhanced version
 console.log = enhancedLog;
+// Make enhancedLog available globally
+global.enhancedLog = enhancedLog;
 
 // Helper function to send progress to SSE clients
 function sendProgressToClients(data) {
