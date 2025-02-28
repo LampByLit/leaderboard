@@ -387,6 +387,7 @@
         let isLimiterEnabled = true;
         let progressSource = null;
         let cycleStatusInterval = null;
+        let eventSource = null;
 
         // Function to check cycle status
         async function checkCycleStatus() {
@@ -584,150 +585,129 @@
             };
         }
 
-        // Function to handle the cycle button click
-        async function runCycle() {
-            const cycleButton = document.getElementById('cycleButton');
-            const progressDisplay = document.getElementById('scrapeProgress');
-            const cooldownDisplay = document.getElementById('cooldown-display');
-            let eventSource = null;
-            let lastMessage = null;
+        function connectEventSource() {
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource('/progress');
+            let lastMessage = '';
+            
+            eventSource.onopen = () => {
+                console.log('SSE connection established');
+            };
+            
+            eventSource.onerror = (error) => {
+                console.error('SSE connection error:', error);
+                // Attempt to reconnect after 2 seconds
+                setTimeout(connectEventSource, 2000);
+            };
+            
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // Prevent duplicate messages
+                if (lastMessage === event.data) return;
+                lastMessage = event.data;
 
+                // Update progress display based on stage
+                switch (data.status) {
+                    case 'starting':
+                        progressDisplay.textContent = '🚀 Starting cycle process...';
+                        progressDisplay.className = 'scrape-progress visible';
+                        break;
+                    case 'scraping':
+                        if (data.current && data.total) {
+                            progressDisplay.textContent = `📚 Book ${data.current}/${data.total}: ${data.message || 'Processing...'}`;
+                        } else {
+                            progressDisplay.textContent = '🔍 Scraping books...';
+                        }
+                        break;
+                    case 'purging':
+                        progressDisplay.textContent = data.stats ? 
+                            `🧹 Removing blacklisted entries... (${data.stats.removed || 0} removed)` :
+                            '🧹 Removing blacklisted entries...';
+                        break;
+                    case 'cleaning':
+                        progressDisplay.textContent = data.stats ? 
+                            `🗑️ Cleaning up submissions... (${data.stats.removed_submissions || 0} removed)` :
+                            '🗑️ Cleaning up submissions...';
+                        break;
+                    case 'publishing':
+                        progressDisplay.textContent = '📝 Publishing updated leaderboard...';
+                        break;
+                    case 'complete':
+                        progressDisplay.textContent = `✨ Cycle completed! ${data.stats ? 
+                            `${data.stats.successful_scrapes || 0} books processed, ${data.stats.purged || 0} purged, ${data.stats.cleaned || 0} cleaned in ${data.stats.duration}` : 
+                            ''}`;
+                        progressDisplay.className = 'scrape-progress visible complete';
+                        // Reload JSON data after completion
+                        loadJsonFiles();
+                        // Close EventSource after completion
+                        if (eventSource) {
+                            eventSource.close();
+                            eventSource = null;
+                        }
+                        // Start cooldown timer
+                        startCooldown();
+                        break;
+                    case 'error':
+                        progressDisplay.textContent = `❌ Error: ${data.message}`;
+                        progressDisplay.className = 'scrape-progress visible error';
+                        // Re-enable cycle button on error
+                        cycleButton.disabled = false;
+                        break;
+                    default:
+                        if (data.message) {
+                            progressDisplay.textContent = data.message;
+                        }
+                }
+            };
+        }
+
+        // Initialize SSE connection when starting cycle
+        async function startCycle() {
+            if (cycleButton.disabled) return;
+            cycleButton.disabled = true;
+            progressDisplay.className = 'scrape-progress visible';
+            
             try {
-                // Check if cycle is already running
-                const statusResponse = await fetch('/cycle-status');
-                const statusData = await statusResponse.json();
+                // Start SSE connection
+                connectEventSource();
                 
-                if (statusData.success && statusData.is_running) {
-                    progressDisplay.textContent = '⚠️ Another cycle is currently running. Please wait.';
-                    progressDisplay.className = 'scrape-progress visible';
-                    cycleButton.disabled = true;
-                    return;
-                }
-
-                // Disable the button while cycling
-                cycleButton.disabled = true;
-
-                // Close any existing EventSource
-                if (progressSource) {
-                    progressSource.close();
-                    progressSource = null;
-                }
-
-                // Show and reset progress display
-                progressDisplay.textContent = '🚀 Starting cycle process...';
-                progressDisplay.className = 'scrape-progress visible';
-
-                // Set up event source for progress updates
-                eventSource = new EventSource('/progress');
+                const response = await fetch('/cycle', { method: 'POST' });
+                const result = await response.json();
                 
-                eventSource.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    
-                    // Prevent duplicate messages
-                    if (lastMessage === event.data) return;
-                    lastMessage = event.data;
-
-                    // Update progress display based on stage
-                    switch (data.status) {
-                        case 'starting':
-                            progressDisplay.textContent = '🚀 Starting cycle process...';
-                            progressDisplay.className = 'scrape-progress visible';
-                            break;
-                        case 'scraping':
-                            if (data.current && data.total) {
-                                progressDisplay.textContent = `📚 Book ${data.current}/${data.total}: ${data.message || 'Processing...'}`;
-                            } else {
-                                progressDisplay.textContent = '🔍 Scraping books...';
-                            }
-                            break;
-                        case 'purging':
-                            progressDisplay.textContent = data.stats ? 
-                                `🧹 Removing blacklisted entries... (${data.stats.removed || 0} removed)` :
-                                '🧹 Removing blacklisted entries...';
-                            break;
-                        case 'cleaning':
-                            progressDisplay.textContent = data.stats ? 
-                                `🗑️ Cleaning up submissions... (${data.stats.removed_submissions || 0} removed)` :
-                                '🗑️ Cleaning up submissions...';
-                            break;
-                        case 'publishing':
-                            progressDisplay.textContent = '📝 Publishing updated leaderboard...';
-                            break;
-                        case 'complete':
-                            progressDisplay.textContent = `✨ Cycle completed! ${data.stats ? 
-                                `${data.stats.successful_scrapes || 0} books processed, ${data.stats.purged || 0} purged, ${data.stats.cleaned || 0} cleaned in ${data.stats.duration}` : 
-                                ''}`;
-                            progressDisplay.className = 'scrape-progress visible complete';
-                            // Reload JSON data after completion
-                            loadJsonFiles();
-                            // Close EventSource after completion
-                            if (eventSource) {
-                                eventSource.close();
-                                eventSource = null;
-                            }
-                            // Start cooldown timer
-                            startCooldown();
-                            break;
-                        case 'error':
-                            progressDisplay.textContent = `❌ Error: ${data.message}`;
-                            progressDisplay.className = 'scrape-progress visible error';
-                            // Re-enable cycle button on error
-                            cycleButton.disabled = false;
-                            break;
-                        default:
-                            if (data.message) {
-                                progressDisplay.textContent = data.message;
-                            }
-                    }
-                };
-
-                eventSource.onerror = (error) => {
-                    console.error('EventSource error:', error);
-                    progressDisplay.textContent = '❌ Error: Lost connection to server';
+                if (!result.success) {
+                    progressDisplay.textContent = `❌ Error: ${result.error}`;
                     progressDisplay.className = 'scrape-progress visible error';
-                    if (eventSource) {
-                        eventSource.close();
-                        eventSource = null;
-                    }
                     cycleButton.disabled = false;
-                };
-
-                // Make the cycle request
-                const response = await fetch('/cycle', {
-                    method: 'POST'
-                });
-
-                const data = await response.json();
-                if (!data.success) {
-                    throw new Error(data.error || 'Cycle failed');
                 }
-
             } catch (error) {
-                console.error('Error running cycle:', error);
                 progressDisplay.textContent = `❌ Error: ${error.message}`;
                 progressDisplay.className = 'scrape-progress visible error';
                 cycleButton.disabled = false;
             }
+        }
 
-            // Function to start cooldown
-            function startCooldown() {
-                const cooldownTime = 10 * 60 * 1000; // 10 minutes in milliseconds
-                let remainingTime = cooldownTime;
+        // Function to start cooldown
+        function startCooldown() {
+            const cooldownTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+            let remainingTime = cooldownTime;
 
-                // Update cooldown display every second
-                const interval = setInterval(() => {
-                    remainingTime -= 1000;
-                    const minutes = Math.floor(remainingTime / 60000);
-                    const seconds = Math.floor((remainingTime % 60000) / 1000);
-                    cooldownDisplay.textContent = `Cooldown: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            // Update cooldown display every second
+            const interval = setInterval(() => {
+                remainingTime -= 1000;
+                const minutes = Math.floor(remainingTime / 60000);
+                const seconds = Math.floor((remainingTime % 60000) / 1000);
+                cooldownDisplay.textContent = `Cooldown: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
-                    if (remainingTime <= 0) {
-                        clearInterval(interval);
-                        cooldownDisplay.textContent = '';
-                cycleButton.disabled = false;
-                    }
-                }, 1000);
-            }
+                if (remainingTime <= 0) {
+                    clearInterval(interval);
+                    cooldownDisplay.textContent = '';
+                    cycleButton.disabled = false;
+                }
+            }, 1000);
         }
 
         // Add event listeners
@@ -736,7 +716,7 @@
             loadJsonFiles();
             
             // Add cycle button listener
-            document.getElementById('cycleButton').addEventListener('click', runCycle);
+            document.getElementById('cycleButton').addEventListener('click', startCycle);
 
             // Start periodic cycle status check
             checkCycleStatus(); // Initial check
