@@ -1,37 +1,28 @@
 {
-  "name": "amazon-book-ranker",
-  "version": "1.0.0",
-  "description": "A Node.js application that tracks Amazon book rankings and displays them in a leaderboard format",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hxkm/amazon-book-ranker.git"
-  },
-  "keywords": [
-    "amazon",
-    "books",
-    "rankings",
-    "leaderboard",
-    "web-scraping"
-  ],
-  "author": "hxkm",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/hxkm/amazon-book-ranker/issues"
-  },
-  "homepage": "https://github.com/hxkm/amazon-book-ranker#readme",
-  "dependencies": {
-    "express": "^4.18.2",
-    "https": "^1.0.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
-  }
-}
+    "name": "amazon-book-ranker",
+    "version": "1.0.0",
+    "description": "A Node.js application that tracks Amazon book rankings and displays them in a leaderboard format",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "express": "^4.18.2",
+        "express-rate-limit": "^7.1.5",
+        "node-fetch": "^2.7.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.3"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/hxkm/amazon-book-ranker.git"
+    },
+    "author": "",
+    "license": "MIT"
+} 

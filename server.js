@@ -7,9 +7,10 @@ const { purge } = require('./scripts/purger');
 const { cleanup } = require('./scripts/cleaner');
 const { cycle } = require('./scripts/cycle');
 const { initializeVolume } = require('./scripts/init-volume');
+require('dotenv').config();
 
 // Configure data directory
-const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 console.log(`Using data directory: ${DATA_DIR}`);
 
 // Keep track of connected clients
@@ -43,7 +44,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Initialize volume before starting server
 async function startServer() {
@@ -616,6 +617,12 @@ app.post('/cycle', async (req, res) => {
             throw new Error(`Purge failed: ${purgeResult.error}`);
         }
         cycleStats.purge = purgeResult.stats;
+        sendProgressToClients({
+            status: 'purging',
+            message: '🧹 Purge process completed',
+            timestamp: new Date().toISOString(),
+            stats: purgeResult.stats
+        });
         
         // Run cleanup
         currentStage = 'cleaning';
@@ -629,6 +636,12 @@ app.post('/cycle', async (req, res) => {
             throw new Error(`Cleanup failed: ${cleanupResult.error}`);
         }
         cycleStats.cleanup = cleanupResult.stats;
+        sendProgressToClients({
+            status: 'cleaning',
+            message: '🗑️ Cleanup process completed',
+            timestamp: new Date().toISOString(),
+            stats: cleanupResult.stats
+        });
         
         // Run publish
         currentStage = 'publishing';
@@ -659,10 +672,11 @@ app.post('/cycle', async (req, res) => {
             timestamp: new Date().toISOString(),
             stats: {
                 duration: `${(duration / 1000).toFixed(2)}s`,
-                successful_scrapes: cycleStats.scrape.successful,
-                failed_scrapes: cycleStats.scrape.failed,
-                purged: cycleStats.purge.removed,
-                cleaned: cycleStats.cleanup.removed
+                successful_scrapes: cycleStats.scrape.successful_scrapes,
+                failed_scrapes: cycleStats.scrape.processed_urls - cycleStats.scrape.successful_scrapes,
+                purged: cycleStats.purge.removed || 0,
+                cleaned: cycleStats.cleanup.removed_submissions || 0,
+                total_remaining: cycleStats.cleanup.remaining_submissions || 0
             }
         });
         

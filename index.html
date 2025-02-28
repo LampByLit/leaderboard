@@ -561,16 +561,22 @@
                             }
                             break;
                         case 'purging':
-                            progressDisplay.textContent = '🧹 Removing blacklisted entries...';
+                            progressDisplay.textContent = data.stats ? 
+                                `🧹 Removing blacklisted entries... (${data.stats.removed || 0} removed)` :
+                                '🧹 Removing blacklisted entries...';
                             break;
                         case 'cleaning':
-                            progressDisplay.textContent = '🗑️ Cleaning up old submissions...';
+                            progressDisplay.textContent = data.stats ? 
+                                `🗑️ Cleaning up submissions... (${data.stats.removed_submissions || 0} removed)` :
+                                '🗑️ Cleaning up submissions...';
                             break;
                         case 'publishing':
                             progressDisplay.textContent = '📝 Publishing updated leaderboard...';
                             break;
                         case 'complete':
-                            progressDisplay.textContent = `✨ Cycle completed! ${data.stats ? `${data.stats.successful_scrapes} books processed in ${data.stats.duration}` : ''}`;
+                            progressDisplay.textContent = `✨ Cycle completed! ${data.stats ? 
+                                `${data.stats.successful_scrapes || 0} books processed, ${data.stats.purged || 0} purged, ${data.stats.cleaned || 0} cleaned in ${data.stats.duration}` : 
+                                ''}`;
                             progressDisplay.className = 'scrape-progress visible complete';
                             // Reload JSON data after completion
                             loadJsonFiles();
@@ -638,7 +644,7 @@
                     if (remainingTime <= 0) {
                         clearInterval(interval);
                         cooldownDisplay.textContent = '';
-                        cycleButton.disabled = false;
+                cycleButton.disabled = false;
                     }
                 }, 1000);
             }

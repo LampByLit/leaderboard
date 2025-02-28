@@ -2,7 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Configure data directory
-const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 
 // Helper function to get data file paths
 function getDataPath(filename) {

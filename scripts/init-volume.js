@@ -23,7 +23,7 @@ const DEFAULT_FILE_CONTENTS = {
 async function initializeVolume() {
     try {
         // Get the data directory from environment variable or use current directory
-        const dataDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+        const dataDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || '/data';
         console.log(`Initializing volume in: ${dataDir}`);
 
         // Ensure the data directory exists

@@ -3,7 +3,7 @@ const path = require('path');
 const https = require('https');
 
 // Configure data directory
-const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 
 // Configure batch processing
 const BATCH_SIZE = 3; // Process 3 books at a time

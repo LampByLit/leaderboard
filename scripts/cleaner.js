@@ -2,7 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Configure data directory
-const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 
 // Helper function to get data file paths
 function getDataPath(filename) {
@@ -73,7 +73,7 @@ function extractASIN(url) {
 }
 
 // Helper function to log cleanup operations
-async function logCleanup(removedSubmissions) {
+async function logCleanup(removedSubmissions, reason) {
     const logPath = getDataPath('cleanup_log.json');
     let log;
     
@@ -96,7 +96,7 @@ async function logCleanup(removedSubmissions) {
                 timestamp,
                 url: submission.url,
                 submitted_at: submission.submitted_at,
-                reason: 'previously_purged'
+                reason: reason
             });
         }
 
@@ -111,39 +111,52 @@ async function cleanup() {
     try {
         console.log('\n🧹 Starting cleanup process...');
         
-        // Read input.json
+        // Read all necessary files
         const inputPath = getDataPath('input.json');
-        console.log('📖 Reading input data...');
+        const metadataPath = getDataPath('metadata.json');
+        
+        console.log('📖 Reading input and metadata...');
         const inputData = JSON.parse(await fs.readFile(inputPath, 'utf8'));
+        const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
         
-        // Get current time
-        const now = new Date();
-        const DAYS_TO_KEEP = 7;
-        console.log(`\n⏳ Checking for submissions older than ${DAYS_TO_KEEP} days...`);
-        
-        // Process submissions
         const totalSubmissions = inputData.submissions.length;
-        let checkedCount = 0;
         let removedCount = 0;
+        const removedSubmissions = [];
         
+        // Filter submissions
         const keptSubmissions = inputData.submissions.filter(submission => {
-            checkedCount++;
-            const submissionDate = new Date(submission.submitted_at);
-            const daysSinceSubmission = (now - submissionDate) / (1000 * 60 * 60 * 24);
+            const asin = extractASIN(submission.url);
             
-            if (daysSinceSubmission > DAYS_TO_KEEP) {
+            // If we can't extract ASIN, mark for removal
+            if (!asin) {
                 removedCount++;
-                console.log(`🗑️ [${checkedCount}/${totalSubmissions}] Removed: ${submission.url} (${Math.floor(daysSinceSubmission)} days old)`);
+                removedSubmissions.push({ ...submission, reason: 'invalid_asin' });
+                console.log(`🗑️ Removed: ${submission.url} (Invalid ASIN)`);
                 return false;
             }
-            return true;
+            
+            // If book exists in metadata and is active, keep it
+            if (metadata.books[asin]) {
+                return true;
+            }
+            
+            // If book doesn't exist in metadata, it failed scraping or was purged
+            removedCount++;
+            removedSubmissions.push({ ...submission, reason: 'failed_or_purged' });
+            console.log(`🗑️ Removed: ${submission.url} (Failed scraping or purged)`);
+            return false;
         });
         
         // Update input data
         inputData.submissions = keptSubmissions;
-        inputData.last_cleanup = now.toISOString();
+        inputData.last_cleanup = new Date().toISOString();
         
-        console.log(`\n📊 Summary: Removed ${removedCount} submissions out of ${totalSubmissions} total`);
+        // Log cleanup operations
+        if (removedSubmissions.length > 0) {
+            await logCleanup(removedSubmissions, 'failed_or_purged');
+        }
+        
+        console.log(`\n📊 Summary: Removed ${removedCount} failed/purged submissions out of ${totalSubmissions} total`);
         
         // Save updated input data
         console.log('💾 Saving cleaned input data...');
@@ -155,8 +168,8 @@ async function cleanup() {
             stats: {
                 total_submissions: totalSubmissions,
                 removed_submissions: removedCount,
-                remaining_submissions: totalSubmissions - removedCount,
-                timestamp: now.toISOString()
+                remaining_submissions: keptSubmissions.length,
+                timestamp: new Date().toISOString()
             }
         };
     } catch (error) {

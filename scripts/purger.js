@@ -2,7 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Configure data directory
-const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
 
 // Helper function to get data file paths
 function getDataPath(filename) {
@@ -46,11 +46,15 @@ function normalizeString(str) {
         .trim();
 }
 
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function isAuthorMatch(bookAuthor, blacklistAuthor) {
     if (!bookAuthor || !blacklistAuthor) return false;
-    const normalizedAuthor = normalizeString(bookAuthor);
-    const normalizedPattern = normalizeString(blacklistAuthor);
-    return normalizedAuthor === normalizedPattern;
+    const normalizedBookAuthor = normalizeString(bookAuthor);
+    const normalizedBlacklistAuthor = normalizeString(blacklistAuthor);
+    return normalizedBookAuthor === normalizedBlacklistAuthor;
 }
 
 function isBlacklisted(book, pattern) {
@@ -106,10 +110,9 @@ async function purge() {
         const purgedBooks = {};
         Object.entries(metadata.books).forEach(([asin, book]) => {
             checkedCount++;
-            const isBlacklisted = blacklist.authors.some(pattern => {
-                const regex = new RegExp(pattern, 'i');
-                return regex.test(book.author) || regex.test(book.title);
-            });
+            const isBlacklisted = blacklist.authors.some(blacklistedAuthor => 
+                isAuthorMatch(book.author, blacklistedAuthor)
+            );
 
             if (isBlacklisted) {
                 purgedCount++;
@@ -120,17 +123,17 @@ async function purge() {
 
         // Remove purged books from metadata
         Object.keys(purgedBooks).forEach(asin => {
-            delete metadata.books[asin];
+                delete metadata.books[asin];
         });
 
         console.log(`\n📊 Summary: Purged ${purgedCount} books out of ${totalBooks} total`);
-        
+
         // Save updated metadata
         console.log('💾 Saving updated metadata...');
         await safeWriteJSON(metadataPath, metadata);
         
         console.log('✅ Purge process completed successfully\n');
-        return {
+                return { 
             success: true,
             stats: {
                 total_books: totalBooks,
