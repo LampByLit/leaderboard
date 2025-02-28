@@ -48,17 +48,17 @@ function enhancedLog(...args) {
         .filter(line => line.length > 0)
         .join(' | ');
 
-    // Log to console using the original function
-    originalConsoleLog.apply(console, args);
+    // Use originalConsoleLog for actual logging
+    originalConsoleLog(formattedMessage);
 
     // Create broadcast message
     const broadcastMessage = {
-        status: 'log',
+        type: 'log',
         message: formattedMessage,
         timestamp: new Date().toISOString()
     };
 
-    // Add to history and broadcast
+    // Add to history and broadcast to clients
     messageHistory.add(broadcastMessage);
     broadcastToClients(broadcastMessage);
 }
