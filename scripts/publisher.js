@@ -352,8 +352,8 @@ async function publish() {
         await safeWriteJSON(booksPath, publicData);
         
         console.log('✅ Publish process completed successfully\n');
-        return {
-            success: true,
+        return { 
+            success: true, 
             stats: {
                 total_books: totalBooks,
                 ranked_books: rankedCount,

@@ -420,7 +420,7 @@
                 if (/^"/.test(match)) {
                     if (/:$/.test(match)) {
                         cls = 'key';
-                    } else {
+                } else {
                         cls = 'string';
                     }
                 } else if (/true|false/.test(match)) {
@@ -504,8 +504,8 @@
 
                 // Display books in sorted order
                 sortedBooks.forEach(book => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+                const row = document.createElement('tr');
+                row.innerHTML = `
                         <td>${hasInvalidRanks ? `${book.rank} (${book.bsr.toLocaleString()})` : book.rank}</td>
                         <td><img src="${book.cover_url}" alt="Book cover" class="cover-img" onclick="expandCover('${book.cover_url}')"></td>
                         <td><a href="${book.url}" target="_blank" style="color: #1a73e8; text-decoration: none; hover: { color: #1557b0; }">${book.title}</a></td>

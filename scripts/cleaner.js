@@ -154,19 +154,19 @@ async function cleanup() {
         const totalSubmissions = inputData.submissions.length;
         let removedCount = 0;
         const removedSubmissions = [];
-        
+
         // Filter submissions
         const keptSubmissions = inputData.submissions.filter(submission => {
             const asin = extractASIN(submission.url);
             
             // If we can't extract ASIN, mark for removal
-            if (!asin) {
+                if (!asin) {
                 removedCount++;
                 removedSubmissions.push({ ...submission, reason: 'invalid_asin' });
                 console.log(`🗑️ Removed: ${submission.url} (Invalid ASIN)`);
-                return false;
-            }
-            
+                    return false;
+                }
+                
             // Initialize or increment failed attempts counter
             submission.failed_attempts = (submission.failed_attempts || 0) + 1;
             
@@ -205,8 +205,8 @@ async function cleanup() {
         await safeWriteJSON(inputPath, inputData);
         
         console.log('✅ Cleanup process completed successfully\n');
-        return {
-            success: true,
+        return { 
+            success: true, 
             stats: {
                 total_submissions: totalSubmissions,
                 removed_submissions: removedCount,
@@ -216,8 +216,8 @@ async function cleanup() {
         };
     } catch (error) {
         console.error('❌ Cleanup process failed:', error);
-        return {
-            success: false,
+        return { 
+            success: false, 
             error: error.message || 'Unknown error during cleanup'
         };
     }
