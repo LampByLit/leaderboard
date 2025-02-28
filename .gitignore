@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Data files
-/data/
+/data/*
 *.json
 *.backup
 *.temp
