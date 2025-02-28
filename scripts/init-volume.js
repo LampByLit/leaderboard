@@ -1,6 +1,30 @@
+/**
+ * Volume Initialization Module
+ * ==========================
+ * 
+ * Responsible for initializing the data volume with required JSON files
+ * and default configurations. Creates necessary data structures if they
+ * don't exist while preserving existing data.
+ * 
+ * Files Created:
+ * - input.json: Stores incoming submissions
+ * - books.json: Maintains processed book data
+ * - metadata.json: Stores system metadata and book processing state
+ * - blacklist.json: Contains content filtering configuration
+ * 
+ * @module init-volume
+ * @requires fs.promises
+ * @requires path
+ */
+
 const fs = require('fs').promises;
 const path = require('path');
 
+/**
+ * Default content templates for data files
+ * Each file has a specific structure and purpose
+ * @constant {Object}
+ */
 const DEFAULT_FILE_CONTENTS = {
     'input.json': {
         submissions: []
@@ -15,11 +39,22 @@ const DEFAULT_FILE_CONTENTS = {
         last_update: new Date().toISOString()
     },
     'blacklist.json': {
-        patterns: [],
+        title_patterns: [],
+        authors: [],
+        patterns: [], // Keep for backward compatibility
+        version: "2.0.0",
         last_updated: new Date().toISOString()
     }
 };
 
+/**
+ * Initializes the data volume with required files and structures
+ * Creates files if they don't exist, preserves existing ones
+ * @async
+ * @function initializeVolume
+ * @returns {Promise<boolean>} True if initialization succeeds
+ * @throws {Error} If initialization fails
+ */
 async function initializeVolume() {
     try {
         // Get the data directory from environment variable or use current directory

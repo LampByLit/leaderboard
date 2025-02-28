@@ -1,3 +1,27 @@
+/**
+ * Content Purger Module
+ * ====================
+ * 
+ * Responsible for filtering out inappropriate or blacklisted content from the book database.
+ * Implements a multi-layer filtering system with both title and author checks.
+ * 
+ * Key Features:
+ * - Multi-pattern content filtering
+ * - Author blacklisting
+ * - Conservative error handling (blocks on uncertainty)
+ * - Atomic file operations with backups
+ * - Detailed logging of purged content
+ * 
+ * Filtering Strategy:
+ * 1. Title Pattern Matching - Checks for inappropriate keywords
+ * 2. Author Blacklisting - Matches against known problematic authors
+ * 3. Legacy Pattern Support - Maintains backward compatibility
+ * 
+ * @module purger
+ * @requires fs.promises
+ * @requires path
+ */
+
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -37,7 +61,12 @@ async function safeWriteJSON(filePath, data) {
     }
 }
 
-// Helper functions for blacklist matching
+/**
+ * Normalizes a string for consistent comparison
+ * Removes punctuation, extra spaces, and converts to lowercase
+ * @param {string} str - The string to normalize
+ * @returns {string} The normalized string
+ */
 function normalizeString(str) {
     if (!str) return '';
     return str.toLowerCase()
@@ -46,10 +75,13 @@ function normalizeString(str) {
         .trim();
 }
 
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
+/**
+ * Checks if a book's author matches a blacklisted author
+ * Uses normalized string comparison for accuracy
+ * @param {string} bookAuthor - The author to check
+ * @param {string} blacklistAuthor - The blacklisted author to compare against
+ * @returns {boolean} True if the authors match
+ */
 function isAuthorMatch(bookAuthor, blacklistAuthor) {
     if (!bookAuthor || !blacklistAuthor) return false;
     const normalizedBookAuthor = normalizeString(bookAuthor);
@@ -57,23 +89,65 @@ function isAuthorMatch(bookAuthor, blacklistAuthor) {
     return normalizedBookAuthor === normalizedBlacklistAuthor;
 }
 
-function isBlacklisted(book, pattern) {
-    if (!book || !pattern) return false;
-    // Check for author match
-    if (isAuthorMatch(book.author, pattern)) {
-        console.log(`Blacklisted author match: ${book.author}`);
+/**
+ * Determines if a book should be filtered based on blacklist criteria
+ * Implements multi-layer filtering with fallback to conservative blocking
+ * @param {Object} book - The book object to check
+ * @param {Object} blacklist - The blacklist configuration
+ * @returns {boolean} True if the book should be filtered out
+ */
+function isBlacklisted(book, blacklist) {
+    if (!book || !blacklist) return false;
+
+    try {
+        // Check author blacklist
+        if (Array.isArray(blacklist.authors)) {
+            const isAuthorBlacklisted = blacklist.authors.some(author => 
+                isAuthorMatch(book.author, author)
+            );
+            if (isAuthorBlacklisted) {
+                console.log(`🚫 Blacklisted author match: ${book.author}`);
+                return true;
+            }
+        }
+
+        // Check title patterns (new format)
+        if (Array.isArray(blacklist.title_patterns) && book.title) {
+            const normalizedTitle = book.title.toLowerCase();
+            const matchedPattern = blacklist.title_patterns.find(pattern => 
+                normalizedTitle.includes(pattern.toLowerCase())
+            );
+            if (matchedPattern) {
+                console.log(`🚫 Blacklisted title pattern match: "${matchedPattern}" in "${book.title}"`);
+                return true;
+            }
+        }
+
+        // Backward compatibility: Check old patterns format
+        if (Array.isArray(blacklist.patterns)) {
+            for (const pattern of blacklist.patterns) {
+                // Handle old title: prefix format
+                if (pattern.startsWith("title:") && book.title) {
+                    const titlePattern = pattern.slice(6).trim().toLowerCase();
+                    if (book.title.toLowerCase().includes(titlePattern)) {
+                        console.log(`🚫 Legacy title pattern match: "${titlePattern}" in "${book.title}"`);
+                        return true;
+                    }
+                }
+                // Handle old author pattern format
+                else if (isAuthorMatch(book.author, pattern)) {
+                    console.log(`🚫 Legacy author pattern match: ${book.author}`);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    } catch (error) {
+        console.error('Error in isBlacklisted:', error);
+        // In case of error, be conservative and return true to prevent potentially inappropriate content
         return true;
     }
-    // Check for title match if pattern starts with "title:"
-    if (pattern.startsWith("title:") && book.title) {
-        const titlePattern = pattern.slice(6).trim();
-        const isMatch = book.title.toLowerCase().includes(titlePattern.toLowerCase());
-        if (isMatch) {
-            console.log(`Blacklisted title match: ${book.title}`);
-        }
-        return isMatch;
-    }
-    return false;
 }
 
 async function purge() {
@@ -89,23 +163,22 @@ async function purge() {
         const blacklistPath = getDataPath('blacklist.json');
         let blacklist;
         try {
-            blacklist = JSON.parse(await fs.readFile(blacklistPath, 'utf8'));
-            const patterns = [];
+            const blacklistData = await fs.readFile(blacklistPath, 'utf8');
+            blacklist = JSON.parse(blacklistData);
             
-            // Handle both old format (authors) and new format (patterns)
-            if (Array.isArray(blacklist.authors)) {
-                patterns.push(...blacklist.authors);
-            }
-            if (Array.isArray(blacklist.patterns)) {
-                patterns.push(...blacklist.patterns);
-            }
-            
-            blacklist = { patterns };
-            console.log(`🚫 Loaded ${patterns.length} patterns from blacklist`);
+            // Log blacklist configuration
+            console.log(`🚫 Loaded blacklist configuration:
+                - ${blacklist.authors?.length || 0} authors
+                - ${blacklist.title_patterns?.length || 0} title patterns
+                - ${blacklist.patterns?.length || 0} legacy patterns`);
         } catch (error) {
             if (error.code === 'ENOENT') {
                 console.log('⚠️ No blacklist.json found, using empty blacklist');
-                blacklist = { patterns: [] };
+                blacklist = { 
+                    authors: [], 
+                    title_patterns: [], 
+                    patterns: [] 
+                };
             } else {
                 console.error('❌ Error reading blacklist:', error);
                 throw error;
@@ -121,9 +194,7 @@ async function purge() {
         const purgedBooks = {};
         Object.entries(metadata.books).forEach(([asin, book]) => {
             checkedCount++;
-            const isBookBlacklisted = blacklist.patterns.some(pattern => 
-                isBlacklisted(book, pattern)
-            );
+            const isBookBlacklisted = isBlacklisted(book, blacklist);
 
             if (isBookBlacklisted) {
                 purgedCount++;
@@ -134,7 +205,7 @@ async function purge() {
 
         // Remove purged books from metadata
         Object.keys(purgedBooks).forEach(asin => {
-                delete metadata.books[asin];
+            delete metadata.books[asin];
         });
 
         console.log(`\n📊 Summary: Purged ${purgedCount} books out of ${totalBooks} total`);
@@ -144,7 +215,7 @@ async function purge() {
         await safeWriteJSON(metadataPath, metadata);
         
         console.log('✅ Purge process completed successfully\n');
-                return { 
+        return { 
             success: true,
             stats: {
                 total_books: totalBooks,
