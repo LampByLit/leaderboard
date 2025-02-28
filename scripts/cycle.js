@@ -114,7 +114,7 @@ async function cycle() {
     try {
         // Check if another cycle is running
         if (await isCycleLocked()) {
-            console.log('Another cycle is currently running. Please wait.');
+            console.log('🔒 Another cycle is currently running. Please wait.');
             return {
                 success: false,
                 error: 'CYCLE_LOCKED',
@@ -124,6 +124,8 @@ async function cycle() {
 
         // Create lock
         await createLock();
+        console.log('\n🚀 Initializing cycle process...');
+        console.log('📋 Checking system state and dependencies...');
 
         const startTime = Date.now();
         const stats = {
@@ -134,15 +136,15 @@ async function cycle() {
         };
         
         try {
-            console.log('Starting cycle process...');
-            
             // Update cycle status
             const metadataPath = getDataPath('metadata.json');
             let metadata;
             try {
                 metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+                console.log('✅ Successfully loaded metadata');
             } catch (error) {
                 if (error.code === 'ENOENT') {
+                    console.log('⚠️ No existing metadata found, creating new...');
                     metadata = { books: {}, last_update: new Date().toISOString() };
                 } else {
                     throw error;
@@ -154,35 +156,44 @@ async function cycle() {
                 started_at: new Date().toISOString()
             };
             await safeWriteJSON(metadataPath, metadata);
+            console.log('✅ Cycle status updated');
             
             // Run each process in sequence and collect stats
-            console.log('Running scrape...');
+            console.log('\n🔄 Starting scrape process...');
+            console.log('📚 This may take several minutes depending on the number of submissions...');
             const scrapeResult = await scrape();
             if (!scrapeResult.success) {
                 throw new Error(`Scrape failed: ${scrapeResult.error}`);
             }
             stats.scrape = scrapeResult.stats;
+            console.log('✅ Scrape process completed successfully');
             
-            console.log('Running purge...');
+            console.log('\n🧹 Starting purge process...');
+            console.log('🔍 Checking books against blacklist criteria...');
             const purgeResult = await purge();
             if (!purgeResult.success) {
                 throw new Error(`Purge failed: ${purgeResult.error}`);
             }
             stats.purge = purgeResult.stats;
+            console.log('✅ Purge process completed successfully');
             
-            console.log('Running cleanup...');
+            console.log('\n🧼 Starting cleanup process...');
+            console.log('📊 Analyzing submission history and failures...');
             const cleanupResult = await cleanup();
             if (!cleanupResult.success) {
                 throw new Error(`Cleanup failed: ${cleanupResult.error}`);
             }
             stats.cleanup = cleanupResult.stats;
+            console.log('✅ Cleanup process completed successfully');
             
-            console.log('Running publish...');
+            console.log('\n📊 Starting publish process...');
+            console.log('📝 Preparing leaderboard data...');
             const publishResult = await publish();
             if (!publishResult.success) {
                 throw new Error(`Publish failed: ${publishResult.error}`);
             }
             stats.publish = publishResult.stats;
+            console.log('✅ Publish process completed successfully');
             
             // Calculate total duration
             const duration = Date.now() - startTime;
@@ -195,7 +206,11 @@ async function cycle() {
             };
             await safeWriteJSON(metadataPath, metadata);
             
-            console.log('Cycle process completed successfully');
+            console.log('\n🎉 Cycle process completed successfully!');
+            console.log(`⏱️ Total duration: ${(duration / 1000).toFixed(2)} seconds`);
+            console.log('\n📊 Final Statistics:');
+            console.log(JSON.stringify(stats, null, 2));
+            
             return {
                 success: true,
                 stats: {
@@ -205,7 +220,7 @@ async function cycle() {
                 }
             };
         } catch (error) {
-            console.error('Cycle process failed:', error);
+            console.error('\n❌ Cycle process failed:', error);
             
             // Calculate duration even for failed cycles
             const duration = Date.now() - startTime;
@@ -220,8 +235,9 @@ async function cycle() {
                     duration: duration
                 };
                 await safeWriteJSON(metadataPath, metadata);
+                console.log('✅ Failure status recorded in metadata');
             } catch (statusError) {
-                console.error('Failed to update cycle status:', statusError);
+                console.error('❌ Failed to update cycle status:', statusError);
             }
             
             return {
@@ -236,33 +252,15 @@ async function cycle() {
         } finally {
             // Always release the lock when done
             await releaseLock();
+            console.log('🔓 Cycle lock released');
         }
     } catch (error) {
-        console.error('Cycle process failed:', error);
-        
-        // Calculate duration even for failed cycles
-        const duration = Date.now() - startTime;
-        
-        // Update cycle status on failure
-        try {
-            const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
-            metadata.cycle_status = {
-                state: 'failed',
-                error: error.message,
-                failed_at: new Date().toISOString(),
-                duration: duration
-            };
-            await safeWriteJSON(metadataPath, metadata);
-        } catch (statusError) {
-            console.error('Failed to update cycle status:', statusError);
-        }
-        
+        console.error('\n❌ Critical cycle error:', error);
         return {
             success: false,
             error: error.message || 'Unknown error during cycle',
             stats: {
-                ...stats,
-                duration: `${(duration / 1000).toFixed(2)}s`,
+                duration: 'N/A',
                 timestamp: new Date().toISOString()
             }
         };

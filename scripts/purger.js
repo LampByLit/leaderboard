@@ -163,14 +163,17 @@ async function purge() {
         const blacklistPath = getDataPath('blacklist.json');
         let blacklist;
         try {
+            console.log('📋 Loading blacklist configuration...');
             const blacklistData = await fs.readFile(blacklistPath, 'utf8');
             blacklist = JSON.parse(blacklistData);
             
             // Log blacklist configuration
-            console.log(`🚫 Loaded blacklist configuration:
-                - ${blacklist.authors?.length || 0} authors
-                - ${blacklist.title_patterns?.length || 0} title patterns
-                - ${blacklist.patterns?.length || 0} legacy patterns`);
+            console.log(`\n📊 Blacklist Status:
+    - ${blacklist.authors?.length || 0} authors blacklisted
+    - ${blacklist.title_patterns?.length || 0} title patterns
+    - ${blacklist.patterns?.length || 0} legacy patterns
+    - Version: ${blacklist.version}
+    - Last Updated: ${new Date(blacklist.last_updated).toLocaleString()}`);
         } catch (error) {
             if (error.code === 'ENOENT') {
                 console.log('⚠️ No blacklist.json found, using empty blacklist');
@@ -192,26 +195,42 @@ async function purge() {
         let purgedCount = 0;
 
         const purgedBooks = {};
+        console.log(`\n🔍 Scanning ${totalBooks} books...`);
+        
         Object.entries(metadata.books).forEach(([asin, book]) => {
             checkedCount++;
             const isBookBlacklisted = isBlacklisted(book, blacklist);
 
             if (isBookBlacklisted) {
                 purgedCount++;
-                console.log(`🚫 [${checkedCount}/${totalBooks}] Purged: "${book.title}" by ${book.author}`);
+                console.log(`\n🚫 Found blacklisted book (${checkedCount}/${totalBooks}):
+    Title: "${book.title}"
+    Author: ${book.author}
+    BSR: ${book.bsr.toLocaleString()}`);
                 purgedBooks[asin] = book;
+            } else if (checkedCount % 10 === 0 || checkedCount === totalBooks) {
+                // Progress update every 10 books
+                console.log(`✓ Checked ${checkedCount}/${totalBooks} books...`);
             }
         });
 
         // Remove purged books from metadata
-        Object.keys(purgedBooks).forEach(asin => {
-            delete metadata.books[asin];
-        });
+        if (purgedCount > 0) {
+            console.log('\n🗑️ Removing purged books from database...');
+            Object.keys(purgedBooks).forEach(asin => {
+                delete metadata.books[asin];
+            });
+            console.log('✅ Purged books removed successfully');
+        }
 
-        console.log(`\n📊 Summary: Purged ${purgedCount} books out of ${totalBooks} total`);
+        console.log(`\n📊 Purge Summary:
+    - Total Books Scanned: ${totalBooks}
+    - Books Purged: ${purgedCount}
+    - Clean Books: ${totalBooks - purgedCount}
+    - Purge Rate: ${((purgedCount/totalBooks) * 100).toFixed(1)}%`);
 
         // Save updated metadata
-        console.log('💾 Saving updated metadata...');
+        console.log('\n💾 Saving updated metadata...');
         await safeWriteJSON(metadataPath, metadata);
         
         console.log('✅ Purge process completed successfully\n');
