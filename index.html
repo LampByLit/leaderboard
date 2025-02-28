@@ -141,13 +141,14 @@
             height: 200px;
             width: 100%;
             max-width: 800px;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
             border: 1px solid #333;
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
             white-space: pre-wrap;
             word-wrap: break-word;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column-reverse;
         }
 
         /* Console animation keyframes */
@@ -738,6 +739,7 @@
 
             eventSource = new EventSource('/progress');
             const progressElement = document.querySelector('.scrape-progress');
+            const maxMessages = 15; // Maximum number of messages to show
 
             // Update connection status
             function updateConnectionStatus(status, message) {
@@ -745,80 +747,57 @@
                 statusElement.className = `connection-status visible ${status}`;
             }
 
+            // Function to add message to console
+            function addMessageToConsole(formattedMessage) {
+                const messageDiv = document.createElement('div');
+                messageDiv.innerHTML = formattedMessage;
+                
+                // Add message at the beginning (will appear at bottom due to column-reverse)
+                progressElement.insertBefore(messageDiv, progressElement.firstChild);
+                
+                // Remove old messages if we exceed the maximum
+                while (progressElement.children.length > maxMessages) {
+                    progressElement.removeChild(progressElement.lastChild);
+                }
+            }
+
             eventSource.onopen = function() {
                 updateConnectionStatus('connected', '🟢 Connected to server');
             };
 
             eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                
-                // Update connection status with client count
-                if (data.connected_clients) {
-                    updateConnectionStatus('connected', `🟢 Connected (${data.connected_clients} active)`);
-                }
+                try {
+                    const data = JSON.parse(event.data);
+                    let formattedMessage = '';
 
-                // Handle different message types
-                switch(data.type) {
-                    case 'welcome':
-                        console.log('Connected as:', data.client_id);
-                        break;
-                    case 'connection':
-                        // System message about connections
-                        progressElement.innerHTML += '\n' + formatConsoleMessage('system', data.message);
-                        break;
-                    case 'heartbeat':
-                        // Silent ping response
-                        break;
-                    default:
-                        // Handle regular status messages
-                        progressElement.classList.add('visible');
-                        
-                        switch(data.status) {
-                            case 'starting':
-                                progressElement.innerHTML = formatConsoleMessage('starting', data.message);
-                                progressElement.className = 'scrape-progress visible';
-                                cycleButton.disabled = true;
-                                break;
-                                
-                            case 'scraping':
-                            case 'purging':
-                            case 'cleaning':
-                            case 'publishing':
-                                const newMessage = formatConsoleMessage(data.status, data.message, data.stats);
-                                progressElement.innerHTML += '\n' + newMessage;
-                                break;
-                                
-                            case 'log':
-                                const logMessage = formatConsoleMessage('log', data.message);
-                                progressElement.innerHTML += '\n' + logMessage;
-                                break;
-                                
-                            case 'error':
-                                progressElement.innerHTML += '\n' + formatConsoleMessage('error', data.message);
-                                progressElement.className = 'scrape-progress visible error';
-                                cycleButton.disabled = false;
-                                break;
-                                
-                            case 'complete':
-                                const completeMessage = formatConsoleMessage('complete', data.message, data.stats);
-                                progressElement.innerHTML += '\n' + completeMessage;
-                                progressElement.className = 'scrape-progress visible complete';
-                                cycleButton.disabled = false;
-                                loadJsonFiles();
-                                break;
-                        }
+                    // Handle different message types
+                    if (data.type === 'log') {
+                        formattedMessage = `<span class="msg-matrix">${data.message}</span>`;
+                    } else if (data.type === 'history') {
+                        formattedMessage = `<span class="msg-data">${data.message}</span>`;
+                    } else if (data.type === 'connection') {
+                        formattedMessage = `<span class="msg-network">${data.message}</span>`;
+                    } else if (data.status) {
+                        formattedMessage = formatConsoleMessage(data.status, data.message, data.stats);
+                    }
+
+                    if (formattedMessage) {
+                        addMessageToConsole(formattedMessage);
+                    }
+
+                    // Show progress display if not already visible
+                    if (!progressElement.classList.contains('visible')) {
+                        progressElement.className = 'scrape-progress visible';
+                    }
+
+                } catch (error) {
+                    console.error('Error processing message:', error);
+                    addMessageToConsole(formatConsoleMessage('error', 'Error processing message'));
                 }
-                
-                // Auto-scroll to bottom
-                progressElement.scrollTop = progressElement.scrollHeight;
             };
 
-            eventSource.onerror = function(error) {
-                console.error('SSE Error:', error);
-                updateConnectionStatus('error', '🔴 Connection lost. Retrying...');
-                const errorMessage = formatConsoleMessage('error', 'Connection lost. Retrying...');
-                progressElement.innerHTML += '\n' + errorMessage;
-                progressElement.className = 'scrape-progress visible error';
+            eventSource.onerror = function() {
+                updateConnectionStatus('error', '🔴 Connection lost - Retrying...');
             };
 
             // Handle page visibility changes
