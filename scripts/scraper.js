@@ -30,7 +30,7 @@ function formatCookies(cookies) {
 
 // Configure batch processing with more conservative delays
 const BATCH_SIZE = 1; // Process only 1 book at a time
-const BATCH_DELAY = 180000; // 3 minutes between batches
+const BATCH_DELAY = 20000; // 20 seconds between batches
 const MIN_REQUEST_DELAY = 90000; // 1.5 minutes minimum between requests
 const MAX_REQUEST_DELAY = 240000; // 4 minutes maximum between requests
 const MAX_RETRIES = 3; // Maximum number of retries
