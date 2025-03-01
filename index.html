@@ -402,6 +402,71 @@
         .connection-status.error {
             color: #ff3333;
         }
+
+        /* Modal dialog for fallback copy */
+        .copy-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .copy-modal.visible {
+            display: flex;
+        }
+
+        .copy-modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 80%;
+            max-height: 80vh;
+            overflow: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .copy-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .copy-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .copy-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .copy-modal-textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            padding: 8px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            resize: none;
+        }
+
+        .copy-modal-instructions {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -478,6 +543,20 @@
 
     <div class="expanded-cover-container" id="expanded-cover-container">
         <img class="expanded-cover" id="expanded-cover" alt="Expanded Cover">
+    </div>
+
+    <!-- Fallback copy modal -->
+    <div id="copy-modal" class="copy-modal">
+        <div class="copy-modal-content">
+            <div class="copy-modal-header">
+                <h3>Copy JSON Data</h3>
+                <button class="copy-modal-close" onclick="closeCopyModal()">&times;</button>
+            </div>
+            <textarea id="copy-modal-textarea" class="copy-modal-textarea" readonly></textarea>
+            <div class="copy-modal-instructions">
+                Press Ctrl+A to select all, then Ctrl+C to copy. Click outside or press the X to close.
+            </div>
+        </div>
     </div>
 
     <footer style="text-align: center; padding: 20px; margin-top: 40px; color: #666; font-size: 12px;">
@@ -571,7 +650,7 @@
         }
 
         // Function to copy JSON to clipboard
-        async function copyToClipboard(elementId) {
+        function copyToClipboard(elementId) {
             const button = document.querySelector(`#${elementId}`).parentElement.querySelector('.copy-button');
             const originalText = button.textContent;
             
@@ -587,9 +666,39 @@
                     throw new Error('Unknown element ID');
                 }
                 
-                // Copy to clipboard
-                await navigator.clipboard.writeText(contentToCopy);
-                button.textContent = 'Copied!';
+                // Try the execCommand approach first
+                try {
+                    // Create a temporary textarea element
+                    const textarea = document.createElement('textarea');
+                    textarea.value = contentToCopy;
+                    
+                    // Make the textarea out of viewport
+                    textarea.style.position = 'fixed';
+                    textarea.style.left = '-999999px';
+                    textarea.style.top = '-999999px';
+                    document.body.appendChild(textarea);
+                    
+                    // Select and copy the text
+                    textarea.focus();
+                    textarea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    
+                    // Remove the temporary element
+                    document.body.removeChild(textarea);
+                    
+                    if (!successful) {
+                        throw new Error('Copy command failed');
+                    }
+                    
+                    button.textContent = 'Copied!';
+                } catch (execError) {
+                    console.warn('execCommand copy failed, showing fallback modal', execError);
+                    // Show the fallback modal if execCommand fails
+                    showCopyModal(contentToCopy, elementId === 'input-json' ? 'Input JSON' : 'Output JSON');
+                    button.textContent = 'See Modal';
+                }
+                
                 setTimeout(() => {
                     button.textContent = originalText;
                 }, 2000);
@@ -600,6 +709,39 @@
                     button.textContent = originalText;
                 }, 2000);
             }
+        }
+        
+        // Function to show the copy modal
+        function showCopyModal(content, title) {
+            const modal = document.getElementById('copy-modal');
+            const textarea = document.getElementById('copy-modal-textarea');
+            const modalTitle = modal.querySelector('.copy-modal-header h3');
+            
+            // Set content and title
+            textarea.value = content;
+            modalTitle.textContent = `Copy ${title}`;
+            
+            // Show modal
+            modal.classList.add('visible');
+            
+            // Focus textarea for easy copying
+            setTimeout(() => {
+                textarea.focus();
+                textarea.select();
+            }, 100);
+            
+            // Close when clicking outside
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeCopyModal();
+                }
+            };
+        }
+        
+        // Function to close the copy modal
+        function closeCopyModal() {
+            const modal = document.getElementById('copy-modal');
+            modal.classList.remove('visible');
         }
 
         // Function to load and display JSON files
