@@ -11,11 +11,11 @@
  * - Conservative error handling (blocks on uncertainty)
  * - Atomic file operations with backups
  * - Detailed logging of purged content
- * - Brownlist generation for rejected books
+ * - Brownlist tracking of rejected books
  * 
  * Filtering Strategy:
- * 1. Title Pattern Matching - Checks for inappropriate keywords with word boundaries
- * 2. Author Blacklisting - Matches against known problematic authors with flexible matching
+ * 1. Title Pattern Matching - Checks for inappropriate keywords
+ * 2. Author Blacklisting - Matches against known problematic authors
  * 3. Legacy Pattern Support - Maintains backward compatibility
  * 
  * @module purger
@@ -77,8 +77,17 @@ function normalizeString(str) {
 }
 
 /**
- * Checks if a book's author matches a blacklisted author
- * Uses improved matching for better accuracy
+ * Helper function to escape special regex characters
+ * @param {string} string - The string to escape
+ * @returns {string} The escaped string
+ */
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Enhanced function to check if a book's author matches a blacklisted author
+ * Uses multiple matching strategies for better accuracy
  * @param {string} bookAuthor - The author to check
  * @param {string} blacklistAuthor - The blacklisted author to compare against
  * @returns {boolean} True if the authors match
@@ -86,24 +95,39 @@ function normalizeString(str) {
 function isAuthorMatch(bookAuthor, blacklistAuthor) {
     if (!bookAuthor || !blacklistAuthor) return false;
     
-    // Normalize both author names
+    // Normalize both strings
     const normalizedBookAuthor = normalizeString(bookAuthor);
     const normalizedBlacklistAuthor = normalizeString(blacklistAuthor);
     
-    // Check for exact match first
+    // Direct match
     if (normalizedBookAuthor === normalizedBlacklistAuthor) {
-        console.log(`🎯 Exact author match: "${bookAuthor}" matches "${blacklistAuthor}"`);
+        console.log(`Direct author match: "${bookAuthor}" matches "${blacklistAuthor}"`);
         return true;
     }
     
-    // Check if blacklisted author appears as a complete name in book author
-    // This handles cases like "Adolf Hitler" in "The Speeches of Adolf Hitler"
-    const blacklistWords = normalizedBlacklistAuthor.split(' ');
-    if (blacklistWords.length > 1) {
-        // Only check for full name matches (first and last name together)
-        // This avoids matching common first names or last names independently
-        if (normalizedBookAuthor.includes(normalizedBlacklistAuthor)) {
-            console.log(`🎯 Full name match: "${blacklistAuthor}" found in "${bookAuthor}"`);
+    // Check if blacklisted author is contained within book author
+    if (normalizedBookAuthor.includes(normalizedBlacklistAuthor)) {
+        console.log(`Partial author match: "${bookAuthor}" contains "${blacklistAuthor}"`);
+        return true;
+    }
+    
+    // Check if book author is contained within blacklisted author
+    if (normalizedBlacklistAuthor.includes(normalizedBookAuthor)) {
+        console.log(`Partial author match: "${blacklistAuthor}" contains "${bookAuthor}"`);
+        return true;
+    }
+    
+    // Check for name parts (first name, last name)
+    const bookAuthorParts = normalizedBookAuthor.split(' ');
+    const blacklistAuthorParts = normalizedBlacklistAuthor.split(' ');
+    
+    // Check if last names match (assuming last part is last name)
+    if (bookAuthorParts.length > 0 && blacklistAuthorParts.length > 0) {
+        const bookLastName = bookAuthorParts[bookAuthorParts.length - 1];
+        const blacklistLastName = blacklistAuthorParts[blacklistAuthorParts.length - 1];
+        
+        if (bookLastName === blacklistLastName && bookLastName.length > 3) {
+            console.log(`Last name match: "${bookAuthor}" and "${blacklistAuthor}" share last name "${bookLastName}"`);
             return true;
         }
     }
@@ -112,40 +136,130 @@ function isAuthorMatch(bookAuthor, blacklistAuthor) {
 }
 
 /**
- * Checks if a title contains a blacklisted pattern with word boundary checks
- * @param {string} title - The book title to check
- * @param {string} pattern - The blacklisted pattern to look for
- * @returns {boolean} True if the pattern is found with word boundaries
+ * Enhanced function to check if a book title contains blacklisted patterns
+ * @param {string} bookTitle - The title to check
+ * @param {Array<string>} titlePatterns - Array of blacklisted title patterns
+ * @returns {Object} Result object with isBlacklisted flag and matchedPattern
  */
-function isTitlePatternMatch(title, pattern) {
-    if (!title || !pattern) return false;
-    
-    const normalizedTitle = normalizeString(title);
-    const normalizedPattern = normalizeString(pattern);
-    
-    // Create a regex with word boundaries to avoid matching substrings within words
-    // This prevents matching "adult" in "adulteration" or "nigger" in "snigger"
-    const regex = new RegExp(`\\b${normalizedPattern}\\b`, 'i');
-    
-    // Test if the pattern exists with word boundaries
-    const isMatch = regex.test(normalizedTitle);
-    
-    if (isMatch) {
-        console.log(`🎯 Title pattern match: "${pattern}" found in "${title}" with word boundaries`);
+function isTitleBlacklisted(bookTitle, titlePatterns) {
+    if (!bookTitle || !Array.isArray(titlePatterns)) {
+        return { isBlacklisted: false, matchedPattern: null };
     }
     
-    return isMatch;
+    const normalizedTitle = normalizeString(bookTitle);
+    
+    for (const pattern of titlePatterns) {
+        const normalizedPattern = normalizeString(pattern);
+        
+        // Skip empty patterns
+        if (!normalizedPattern) continue;
+        
+        // Check for exact pattern match
+        if (normalizedTitle.includes(normalizedPattern)) {
+            console.log(`Title pattern match: "${pattern}" found in "${bookTitle}"`);
+            return {
+                isBlacklisted: true,
+                matchedPattern: pattern
+            };
+        }
+        
+        // Check for word boundary match (to avoid matching substrings within words)
+        try {
+            const wordBoundaryRegex = new RegExp(`\\b${escapeRegExp(normalizedPattern)}\\b`, 'i');
+            if (wordBoundaryRegex.test(normalizedTitle)) {
+                console.log(`Word boundary title match: "${pattern}" found as whole word in "${bookTitle}"`);
+                return {
+                    isBlacklisted: true,
+                    matchedPattern: pattern
+                };
+            }
+        } catch (error) {
+            console.error(`Error creating regex for pattern "${pattern}":`, error);
+        }
+    }
+    
+    return {
+        isBlacklisted: false,
+        matchedPattern: null
+    };
 }
 
 /**
- * Determines if a book should be filtered based on blacklist criteria
- * Implements multi-layer filtering with fallback to conservative blocking
+ * Logs detailed information about a purged book
+ * @param {Object} book - The book object being purged
+ * @param {string} reason - The reason for purging
+ * @param {string} matchedPattern - The pattern that triggered the purge
+ */
+function logPurgeAction(book, reason, matchedPattern) {
+    const timestamp = new Date().toISOString();
+    console.log(`\n[${timestamp}] 🚫 PURGED: "${book.title}" by ${book.author}`);
+    console.log(`  Reason: ${reason}`);
+    console.log(`  Matched Pattern: "${matchedPattern}"`);
+    console.log(`  BSR: ${book.bsr?.toLocaleString() || 'N/A'}`);
+    console.log(`  URL: ${book.url || 'N/A'}`);
+    console.log(`  ASIN: ${book.asin || 'N/A'}`);
+}
+
+/**
+ * Adds a rejected book to the brownlist.json file
+ * @param {Object} book - The book object being rejected
+ * @param {string} reason - The reason for rejection
+ * @param {string} matchedPattern - The pattern that triggered the rejection
+ */
+async function addToBrownlist(book, reason, matchedPattern) {
+    const brownlistPath = getDataPath('brownlist.json');
+    let brownlist;
+    
+    try {
+        try {
+            brownlist = JSON.parse(await fs.readFile(brownlistPath, 'utf8'));
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                brownlist = {
+                    version: "1.0.0",
+                    last_updated: new Date().toISOString(),
+                    rejected_books: []
+                };
+            } else {
+                throw err;
+            }
+        }
+        
+        // Add the rejected book to the brownlist
+        brownlist.rejected_books.push({
+            asin: book.asin,
+            title: book.title,
+            author: book.author,
+            url: book.url,
+            bsr: book.bsr,
+            rejection_reason: reason,
+            matched_pattern: matchedPattern,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Update last_updated timestamp
+        brownlist.last_updated = new Date().toISOString();
+        
+        // Save the updated brownlist
+        await safeWriteJSON(brownlistPath, brownlist);
+        
+        console.log(`✅ Added to brownlist: "${book.title}" by ${book.author}`);
+    } catch (error) {
+        console.error(`❌ Error adding to brownlist: ${error.message}`);
+    }
+}
+
+/**
+ * Enhanced function to determine if a book should be filtered based on blacklist criteria
+ * Implements multi-layer filtering with detailed result information
  * @param {Object} book - The book object to check
  * @param {Object} blacklist - The blacklist configuration
- * @returns {Object} Result object with isBlacklisted flag and reason
+ * @returns {Object} Result object with isBlacklisted flag, reason, and matchedPattern
  */
 function isBlacklisted(book, blacklist) {
-    if (!book || !blacklist) return { isBlacklisted: false };
+    if (!book || !blacklist) {
+        return { isBlacklisted: false, reason: null, matchedPattern: null };
+    }
 
     try {
         // Check author blacklist
@@ -154,25 +268,22 @@ function isBlacklisted(book, blacklist) {
                 if (isAuthorMatch(book.author, author)) {
                     return {
                         isBlacklisted: true,
-                        reason: `Blacklisted author: ${author}`,
-                        matchedPattern: author,
-                        matchType: 'author'
+                        reason: "blacklisted_author",
+                        matchedPattern: author
                     };
                 }
             }
         }
 
-        // Check title patterns (new format) with word boundary checks
+        // Check title patterns (new format)
         if (Array.isArray(blacklist.title_patterns) && book.title) {
-            for (const pattern of blacklist.title_patterns) {
-                if (isTitlePatternMatch(book.title, pattern)) {
-                    return {
-                        isBlacklisted: true,
-                        reason: `Blacklisted title pattern: "${pattern}"`,
-                        matchedPattern: pattern,
-                        matchType: 'title_pattern'
-                    };
-                }
+            const titleCheck = isTitleBlacklisted(book.title, blacklist.title_patterns);
+            if (titleCheck.isBlacklisted) {
+                return {
+                    isBlacklisted: true,
+                    reason: "blacklisted_title_pattern",
+                    matchedPattern: titleCheck.matchedPattern
+                };
             }
         }
 
@@ -182,12 +293,12 @@ function isBlacklisted(book, blacklist) {
                 // Handle old title: prefix format
                 if (pattern.startsWith("title:") && book.title) {
                     const titlePattern = pattern.slice(6).trim();
-                    if (isTitlePatternMatch(book.title, titlePattern)) {
+                    const titleCheck = isTitleBlacklisted(book.title, [titlePattern]);
+                    if (titleCheck.isBlacklisted) {
                         return {
                             isBlacklisted: true,
-                            reason: `Legacy title pattern: "${titlePattern}"`,
-                            matchedPattern: titlePattern,
-                            matchType: 'legacy_title_pattern'
+                            reason: "legacy_title_pattern",
+                            matchedPattern: titlePattern
                         };
                     }
                 }
@@ -195,26 +306,29 @@ function isBlacklisted(book, blacklist) {
                 else if (isAuthorMatch(book.author, pattern)) {
                     return {
                         isBlacklisted: true,
-                        reason: `Legacy author pattern: ${pattern}`,
-                        matchedPattern: pattern,
-                        matchType: 'legacy_author'
+                        reason: "legacy_author_pattern",
+                        matchedPattern: pattern
                     };
                 }
             }
         }
 
-        return { isBlacklisted: false };
+        return { isBlacklisted: false, reason: null, matchedPattern: null };
     } catch (error) {
         console.error('Error in isBlacklisted:', error);
         // In case of error, be conservative and return true to prevent potentially inappropriate content
-        return { 
-            isBlacklisted: true, 
-            reason: `Error during filtering: ${error.message}`,
-            matchType: 'error'
+        return {
+            isBlacklisted: true,
+            reason: "error_during_check",
+            matchedPattern: error.message
         };
     }
 }
 
+/**
+ * Main purge function that removes blacklisted books from the database
+ * @returns {Object} Result object with success flag and statistics
+ */
 async function purge() {
     try {
         console.log('\n🧹 Starting purge process...');
@@ -253,27 +367,6 @@ async function purge() {
             }
         }
 
-        // Initialize brownlist
-        const brownlistPath = getDataPath('brownlist.json');
-        let brownlist;
-        try {
-            const brownlistData = await fs.readFile(brownlistPath, 'utf8');
-            brownlist = JSON.parse(brownlistData);
-            console.log(`📋 Loaded existing brownlist with ${Object.keys(brownlist.rejected_books).length} entries`);
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                console.log('📋 Creating new brownlist.json file');
-                brownlist = {
-                    version: '1.0.0',
-                    last_updated: new Date().toISOString(),
-                    rejected_books: {}
-                };
-            } else {
-                console.error('❌ Error reading brownlist:', error);
-                throw error;
-            }
-        }
-
         // Process books
         console.log('\n📚 Checking books against blacklist...');
         const totalBooks = Object.keys(metadata.books).length;
@@ -283,34 +376,37 @@ async function purge() {
         const purgedBooks = {};
         console.log(`\n🔍 Scanning ${totalBooks} books...`);
         
+        // Create an array of promises for brownlist additions
+        const brownlistPromises = [];
+        
         for (const [asin, book] of Object.entries(metadata.books)) {
             checkedCount++;
-            const result = isBlacklisted(book, blacklist);
+            const blacklistResult = isBlacklisted(book, blacklist);
 
-            if (result.isBlacklisted) {
+            if (blacklistResult.isBlacklisted) {
                 purgedCount++;
-                console.log(`\n🚫 Found blacklisted book (${checkedCount}/${totalBooks}):
-    Title: "${book.title}"
-    Author: ${book.author}
-    BSR: ${book.bsr.toLocaleString()}
-    Reason: ${result.reason}`);
                 
+                // Log detailed purge information
+                logPurgeAction(book, blacklistResult.reason, blacklistResult.matchedPattern);
+                
+                // Add to purged books
                 purgedBooks[asin] = book;
                 
-                // Add to brownlist
-                brownlist.rejected_books[asin] = {
-                    title: book.title,
-                    author: book.author,
-                    url: book.url,
-                    rejection_reason: result.reason,
-                    matched_pattern: result.matchedPattern || '',
-                    match_type: result.matchType || 'unknown',
-                    timestamp: new Date().toISOString()
-                };
+                // Add to brownlist (collect promise)
+                brownlistPromises.push(
+                    addToBrownlist(book, blacklistResult.reason, blacklistResult.matchedPattern)
+                );
             } else if (checkedCount % 10 === 0 || checkedCount === totalBooks) {
                 // Progress update every 10 books
                 console.log(`✓ Checked ${checkedCount}/${totalBooks} books...`);
             }
+        }
+
+        // Wait for all brownlist additions to complete
+        if (brownlistPromises.length > 0) {
+            console.log(`\n📝 Adding ${brownlistPromises.length} books to brownlist...`);
+            await Promise.all(brownlistPromises);
+            console.log('✅ Brownlist updated successfully');
         }
 
         // Remove purged books from metadata
@@ -320,14 +416,6 @@ async function purge() {
                 delete metadata.books[asin];
             });
             console.log('✅ Purged books removed successfully');
-            
-            // Update brownlist timestamp
-            brownlist.last_updated = new Date().toISOString();
-            
-            // Save brownlist
-            console.log('💾 Saving brownlist with rejected books...');
-            await safeWriteJSON(brownlistPath, brownlist);
-            console.log(`✅ Brownlist saved with ${Object.keys(brownlist.rejected_books).length} total entries`);
         }
 
         console.log(`\n📊 Purge Summary:
