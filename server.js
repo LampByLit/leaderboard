@@ -221,6 +221,27 @@ app.get('/api/data/books', async (req, res) => {
     }
 });
 
+app.get('/api/data/metadata', async (req, res) => {
+    try {
+        const filePath = getDataPath('metadata.json');
+        const data = await fs.readFile(filePath, 'utf8');
+        const jsonData = JSON.parse(data);
+        
+        // Filter out sensitive information and only include necessary data
+        const sanitizedData = {
+            last_update: jsonData.last_update,
+            cycle_status: jsonData.cycle_status || { state: 'idle' },
+            books_count: Object.keys(jsonData.books || {}).length,
+            limiter_enabled: jsonData.limiter_enabled
+        };
+        
+        res.json(sanitizedData);
+    } catch (error) {
+        console.error('Error reading metadata:', error);
+        res.status(500).json({ error: 'Failed to read metadata' });
+    }
+});
+
 // Helper function for safe file writing with retries
 async function safeWriteJSON(filePath, data, retries = 3) {
     const backupPath = `${filePath}.backup`;
@@ -706,13 +727,6 @@ app.post('/cycle', async (req, res) => {
             });
         }
         
-        // Get options from request body
-        const options = {
-            runPurgeStep: req.body.runPurgeStep === true // Default to false if not specified
-        };
-        
-        console.log(`🔧 Cycle options: ${JSON.stringify(options)}`);
-        
         const startTime = Date.now();
         let currentStage = 'init';
         let cycleStats = {
@@ -761,35 +775,25 @@ app.post('/cycle', async (req, res) => {
             }
             cycleStats.scrape = scrapeResult.stats;
             
-            // Run purge if requested or skip if already done during scraping
+            // Run purge
             currentStage = 'purging';
-            if (options.runPurgeStep) {
-                console.log('🧹 Running additional purge process...');
-                sendProgressToClients({ 
-                    status: 'purging', 
-                    message: '🧹 Running additional purge process...',
-                    timestamp: new Date().toISOString()
-                });
-                const purgeResult = await purge();
-                if (!purgeResult.success) {
-                    throw new Error(`Purge failed: ${purgeResult.error}`);
-                }
-                cycleStats.purge = purgeResult.stats;
-                sendProgressToClients({
-                    status: 'purging',
-                    message: '🧹 Additional purge process completed',
-                    timestamp: new Date().toISOString(),
-                    stats: purgeResult.stats
-                });
-            } else {
-                console.log('🧹 Skipping separate purge process (already done during scraping)');
-                sendProgressToClients({ 
-                    status: 'purging', 
-                    message: '🧹 Skipping separate purge (already done during scraping)',
-                    timestamp: new Date().toISOString()
-                });
-                cycleStats.purge = { skipped: true, reason: 'Purging performed during scrape process' };
+            console.log('🧹 Running purge process...');
+            sendProgressToClients({ 
+                status: 'purging', 
+                message: '🧹 Running purge process...',
+                timestamp: new Date().toISOString()
+            });
+            const purgeResult = await purge();
+            if (!purgeResult.success) {
+                throw new Error(`Purge failed: ${purgeResult.error}`);
             }
+            cycleStats.purge = purgeResult.stats;
+            sendProgressToClients({
+                status: 'purging',
+                message: '🧹 Purge process completed',
+                timestamp: new Date().toISOString(),
+                stats: purgeResult.stats
+            });
             
             // Run cleanup
             currentStage = 'cleaning';
