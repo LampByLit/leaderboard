@@ -29,8 +29,6 @@ const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
 const zlib = require('zlib');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { purge } = require('./purger'); // Import the purge function
 
 // Configure data directory
