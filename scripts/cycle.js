@@ -106,12 +106,21 @@ async function safeWriteJSON(filePath, data) {
 /**
  * Runs a complete cycle of operations:
  * 1. Cleanup - Removes invalid submissions
- * 2. Scrape - Fetches latest data from Amazon
- * 3. Purge - Removes blacklisted authors
- * 4. Publish - Updates the leaderboard
+ * 2. Scrape - Fetches latest data from Amazon (now includes purging after each batch)
+ * 3. Publish - Updates the leaderboard
+ * 
+ * Note: The separate purge step is now optional since purging happens during scraping
  */
-async function cycle() {
+async function cycle(options = {}) {
     try {
+        // Default options
+        const defaultOptions = {
+            runPurgeStep: false, // Default to false since purging now happens during scraping
+        };
+        
+        // Merge provided options with defaults
+        const cycleOptions = { ...defaultOptions, ...options };
+        
         // Check if another cycle is running
         if (await isCycleLocked()) {
             console.log('🔒 Another cycle is currently running. Please wait.');
@@ -168,14 +177,20 @@ async function cycle() {
             stats.scrape = scrapeResult.stats;
             console.log('✅ Scrape process completed successfully');
             
-            console.log('\n🧹 Starting purge process...');
-            console.log('🔍 Checking books against blacklist criteria...');
-            const purgeResult = await purge();
-            if (!purgeResult.success) {
-                throw new Error(`Purge failed: ${purgeResult.error}`);
+            // Only run the purge step if explicitly requested
+            if (cycleOptions.runPurgeStep) {
+                console.log('\n🧹 Starting additional purge process...');
+                console.log('🔍 Checking books against blacklist criteria...');
+                const purgeResult = await purge();
+                if (!purgeResult.success) {
+                    throw new Error(`Purge failed: ${purgeResult.error}`);
+                }
+                stats.purge = purgeResult.stats;
+                console.log('✅ Purge process completed successfully');
+            } else {
+                console.log('\n🧹 Skipping separate purge process (already done during scraping)');
+                stats.purge = { skipped: true, reason: 'Purging performed during scrape process' };
             }
-            stats.purge = purgeResult.stats;
-            console.log('✅ Purge process completed successfully');
             
             console.log('\n🧼 Starting cleanup process...');
             console.log('📊 Analyzing submission history and failures...');

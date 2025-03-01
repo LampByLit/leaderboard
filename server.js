@@ -706,6 +706,13 @@ app.post('/cycle', async (req, res) => {
             });
         }
         
+        // Get options from request body
+        const options = {
+            runPurgeStep: req.body.runPurgeStep === true // Default to false if not specified
+        };
+        
+        console.log(`🔧 Cycle options: ${JSON.stringify(options)}`);
+        
         const startTime = Date.now();
         let currentStage = 'init';
         let cycleStats = {
@@ -754,25 +761,35 @@ app.post('/cycle', async (req, res) => {
             }
             cycleStats.scrape = scrapeResult.stats;
             
-            // Run purge
+            // Run purge if requested or skip if already done during scraping
             currentStage = 'purging';
-            console.log('🧹 Running purge process...');
-            sendProgressToClients({ 
-                status: 'purging', 
-                message: '🧹 Running purge process...',
-                timestamp: new Date().toISOString()
-            });
-            const purgeResult = await purge();
-            if (!purgeResult.success) {
-                throw new Error(`Purge failed: ${purgeResult.error}`);
+            if (options.runPurgeStep) {
+                console.log('🧹 Running additional purge process...');
+                sendProgressToClients({ 
+                    status: 'purging', 
+                    message: '🧹 Running additional purge process...',
+                    timestamp: new Date().toISOString()
+                });
+                const purgeResult = await purge();
+                if (!purgeResult.success) {
+                    throw new Error(`Purge failed: ${purgeResult.error}`);
+                }
+                cycleStats.purge = purgeResult.stats;
+                sendProgressToClients({
+                    status: 'purging',
+                    message: '🧹 Additional purge process completed',
+                    timestamp: new Date().toISOString(),
+                    stats: purgeResult.stats
+                });
+            } else {
+                console.log('🧹 Skipping separate purge process (already done during scraping)');
+                sendProgressToClients({ 
+                    status: 'purging', 
+                    message: '🧹 Skipping separate purge (already done during scraping)',
+                    timestamp: new Date().toISOString()
+                });
+                cycleStats.purge = { skipped: true, reason: 'Purging performed during scrape process' };
             }
-            cycleStats.purge = purgeResult.stats;
-            sendProgressToClients({
-                status: 'purging',
-                message: '🧹 Purge process completed',
-                timestamp: new Date().toISOString(),
-                stats: purgeResult.stats
-            });
             
             // Run cleanup
             currentStage = 'cleaning';
