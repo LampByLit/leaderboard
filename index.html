@@ -489,6 +489,9 @@
         let progressSource = null;
         let cycleStatusInterval = null;
         let eventSource = null;
+        // Store original JSON data for copying
+        let originalInputData = null;
+        let originalOutputData = null;
 
         // Function to check cycle status
         async function checkCycleStatus() {
@@ -569,16 +572,23 @@
 
         // Function to copy JSON to clipboard
         async function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const button = element.parentElement.querySelector('.copy-button');
+            const button = document.querySelector(`#${elementId}`).parentElement.querySelector('.copy-button');
             const originalText = button.textContent;
             
             try {
-                // Get the text content and strip HTML tags
-                const content = element.textContent;
+                let contentToCopy;
+                
+                // Use the appropriate original data based on which button was clicked
+                if (elementId === 'input-json') {
+                    contentToCopy = JSON.stringify(originalInputData, null, 2);
+                } else if (elementId === 'output-json') {
+                    contentToCopy = JSON.stringify(originalOutputData, null, 2);
+                } else {
+                    throw new Error('Unknown element ID');
+                }
                 
                 // Copy to clipboard
-                await navigator.clipboard.writeText(content);
+                await navigator.clipboard.writeText(contentToCopy);
                 button.textContent = 'Copied!';
                 setTimeout(() => {
                     button.textContent = originalText;
@@ -601,10 +611,10 @@
                     throw new Error(`Failed to fetch input data: ${inputResponse.statusText}`);
                 }
                 const inputData = await inputResponse.json();
+                // Store original data for copying
+                originalInputData = inputData;
                 const inputElement = document.getElementById('input-json');
                 inputElement.innerHTML = syntaxHighlight(inputData);
-                // Store raw JSON for copying
-                // inputElement.setAttribute('data-raw-json', JSON.stringify(inputData, null, 2));
 
                 // Fetch books data from API
                 const outputResponse = await fetch('/api/data/books');
@@ -612,10 +622,10 @@
                     throw new Error(`Failed to fetch books data: ${outputResponse.statusText}`);
                 }
                 const outputData = await outputResponse.json();
+                // Store original data for copying
+                originalOutputData = outputData;
                 const outputElement = document.getElementById('output-json');
                 outputElement.innerHTML = syntaxHighlight(outputData);
-                // Store raw JSON for copying
-                // outputElement.setAttribute('data-raw-json', JSON.stringify(outputData, null, 2));
 
                 // Update leaderboard
                 const leaderboardBody = document.getElementById('leaderboard-body');
@@ -666,6 +676,9 @@
                 }
             } catch (error) {
                 console.error('Error loading JSON files:', error);
+                // Reset original data
+                originalInputData = { error: 'Failed to load input data' };
+                originalOutputData = { error: 'Failed to load books data' };
                 // Show error in code blocks
                 document.getElementById('input-json').innerHTML = syntaxHighlight({ error: 'Failed to load input data' });
                 document.getElementById('output-json').innerHTML = syntaxHighlight({ error: 'Failed to load books data' });
