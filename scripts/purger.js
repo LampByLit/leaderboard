@@ -11,6 +11,7 @@
  * - Conservative error handling (blocks on uncertainty)
  * - Atomic file operations with backups
  * - Detailed logging of purged content
+ * - Brownlist creation for rejected books
  * 
  * Filtering Strategy:
  * 1. Title Pattern Matching - Checks for inappropriate keywords
@@ -76,17 +77,142 @@ function normalizeString(str) {
 }
 
 /**
- * Checks if a book's author matches a blacklisted author
- * Uses normalized string comparison for accuracy
+ * Enhanced author matching with support for name variations
+ * Checks for exact matches and also handles cases with middle names/initials
  * @param {string} bookAuthor - The author to check
  * @param {string} blacklistAuthor - The blacklisted author to compare against
  * @returns {boolean} True if the authors match
  */
 function isAuthorMatch(bookAuthor, blacklistAuthor) {
     if (!bookAuthor || !blacklistAuthor) return false;
+    
+    // Normalize both strings
     const normalizedBookAuthor = normalizeString(bookAuthor);
     const normalizedBlacklistAuthor = normalizeString(blacklistAuthor);
-    return normalizedBookAuthor === normalizedBlacklistAuthor;
+    
+    // Exact match check
+    if (normalizedBookAuthor === normalizedBlacklistAuthor) {
+        console.log(`🔍 Author exact match: "${bookAuthor}" matches "${blacklistAuthor}"`);
+        return true;
+    }
+    
+    // Partial name match (for cases with middle names/initials)
+    const bookAuthorParts = normalizedBookAuthor.split(' ');
+    const blacklistAuthorParts = normalizedBlacklistAuthor.split(' ');
+    
+    // Check if first and last names match when there are multiple parts
+    if (bookAuthorParts.length >= 2 && blacklistAuthorParts.length >= 2) {
+        const bookFirstLast = [bookAuthorParts[0], bookAuthorParts[bookAuthorParts.length - 1]].join(' ');
+        const blacklistFirstLast = [blacklistAuthorParts[0], blacklistAuthorParts[blacklistAuthorParts.length - 1]].join(' ');
+        
+        if (bookFirstLast === blacklistFirstLast) {
+            console.log(`🔍 Author partial match: "${bookAuthor}" matches "${blacklistAuthor}" (first/last name)`);
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Enhanced title pattern matching with word boundary checks
+ * @param {string} title - The book title to check
+ * @param {Array<string>} patterns - List of blacklisted patterns
+ * @returns {boolean} True if the title contains a blacklisted pattern
+ */
+function isTitlePatternMatch(title, patterns) {
+    if (!title || !patterns || !Array.isArray(patterns)) return false;
+    
+    const normalizedTitle = title.toLowerCase();
+    
+    for (const pattern of patterns) {
+        // Simple contains check for short patterns (less than 4 chars)
+        if (pattern.length < 4) {
+            if (normalizedTitle.includes(pattern.toLowerCase())) {
+                console.log(`🚫 Title pattern match (simple): "${pattern}" in "${title}"`);
+                return true;
+            }
+        } else {
+            // Use word boundary check for longer patterns to avoid false positives
+            try {
+                const regex = new RegExp(`\\b${pattern.toLowerCase()}\\b`, 'i');
+                if (regex.test(normalizedTitle)) {
+                    console.log(`🚫 Title pattern match (word boundary): "${pattern}" in "${title}"`);
+                    return true;
+                }
+            } catch (error) {
+                // Fallback to simple contains if regex fails (e.g., for special characters)
+                if (normalizedTitle.includes(pattern.toLowerCase())) {
+                    console.log(`🚫 Title pattern match (fallback): "${pattern}" in "${title}"`);
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Log detailed information about filtering decisions
+ * @param {Object} book - The book being checked
+ * @param {boolean} isFiltered - Whether the book was filtered
+ * @param {string} reason - The reason for the decision
+ */
+function logFilterDecision(book, isFiltered, reason) {
+    const status = isFiltered ? '🚫 FILTERED' : '✅ KEPT';
+    console.log(`${status}: "${book.title}" by ${book.author}`);
+    console.log(`   BSR: ${book.bsr.toLocaleString()}`);
+    console.log(`   Reason: ${reason}`);
+    console.log(`   URL: ${book.url}`);
+    console.log('-----------------------------------');
+}
+
+/**
+ * Add a rejected book to the brownlist
+ * @param {Object} book - The rejected book
+ * @param {string} reason - The reason for rejection
+ */
+async function addToBrownlist(book, reason) {
+    const brownlistPath = getDataPath('brownlist.json');
+    let brownlist;
+    
+    try {
+        try {
+            brownlist = JSON.parse(await fs.readFile(brownlistPath, 'utf8'));
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                brownlist = { 
+                    rejected_books: [],
+                    last_updated: new Date().toISOString(),
+                    version: "1.0.0"
+                };
+                console.log('📝 Creating new brownlist.json file');
+            } else {
+                throw err;
+            }
+        }
+        
+        // Add the rejected book with timestamp and reason
+        brownlist.rejected_books.push({
+            title: book.title,
+            author: book.author,
+            url: book.url,
+            bsr: book.bsr,
+            asin: book.asin,
+            rejected_at: new Date().toISOString(),
+            reason: reason
+        });
+        
+        // Update last_updated timestamp
+        brownlist.last_updated = new Date().toISOString();
+        
+        // Save the updated brownlist
+        await safeWriteJSON(brownlistPath, brownlist);
+        console.log(`📝 Added to brownlist: "${book.title}" by ${book.author}`);
+    } catch (error) {
+        console.error('Error updating brownlist:', error);
+    }
 }
 
 /**
@@ -94,32 +220,33 @@ function isAuthorMatch(bookAuthor, blacklistAuthor) {
  * Implements multi-layer filtering with fallback to conservative blocking
  * @param {Object} book - The book object to check
  * @param {Object} blacklist - The blacklist configuration
- * @returns {boolean} True if the book should be filtered out
+ * @returns {Object} Result with isBlacklisted flag and reason
  */
 function isBlacklisted(book, blacklist) {
-    if (!book || !blacklist) return false;
+    if (!book || !blacklist) return { isBlacklisted: false, reason: 'Invalid input' };
 
     try {
         // Check author blacklist
         if (Array.isArray(blacklist.authors)) {
-            const isAuthorBlacklisted = blacklist.authors.some(author => 
+            const blacklistedAuthor = blacklist.authors.find(author => 
                 isAuthorMatch(book.author, author)
             );
-            if (isAuthorBlacklisted) {
-                console.log(`🚫 Blacklisted author match: ${book.author}`);
-                return true;
+            
+            if (blacklistedAuthor) {
+                return { 
+                    isBlacklisted: true, 
+                    reason: `Blacklisted author: ${blacklistedAuthor}` 
+                };
             }
         }
 
         // Check title patterns (new format)
         if (Array.isArray(blacklist.title_patterns) && book.title) {
-            const normalizedTitle = book.title.toLowerCase();
-            const matchedPattern = blacklist.title_patterns.find(pattern => 
-                normalizedTitle.includes(pattern.toLowerCase())
-            );
-            if (matchedPattern) {
-                console.log(`🚫 Blacklisted title pattern match: "${matchedPattern}" in "${book.title}"`);
-                return true;
+            if (isTitlePatternMatch(book.title, blacklist.title_patterns)) {
+                return { 
+                    isBlacklisted: true, 
+                    reason: 'Blacklisted title pattern' 
+                };
             }
         }
 
@@ -128,31 +255,39 @@ function isBlacklisted(book, blacklist) {
             for (const pattern of blacklist.patterns) {
                 // Handle old title: prefix format
                 if (pattern.startsWith("title:") && book.title) {
-                    const titlePattern = pattern.slice(6).trim().toLowerCase();
-                    if (book.title.toLowerCase().includes(titlePattern)) {
-                        console.log(`🚫 Legacy title pattern match: "${titlePattern}" in "${book.title}"`);
-                        return true;
+                    const titlePattern = pattern.slice(6).trim();
+                    if (book.title.toLowerCase().includes(titlePattern.toLowerCase())) {
+                        return { 
+                            isBlacklisted: true, 
+                            reason: `Legacy title pattern: ${titlePattern}` 
+                        };
                     }
                 }
                 // Handle old author pattern format
                 else if (isAuthorMatch(book.author, pattern)) {
-                    console.log(`🚫 Legacy author pattern match: ${book.author}`);
-                    return true;
+                    return { 
+                        isBlacklisted: true, 
+                        reason: `Legacy author pattern: ${pattern}` 
+                    };
                 }
             }
         }
 
-        return false;
+        return { isBlacklisted: false, reason: 'Passed all checks' };
     } catch (error) {
         console.error('Error in isBlacklisted:', error);
         // In case of error, be conservative and return true to prevent potentially inappropriate content
-        return true;
+        return { 
+            isBlacklisted: true, 
+            reason: `Error during check: ${error.message}` 
+        };
     }
 }
 
 async function purge() {
     try {
         console.log('\n🧹 Starting purge process...');
+        console.log('⏱️ ' + new Date().toISOString());
         
         // Read metadata.json
         const metadataPath = getDataPath('metadata.json');
@@ -172,8 +307,8 @@ async function purge() {
     - ${blacklist.authors?.length || 0} authors blacklisted
     - ${blacklist.title_patterns?.length || 0} title patterns
     - ${blacklist.patterns?.length || 0} legacy patterns
-    - Version: ${blacklist.version}
-    - Last Updated: ${new Date(blacklist.last_updated).toLocaleString()}`);
+    - Version: ${blacklist.version || 'unknown'}
+    - Last Updated: ${blacklist.last_updated ? new Date(blacklist.last_updated).toLocaleString() : 'unknown'}`);
         } catch (error) {
             if (error.code === 'ENOENT') {
                 console.log('⚠️ No blacklist.json found, using empty blacklist');
@@ -194,33 +329,41 @@ async function purge() {
         let checkedCount = 0;
         let purgedCount = 0;
 
-        const purgedBooks = {};
         console.log(`\n🔍 Scanning ${totalBooks} books...`);
         
-        Object.entries(metadata.books).forEach(([asin, book]) => {
+        // Create a copy of the books to avoid modification during iteration
+        const bookEntries = Object.entries(metadata.books);
+        
+        for (const [asin, book] of bookEntries) {
             checkedCount++;
-            const isBookBlacklisted = isBlacklisted(book, blacklist);
-
-            if (isBookBlacklisted) {
-                purgedCount++;
-                console.log(`\n🚫 Found blacklisted book (${checkedCount}/${totalBooks}):
-    Title: "${book.title}"
-    Author: ${book.author}
-    BSR: ${book.bsr.toLocaleString()}`);
-                purgedBooks[asin] = book;
-            } else if (checkedCount % 10 === 0 || checkedCount === totalBooks) {
-                // Progress update every 10 books
-                console.log(`✓ Checked ${checkedCount}/${totalBooks} books...`);
+            
+            // Skip books without required fields
+            if (!book.title || !book.author) {
+                console.log(`⚠️ Skipping book with missing data: ${asin}`);
+                continue;
             }
-        });
+            
+            const result = isBlacklisted(book, blacklist);
 
-        // Remove purged books from metadata
-        if (purgedCount > 0) {
-            console.log('\n🗑️ Removing purged books from database...');
-            Object.keys(purgedBooks).forEach(asin => {
+            if (result.isBlacklisted) {
+                purgedCount++;
+                console.log(`\n🚫 Found blacklisted book (${checkedCount}/${totalBooks}):`);
+                console.log(`   Title: "${book.title}"`);
+                console.log(`   Author: ${book.author}`);
+                console.log(`   BSR: ${book.bsr.toLocaleString()}`);
+                console.log(`   Reason: ${result.reason}`);
+                
+                // Add to brownlist before removing
+                await addToBrownlist(book, result.reason);
+                
+                // Remove from metadata
                 delete metadata.books[asin];
-            });
-            console.log('✅ Purged books removed successfully');
+            } else {
+                // Log decision for kept books (less verbose)
+                if (checkedCount % 10 === 0 || checkedCount === totalBooks) {
+                    console.log(`✓ Checked ${checkedCount}/${totalBooks} books...`);
+                }
+            }
         }
 
         console.log(`\n📊 Purge Summary:
