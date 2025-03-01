@@ -221,27 +221,6 @@ app.get('/api/data/books', async (req, res) => {
     }
 });
 
-app.get('/api/data/metadata', async (req, res) => {
-    try {
-        const filePath = getDataPath('metadata.json');
-        const data = await fs.readFile(filePath, 'utf8');
-        const jsonData = JSON.parse(data);
-        
-        // Filter out sensitive information
-        const sanitizedData = {
-            last_updated: jsonData.last_updated,
-            cycle_status: jsonData.cycle_status,
-            stats: jsonData.stats,
-            version: jsonData.version
-        };
-        
-        res.json(sanitizedData);
-    } catch (error) {
-        console.error('Error reading metadata:', error);
-        res.status(500).json({ error: 'Failed to read metadata' });
-    }
-});
-
 // Helper function for safe file writing with retries
 async function safeWriteJSON(filePath, data, retries = 3) {
     const backupPath = `${filePath}.backup`;

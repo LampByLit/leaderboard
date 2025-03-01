@@ -1,0 +1,5 @@
+[33m6b44256[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m PURGE BETWEEN BATCHES: Remove Puppeteer imports and fix scraper.js
+[33mf7863ad[m PURGE BETWEEN BATCHES: The Cleansing Protocol - Implement real-time content filtering during scraping
+[33me0ef80a[m OPERATION PURITY PATROL: Enhanced purger with improved author matching and word boundary checks
+[33m472aee2[m Revert "The Great Purge: Enhanced blacklist filtering with improved author matching, title pattern detection, and brownlist tracking"
+[33m9b5220e[m The Great Purge: Enhanced blacklist filtering with improved author matching, title pattern detection, and brownlist tracking

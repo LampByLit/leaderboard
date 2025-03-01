@@ -29,7 +29,6 @@ const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
 const zlib = require('zlib');
-const { purge } = require('./purger'); // Import the purge function
 
 // Configure data directory
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
@@ -663,19 +662,6 @@ async function scrape(progressCallback = () => {}) {
                 total: inputData.submissions.length,
                 successful: successfulScrapes
             });
-            
-            // Run purger after each batch to filter out problematic content immediately
-            console.log('\n🧹 Running purger after batch to filter problematic content...');
-            try {
-                const purgeResult = await purge();
-                if (purgeResult.success) {
-                    console.log(`✅ Purge completed: ${purgeResult.stats.purged_books} books removed`);
-                } else {
-                    console.warn(`⚠️ Purge after batch failed: ${purgeResult.error}`);
-                }
-            } catch (purgeError) {
-                console.warn(`⚠️ Error running purger after batch: ${purgeError.message}`);
-            }
             
             // Add delay between batches if not the last batch
             if (i + BATCH_SIZE < inputData.submissions.length) {
