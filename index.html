@@ -574,24 +574,11 @@
             const originalText = button.textContent;
             
             try {
-                // Get the original JSON data instead of the HTML content
-                let jsonData;
-                if (elementId === 'input-json') {
-                    const response = await fetch('/api/data/input');
-                    jsonData = await response.json();
-                } else if (elementId === 'output-json') {
-                    const response = await fetch('/api/data/books');
-                    jsonData = await response.json();
-                } else {
-                    // Fallback to getting text content if we can't fetch the data
-                    jsonData = element.textContent;
-                }
-                
-                // Convert to formatted JSON string
-                const jsonString = JSON.stringify(jsonData, null, 2);
+                // Get the text content and strip HTML tags
+                const content = element.textContent;
                 
                 // Copy to clipboard
-                await navigator.clipboard.writeText(jsonString);
+                await navigator.clipboard.writeText(content);
                 button.textContent = 'Copied!';
                 setTimeout(() => {
                     button.textContent = originalText;
@@ -614,7 +601,10 @@
                     throw new Error(`Failed to fetch input data: ${inputResponse.statusText}`);
                 }
                 const inputData = await inputResponse.json();
-                document.getElementById('input-json').innerHTML = syntaxHighlight(inputData);
+                const inputElement = document.getElementById('input-json');
+                inputElement.innerHTML = syntaxHighlight(inputData);
+                // Store raw JSON for copying
+                // inputElement.setAttribute('data-raw-json', JSON.stringify(inputData, null, 2));
 
                 // Fetch books data from API
                 const outputResponse = await fetch('/api/data/books');
@@ -622,7 +612,10 @@
                     throw new Error(`Failed to fetch books data: ${outputResponse.statusText}`);
                 }
                 const outputData = await outputResponse.json();
-                document.getElementById('output-json').innerHTML = syntaxHighlight(outputData);
+                const outputElement = document.getElementById('output-json');
+                outputElement.innerHTML = syntaxHighlight(outputData);
+                // Store raw JSON for copying
+                // outputElement.setAttribute('data-raw-json', JSON.stringify(outputData, null, 2));
 
                 // Update leaderboard
                 const leaderboardBody = document.getElementById('leaderboard-body');
