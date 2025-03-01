@@ -10,14 +10,12 @@
  * - Browser simulation with rotating user agents
  * - Compression handling (gzip, deflate, brotli)
  * - CAPTCHA detection and avoidance
- * - Safe time windows to avoid peak hours
  * - Cookie management and session persistence
  * - Atomic file operations with backups
  * 
  * Safety Measures:
- * - MIN_REQUEST_DELAY: 90s between Amazon requests
- * - MAX_REQUEST_DELAY: 240s maximum delay
- * - Time window restrictions (avoid peak hours)
+ * - MIN_REQUEST_DELAY: 15s between Amazon requests
+ * - MAX_REQUEST_DELAY: 30s maximum delay
  * - Random delays with jitter
  * - Rotating user agents and viewport sizes
  * - Cookie management
@@ -58,10 +56,10 @@ function formatCookies(cookies) {
 // Configure batch processing with more conservative delays
 const BATCH_SIZE = 1; // Process only 1 book at a time
 const BATCH_DELAY = 5000; // 5 seconds between batches
-const MIN_REQUEST_DELAY = 90000; // 1.5 minutes minimum between requests
-const MAX_REQUEST_DELAY = 240000; // 4 minutes maximum between requests
+const MIN_REQUEST_DELAY = 15000; // 15 seconds minimum between requests
+const MAX_REQUEST_DELAY = 30000; // 30 seconds maximum between requests
 const MAX_RETRIES = 3; // Maximum number of retries
-const INITIAL_RETRY_DELAY = 300000; // 5 minutes initial retry delay
+const INITIAL_RETRY_DELAY = 120000; // 2 minutes initial retry delay
 
 // Enhanced browser headers
 const BROWSER_HEADERS = {
@@ -114,31 +112,16 @@ function getRandomUserAgent() {
 
 // Add time-based request throttling
 let lastRequestTime = 0;
-const MIN_TIME_BETWEEN_REQUESTS = 60000; // 1 minute minimum between requests
+const MIN_TIME_BETWEEN_REQUESTS = 15000; // 15 seconds minimum between requests
 
 // Enhanced delay function with random jitter
 function delay(ms) {
-    const jitter = Math.floor(Math.random() * 30000); // Add up to 30 seconds of random jitter
+    const jitter = Math.floor(Math.random() * 5000); // Add up to 5 seconds of random jitter
     return new Promise(resolve => setTimeout(resolve, ms + jitter));
 }
 
-// Add time window restrictions (avoid peak hours)
-function isWithinSafeTimeWindow() {
-    // Temporarily disable time window restrictions
-    return true;
-    
-    // const hour = new Date().getHours();
-    // return hour < 14 || hour > 21; // Old restrictive check
-}
-
-// Enhanced fetchPage function with time window check and compression handling
+// Enhanced fetchPage function with compression handling
 async function fetchPage(url, retryCount = 0) {
-    // Check if we're in a safe time window
-    if (!isWithinSafeTimeWindow()) {
-        console.log('Outside safe time window, waiting for next window...');
-        await delay(3600000); // Wait an hour
-    }
-
     // Ensure minimum time between requests
     const timeSinceLastRequest = Date.now() - lastRequestTime;
     if (timeSinceLastRequest < MIN_TIME_BETWEEN_REQUESTS) {
@@ -590,8 +573,8 @@ async function processBatch(submissions, startIndex, batchSize, metadata) {
         const submission = submissions[i];
         console.log(`🔄 [${i + 1}/${submissions.length}] Processing submission...`);
         
-        // Add random delay between requests
-        const delayTime = Math.floor(Math.random() * 7000) + 3000; // 3-10 seconds
+        // Add random delay between requests (reduced for faster processing)
+        const delayTime = Math.floor(Math.random() * 5000) + 2000; // 2-7 seconds
         console.log(`⏰ Waiting ${(delayTime/1000).toFixed(1)} seconds before next request...`);
         await delay(delayTime);
 
