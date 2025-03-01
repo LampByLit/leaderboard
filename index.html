@@ -660,42 +660,34 @@
 
         // Function to copy JSON to clipboard
         function copyToClipboard(elementId) {
-            const button = document.querySelector(`#${elementId}`).parentElement.querySelector('.copy-button');
+            const button = document.querySelector(`button[onclick="copyToClipboard('${elementId}')"]`);
             const originalText = button.textContent;
             
             try {
                 let contentToCopy;
                 
-                // Use the appropriate original data based on which button was clicked
+                // Get the appropriate content based on element ID
                 if (elementId === 'input-json') {
                     contentToCopy = JSON.stringify(originalInputData, null, 2);
                 } else if (elementId === 'output-json') {
                     contentToCopy = JSON.stringify(originalOutputData, null, 2);
                 } else if (elementId === 'metadata-json') {
+                    console.log('Copying metadata:', originalMetadataData);
                     contentToCopy = JSON.stringify(originalMetadataData, null, 2);
                 } else {
                     throw new Error('Unknown element ID');
                 }
                 
-                // Try the execCommand approach first
+                // Create a temporary textarea element
+                const textarea = document.createElement('textarea');
+                textarea.value = contentToCopy;
+                textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+                document.body.appendChild(textarea);
+                textarea.select();
+                
                 try {
-                    // Create a temporary textarea element
-                    const textarea = document.createElement('textarea');
-                    textarea.value = contentToCopy;
-                    
-                    // Make the textarea out of viewport
-                    textarea.style.position = 'fixed';
-                    textarea.style.left = '-999999px';
-                    textarea.style.top = '-999999px';
-                    document.body.appendChild(textarea);
-                    
-                    // Select and copy the text
-                    textarea.focus();
-                    textarea.select();
-                    
+                    // Execute copy command
                     const successful = document.execCommand('copy');
-                    
-                    // Remove the temporary element
                     document.body.removeChild(textarea);
                     
                     if (!successful) {
@@ -703,16 +695,20 @@
                     }
                     
                     button.textContent = 'Copied!';
+                    // Reset button text after 2 seconds
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                    }, 2000);
                 } catch (execError) {
                     console.warn('execCommand copy failed, showing fallback modal', execError);
                     // Show the fallback modal if execCommand fails
                     showCopyModal(contentToCopy, elementId === 'input-json' ? 'Input JSON' : elementId === 'output-json' ? 'Output JSON' : 'Metadata JSON');
                     button.textContent = 'See Modal';
+                    // Reset button text after 2 seconds
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                    }, 2000);
                 }
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                }, 2000);
             } catch (err) {
                 console.error('Failed to copy:', err);
                 button.textContent = 'Failed!';
@@ -758,34 +754,42 @@
         // Function to load and display JSON files
         async function loadJsonFiles() {
             try {
+                console.log('Loading JSON files...');
+                
                 // Fetch input data from API
+                console.log('Fetching input data...');
                 const inputResponse = await fetch('/api/data/input');
                 if (!inputResponse.ok) {
                     throw new Error(`Failed to fetch input data: ${inputResponse.statusText}`);
                 }
                 const inputData = await inputResponse.json();
+                console.log('Input data loaded successfully');
                 // Store original data for copying
                 originalInputData = inputData;
                 const inputElement = document.getElementById('input-json');
                 inputElement.innerHTML = syntaxHighlight(inputData);
 
                 // Fetch books data from API
+                console.log('Fetching books data...');
                 const outputResponse = await fetch('/api/data/books');
                 if (!outputResponse.ok) {
                     throw new Error(`Failed to fetch books data: ${outputResponse.statusText}`);
                 }
                 const outputData = await outputResponse.json();
+                console.log('Books data loaded successfully');
                 // Store original data for copying
                 originalOutputData = outputData;
                 const outputElement = document.getElementById('output-json');
                 outputElement.innerHTML = syntaxHighlight(outputData);
 
                 // Fetch metadata data from API
+                console.log('Fetching metadata...');
                 const metadataResponse = await fetch('/api/data/metadata');
                 if (!metadataResponse.ok) {
                     throw new Error(`Failed to fetch metadata data: ${metadataResponse.statusText}`);
                 }
                 const metadataData = await metadataResponse.json();
+                console.log('Metadata loaded successfully:', metadataData);
                 // Store original data for copying
                 originalMetadataData = metadataData;
                 const metadataElement = document.getElementById('metadata-json');
