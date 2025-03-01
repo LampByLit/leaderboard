@@ -574,7 +574,24 @@
             const originalText = button.textContent;
             
             try {
-                await navigator.clipboard.writeText(element.textContent);
+                // Get the original JSON data instead of the HTML content
+                let jsonData;
+                if (elementId === 'input-json') {
+                    const response = await fetch('/api/data/input');
+                    jsonData = await response.json();
+                } else if (elementId === 'output-json') {
+                    const response = await fetch('/api/data/books');
+                    jsonData = await response.json();
+                } else {
+                    // Fallback to getting text content if we can't fetch the data
+                    jsonData = element.textContent;
+                }
+                
+                // Convert to formatted JSON string
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(jsonString);
                 button.textContent = 'Copied!';
                 setTimeout(() => {
                     button.textContent = originalText;
@@ -582,7 +599,7 @@
             } catch (err) {
                 console.error('Failed to copy:', err);
                 button.textContent = 'Failed!';
-                        setTimeout(() => {
+                setTimeout(() => {
                     button.textContent = originalText;
                 }, 2000);
             }
