@@ -221,114 +221,6 @@ app.get('/api/data/books', async (req, res) => {
     }
 });
 
-// Add new endpoint for manual purge operations
-app.post('/api/purge', async (req, res) => {
-    try {
-        console.log('🧹 Manual purge process initiated from frontend');
-        
-        // Check if another cycle is running
-        if (await isCycleLocked()) {
-            console.log('🔒 Cannot purge: Another cycle is currently running');
-            return res.status(409).json({
-                success: false,
-                error: 'CYCLE_LOCKED',
-                message: 'Another cycle is currently running'
-            });
-        }
-        
-        // Run the purge process
-        const result = await purge();
-        
-        // Broadcast the result to all clients
-        broadcastToClients({
-            type: 'purge_complete',
-            success: result.success,
-            stats: result.stats,
-            message: result.success 
-                ? `Purge completed successfully! ${result.stats.purged_books} books were removed.` 
-                : `Purge failed: ${result.error}`
-        });
-        
-        res.json(result);
-    } catch (error) {
-        console.error('Error during manual purge:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message || 'Unknown error during purge'
-        });
-    }
-});
-
-// Add endpoint to get brownlist data
-app.get('/api/data/brownlist', async (req, res) => {
-    try {
-        const filePath = getDataPath('brownlist.json');
-        
-        try {
-            const data = await fs.readFile(filePath, 'utf8');
-            const jsonData = JSON.parse(data);
-            
-            // Return the brownlist data
-            res.json(jsonData);
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                // If brownlist doesn't exist yet, create an empty one
-                const emptyBrownlist = {
-                    rejected_books: [],
-                    last_updated: new Date().toISOString(),
-                    version: "1.0.0"
-                };
-                
-                // Write the empty brownlist file
-                await fs.writeFile(filePath, JSON.stringify(emptyBrownlist, null, 2), 'utf8');
-                console.log('Created empty brownlist.json file');
-                
-                // Return the empty structure
-                res.json(emptyBrownlist);
-            } else {
-                throw err;
-            }
-        }
-    } catch (error) {
-        console.error('Error reading brownlist data:', error);
-        res.status(500).json({ error: 'Failed to read brownlist data' });
-    }
-});
-
-// Add endpoint to get metadata
-app.get('/api/data/metadata', async (req, res) => {
-    try {
-        const filePath = getDataPath('metadata.json');
-        
-        try {
-            const data = await fs.readFile(filePath, 'utf8');
-            const jsonData = JSON.parse(data);
-            
-            // Filter out sensitive information
-            const sanitizedData = {
-                last_update: jsonData.last_update,
-                cycle_status: jsonData.cycle_status,
-                book_count: Object.keys(jsonData.books || {}).length
-            };
-            
-            res.json(sanitizedData);
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                res.json({ 
-                    last_update: null,
-                    cycle_status: { state: 'unknown' },
-                    book_count: 0
-                });
-            } else {
-                throw err;
-            }
-        }
-    } catch (error) {
-        console.error('Error reading metadata:', error);
-        res.status(500).json({ error: 'Failed to read metadata' });
-    }
-});
-
 // Helper function for safe file writing with retries
 async function safeWriteJSON(filePath, data, retries = 3) {
     const backupPath = `${filePath}.backup`;
@@ -712,6 +604,38 @@ app.post('/publish', async (req, res) => {
     }
 });
 
+// Handle blacklist purge
+app.post('/purge', async (req, res) => {
+    console.log('Starting blacklist purge...');
+    
+    try {
+        const result = await purge();
+        
+        if (!result.success) {
+            console.error('Purge failed:', result.error);
+            return res.status(500).json({ 
+                success: false, 
+                error: result.error 
+            });
+        }
+
+        console.log(`Purge completed successfully. Stats:`, result.stats);
+        
+        res.json({ 
+            success: true, 
+            stats: result.stats,
+            purged_count: result.purged_books.length,
+            message: `Successfully purged ${result.stats.purged} books`
+        });
+    } catch (error) {
+        console.error('Unexpected error during purge:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error during purge operation' 
+        });
+    }
+});
+
 // Handle cleanup of submissions
 app.post('/cleanup', async (req, res) => {
     console.log('Starting submission cleanup...');
@@ -952,70 +876,6 @@ app.post('/cycle', async (req, res) => {
         });
     }
 });
-
-// API endpoint to run a full cycle
-app.post('/api/cycle', (req, res) => {
-    console.log('🔄 Manual cycle requested');
-    
-    // Check if a cycle is already running
-    if (isCycleLocked()) {
-        console.log('🚫 Cannot start cycle: Another cycle is already running');
-        return res.status(409).json({ success: false, error: 'CYCLE_LOCKED' });
-    }
-    
-    // Run the cycle
-    cycle.runCycle()
-        .then(() => {
-            console.log('✅ Manual cycle completed successfully');
-            // Broadcast to all clients
-            broadcastToClients({ type: 'cycle_status', status: 'completed', message: '✅ Cycle completed successfully' });
-        })
-        .catch(error => {
-            console.error('❌ Error during manual cycle:', error);
-            // Broadcast to all clients
-            broadcastToClients({ type: 'cycle_status', status: 'error', message: `❌ Cycle failed: ${error.message}` });
-        });
-    
-    // Respond immediately
-    res.json({ success: true });
-});
-
-// API endpoint to trigger a purge
-app.post('/api/purge', (req, res) => {
-    console.log('🧹 Manual purge requested');
-    
-    // Check if a cycle is already running
-    if (isCycleLocked()) {
-        console.log('🚫 Cannot start purge: A cycle is already running');
-        return res.status(409).json({ success: false, error: 'CYCLE_LOCKED' });
-    }
-    
-    // Run the purge
-    purger.purge()
-        .then(result => {
-            console.log(`✅ Manual purge completed successfully. ${result.purged_books} books were purged.`);
-            // Broadcast to all clients
-            broadcastToClients({ 
-                type: 'purge_complete', 
-                status: 'completed', 
-                message: `✅ Purge completed: ${result.purged_books} books were purged`,
-                stats: result
-            });
-            res.json({ success: true, stats: result });
-        })
-        .catch(error => {
-            console.error('❌ Error during manual purge:', error);
-            // Broadcast to all clients
-            broadcastToClients({ 
-                type: 'purge_error', 
-                status: 'error', 
-                message: `❌ Purge failed: ${error.message}`
-            });
-            res.status(500).json({ success: false, error: error.message });
-        });
-});
-
-// API endpoint to submit a book
 
 // Add error handling middleware
 app.use((err, req, res, next) => {
