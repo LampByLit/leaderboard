@@ -293,13 +293,28 @@ async function publish() {
         // Read metadata.json
         const metadataPath = getDataPath('metadata.json');
         console.log('📖 Reading metadata...');
-        const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        let metadata;
+        try {
+            metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            if (!metadata.books) {
+                console.warn('⚠️ No books found in metadata, initializing empty books object');
+                metadata.books = {};
+            }
+        } catch (error) {
+            console.error('❌ Error reading metadata:', error);
+            throw new Error('Failed to read metadata: ' + error.message);
+        }
         
         // Process books
         console.log('\n📊 Processing books...');
         const totalBooks = Object.keys(metadata.books).length;
-        let processedCount = 0;
-        let rankedCount = 0;
+        if (totalBooks === 0) {
+            console.warn('⚠️ No books found in metadata');
+            return {
+                success: false,
+                error: 'No books found in metadata'
+            };
+        }
 
         // Convert books object to array and sort by BSR
         const sortedBooks = Object.entries(metadata.books)
@@ -311,10 +326,9 @@ async function publish() {
                 bsr: parseInt(String(book.bsr).replace(/,/g, ''), 10)
             }))
             .filter(book => {
-                processedCount++;
                 const isValid = !isNaN(book.bsr) && book.title && book.author && book.cover_url;
                 if (!isValid) {
-                    console.log(`⚠️ [${processedCount}/${totalBooks}] Skipping invalid book: ${book.title || 'Unknown'}`);
+                    console.log(`⚠️ Skipping invalid book: ${book.title || 'Unknown'}`);
                 }
                 return isValid;
             })
@@ -323,7 +337,6 @@ async function publish() {
         // Create ranked output
         const books = {};
         sortedBooks.forEach((book, index) => {
-            rankedCount++;
             books[book.asin] = {
                 rank: index + 1,
                 title: book.title,
@@ -337,7 +350,7 @@ async function publish() {
             }
         });
 
-        console.log(`\n✨ Ranked ${rankedCount} books out of ${totalBooks} total`);
+        console.log(`\n✨ Ranked ${Object.keys(books).length} books out of ${totalBooks} total`);
         
         // Create public books.json
         const publicData = {
@@ -346,17 +359,33 @@ async function publish() {
             books
         };
         
+        // Validate output before saving
+        try {
+            validateOutput(publicData);
+        } catch (error) {
+            console.error('❌ Output validation failed:', error);
+            throw error;
+        }
+        
         // Write to books.json
         console.log('💾 Saving leaderboard...');
         const booksPath = getDataPath('books.json');
         await safeWriteJSON(booksPath, publicData);
+        
+        // Update metadata with latest publish info
+        metadata.last_publish = {
+            timestamp: new Date().toISOString(),
+            total_books: Object.keys(books).length,
+            ranked_books: Object.keys(books).length
+        };
+        await safeWriteJSON(metadataPath, metadata);
         
         console.log('✅ Publish process completed successfully\n');
         return { 
             success: true, 
             stats: {
                 total_books: totalBooks,
-                ranked_books: rankedCount,
+                ranked_books: Object.keys(books).length,
                 timestamp: new Date().toISOString()
             },
             books: publicData

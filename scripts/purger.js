@@ -34,6 +34,79 @@ function getDataPath(filename) {
     return path.join(DATA_DIR, filename);
 }
 
+/**
+ * Initializes the brownlist.json file if it doesn't exist or is empty/invalid
+ * Creates with default structure for tracking rejected books
+ * @returns {Promise<void>}
+ */
+async function initializeBrownlist() {
+    const brownlistPath = getDataPath('brownlist.json');
+    
+    try {
+        // Check if file exists
+        try {
+            await fs.access(brownlistPath);
+            console.log('✓ Brownlist file exists');
+            
+            // Check if file is empty or has invalid JSON
+            try {
+                const data = await fs.readFile(brownlistPath, 'utf8');
+                
+                // If file is empty, initialize it
+                if (!data || data.trim() === '') {
+                    throw new Error('Empty brownlist file');
+                }
+                
+                // Try to parse the JSON
+                const brownlist = JSON.parse(data);
+                
+                // Validate structure
+                if (!brownlist || typeof brownlist !== 'object') {
+                    throw new Error('Invalid brownlist structure');
+                }
+                
+                // Ensure required fields exist
+                if (!Array.isArray(brownlist.rejected_books)) {
+                    console.log('⚠️ Brownlist missing rejected_books array, repairing...');
+                    brownlist.rejected_books = [];
+                    await safeWriteJSON(brownlistPath, brownlist);
+                    console.log('✅ Repaired brownlist.json structure');
+                }
+            } catch (parseErr) {
+                console.log(`⚠️ Brownlist issue: ${parseErr.message}`);
+                await createNewBrownlist(brownlistPath);
+            }
+        } catch (accessErr) {
+            if (accessErr.code === 'ENOENT') {
+                await createNewBrownlist(brownlistPath);
+            } else {
+                throw accessErr;
+            }
+        }
+    } catch (error) {
+        console.error(`❌ Failed to initialize brownlist: ${error.message}`);
+        // Don't throw - we'll continue without brownlist
+        console.log('⚠️ Continuing without brownlist...');
+    }
+}
+
+/**
+ * Creates a new brownlist file with default structure
+ * @param {string} filePath - Path to brownlist file
+ * @returns {Promise<void>}
+ */
+async function createNewBrownlist(filePath) {
+    const initialBrownlist = {
+        version: "1.0.0",
+        created_at: new Date().toISOString(),
+        last_updated: new Date().toISOString(),
+        rejected_books: []
+    };
+    
+    await fs.writeFile(filePath, JSON.stringify(initialBrownlist, null, 4));
+    console.log('✅ Initialized new brownlist.json');
+}
+
 async function safeWriteJSON(filePath, data) {
     const backupPath = `${filePath}.backup`;
     try {
@@ -211,18 +284,36 @@ async function addToBrownlist(book, reason, matchedPattern) {
     let brownlist;
     
     try {
+        // Try to read existing brownlist file
         try {
-            brownlist = JSON.parse(await fs.readFile(brownlistPath, 'utf8'));
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                brownlist = {
-                    version: "1.0.0",
-                    last_updated: new Date().toISOString(),
-                    rejected_books: []
-                };
-            } else {
-                throw err;
+            const brownlistData = await fs.readFile(brownlistPath, 'utf8');
+            
+            // Handle empty file case
+            if (!brownlistData || brownlistData.trim() === '') {
+                throw new Error('Empty brownlist file');
             }
+            
+            brownlist = JSON.parse(brownlistData);
+            
+            // Validate the structure
+            if (!brownlist || typeof brownlist !== 'object') {
+                throw new Error('Invalid brownlist format');
+            }
+            
+            // Ensure rejected_books array exists
+            if (!Array.isArray(brownlist.rejected_books)) {
+                console.log('⚠️ Brownlist missing rejected_books array, initializing...');
+                brownlist.rejected_books = [];
+            }
+        } catch (err) {
+            // Initialize new brownlist if file doesn't exist, is empty, or has invalid JSON
+            console.log(`⚠️ Brownlist issue: ${err.message}, creating new brownlist structure`);
+            brownlist = {
+                version: "1.0.0",
+                created_at: new Date().toISOString(),
+                last_updated: new Date().toISOString(),
+                rejected_books: []
+            };
         }
         
         // Add the rejected book to the brownlist
@@ -244,8 +335,34 @@ async function addToBrownlist(book, reason, matchedPattern) {
         await safeWriteJSON(brownlistPath, brownlist);
         
         console.log(`✅ Added to brownlist: "${book.title}" by ${book.author}`);
+        return true;
     } catch (error) {
         console.error(`❌ Error adding to brownlist: ${error.message}`);
+        // Try to create a new brownlist file as a last resort
+        try {
+            console.log('🔄 Attempting to create new brownlist file...');
+            const newBrownlist = {
+                version: "1.0.0",
+                created_at: new Date().toISOString(),
+                last_updated: new Date().toISOString(),
+                rejected_books: [{
+                    asin: book.asin,
+                    title: book.title,
+                    author: book.author,
+                    url: book.url,
+                    bsr: book.bsr,
+                    rejection_reason: reason,
+                    matched_pattern: matchedPattern,
+                    timestamp: new Date().toISOString()
+                }]
+            };
+            await fs.writeFile(brownlistPath, JSON.stringify(newBrownlist, null, 4));
+            console.log('✅ Created new brownlist file with the rejected book');
+            return true;
+        } catch (fallbackError) {
+            console.error(`❌ Failed to create brownlist file: ${fallbackError.message}`);
+            return false;
+        }
     }
 }
 
@@ -333,6 +450,9 @@ async function purge() {
     try {
         console.log('\n🧹 Starting purge process...');
         
+        // Initialize brownlist if it doesn't exist
+        await initializeBrownlist();
+        
         // Read metadata.json
         const metadataPath = getDataPath('metadata.json');
         console.log('📖 Reading metadata...');
@@ -376,8 +496,8 @@ async function purge() {
         const purgedBooks = {};
         console.log(`\n🔍 Scanning ${totalBooks} books...`);
         
-        // Create an array of promises for brownlist additions
-        const brownlistPromises = [];
+        // Create an array for tracking brownlist additions
+        const brownlistFailures = [];
         
         for (const [asin, book] of Object.entries(metadata.books)) {
             checkedCount++;
@@ -392,21 +512,29 @@ async function purge() {
                 // Add to purged books
                 purgedBooks[asin] = book;
                 
-                // Add to brownlist (collect promise)
-                brownlistPromises.push(
-                    addToBrownlist(book, blacklistResult.reason, blacklistResult.matchedPattern)
-                );
+                // Try to add to brownlist but don't wait for it
+                try {
+                    const success = await addToBrownlist(book, blacklistResult.reason, blacklistResult.matchedPattern);
+                    if (!success) {
+                        brownlistFailures.push(book.title);
+                    }
+                } catch (brownlistError) {
+                    console.error(`❌ Error adding "${book.title}" to brownlist: ${brownlistError.message}`);
+                    brownlistFailures.push(book.title);
+                }
             } else if (checkedCount % 10 === 0 || checkedCount === totalBooks) {
                 // Progress update every 10 books
                 console.log(`✓ Checked ${checkedCount}/${totalBooks} books...`);
             }
         }
 
-        // Wait for all brownlist additions to complete
-        if (brownlistPromises.length > 0) {
-            console.log(`\n📝 Adding ${brownlistPromises.length} books to brownlist...`);
-            await Promise.all(brownlistPromises);
-            console.log('✅ Brownlist updated successfully');
+        // Log brownlist status
+        if (purgedCount > 0) {
+            if (brownlistFailures.length === 0) {
+                console.log('✅ All purged books successfully added to brownlist');
+            } else {
+                console.warn(`⚠️ Failed to add ${brownlistFailures.length} books to brownlist`);
+            }
         }
 
         // Remove purged books from metadata

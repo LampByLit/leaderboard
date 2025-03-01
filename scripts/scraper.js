@@ -629,12 +629,27 @@ async function scrape(progressCallback = () => {}) {
             }
         }
         
+        // Make backup of current books data
+        const existingBooks = { ...metadata.books };
+        const existingBooksCount = Object.keys(existingBooks).length;
+        console.log(`📚 Current metadata contains ${existingBooksCount} books`);
+        
         // Initialize scraping progress
         metadata.scraping_progress = {
             current: 0,
             total: inputData.submissions.length,
             successful: 0
         };
+        
+        // Ensure books object exists
+        if (!metadata.books) {
+            console.log('⚠️ Books object missing in metadata, initializing...');
+            metadata.books = {};
+        } else if (existingBooksCount > 0) {
+            console.log('✅ Preserving existing books data');
+        }
+        
+        // Save initial metadata state
         await safeWriteJSON(metadataPath, metadata);
         
         // Send initial progress
@@ -652,33 +667,78 @@ async function scrape(progressCallback = () => {}) {
         let successfulScrapes = 0;
         
         for (let i = 0; i < inputData.submissions.length; i += BATCH_SIZE) {
-            const batchResults = await processBatch(inputData.submissions, i, BATCH_SIZE, metadata);
+            const batchResults = await processBatch(
+                inputData.submissions,
+                i,
+                BATCH_SIZE,
+                metadata
+            );
+            
             results.push(...batchResults);
             
-            // Update successful scrapes count and send progress
-            successfulScrapes = results.filter(r => r.success).length;
+            // Update successful scrapes count
+            const batchSuccesses = batchResults.filter(r => r.success).length;
+            successfulScrapes += batchSuccesses;
+            
+            // Update metadata progress
+            metadata.scraping_progress.current = i + BATCH_SIZE;
+            metadata.scraping_progress.successful = successfulScrapes;
+            
+            // Verify books object isn't lost
+            if (!metadata.books) {
+                console.warn('⚠️ Books object was lost, restoring from backup...');
+                metadata.books = { ...existingBooks };
+            }
+            
+            // Log current status of books in metadata
+            const currentBooksCount = Object.keys(metadata.books).length;
+            console.log(`📊 Metadata now contains ${currentBooksCount} books`);
+            
+            // Save metadata after each batch
+            await safeWriteJSON(metadataPath, metadata);
+            
+            // Send progress update
             progressCallback({
-                current: Math.min(i + BATCH_SIZE, inputData.submissions.length),
+                current: i + BATCH_SIZE,
                 total: inputData.submissions.length,
                 successful: successfulScrapes
             });
             
-            // Add delay between batches if not the last batch
             if (i + BATCH_SIZE < inputData.submissions.length) {
-                const nextBatch = Math.min(i + BATCH_SIZE + BATCH_SIZE, inputData.submissions.length);
-                console.log(`\n⏳ Waiting ${BATCH_DELAY/1000}s before processing next batch (${i + BATCH_SIZE + 1}-${nextBatch})...\n`);
+                console.log(`\n⏳ Waiting ${BATCH_DELAY/1000}s before processing next batch (${i + BATCH_SIZE + 1}-${Math.min(i + BATCH_SIZE * 2, inputData.submissions.length)})...\n`);
                 await delay(BATCH_DELAY);
             }
         }
         
-        // Clear scraping progress and update metadata
-        delete metadata.scraping_progress;
+        // Final verification of books object
+        if (!metadata.books || Object.keys(metadata.books).length === 0) {
+            console.warn('⚠️ Final books object is empty, restoring from backup and processed data...');
+            
+            // Rebuild books from backup and new results
+            metadata.books = { ...existingBooks };
+            
+            // Add successfully scraped books
+            results.forEach(result => {
+                if (result.success) {
+                    metadata.books[result.book.asin] = result.book;
+                }
+            });
+        }
+        
+        // Update final metadata state
         metadata.last_update = new Date().toISOString();
+        metadata.scraping_progress = {
+            current: inputData.submissions.length,
+            total: inputData.submissions.length,
+            successful: successfulScrapes
+        };
+        
+        // Log final books count
+        const finalBooksCount = Object.keys(metadata.books).length;
+        console.log(`📊 Final metadata contains ${finalBooksCount} books`);
+        
         await safeWriteJSON(metadataPath, metadata);
-        
-        console.log('\n✨ Scrape process completed successfully');
-        console.log(`📊 Final Results: ${successfulScrapes}/${inputData.submissions.length} books scraped successfully\n`);
-        
+
         return {
             success: true,
             stats: {
@@ -689,7 +749,7 @@ async function scrape(progressCallback = () => {}) {
             }
         };
     } catch (error) {
-        console.error('\n❌ Scrape process failed:', error);
+        console.error('❌ Scrape process failed:', error);
         return {
             success: false,
             error: error.message || 'Unknown error during scrape'

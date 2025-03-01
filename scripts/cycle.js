@@ -34,7 +34,7 @@ const { purge } = require('./purger');
 const { cleanup } = require('./cleaner');
 
 // Configure data directory
-const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || '.';
+const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '..', 'data'));
 
 // Add lock file path constant
 const LOCK_FILE = path.join(DATA_DIR, 'cycle.lock');
@@ -64,15 +64,150 @@ async function createLock() {
 // Helper function to release lock
 async function releaseLock() {
     try {
-        await fs.unlink(LOCK_FILE);
+        // First check if the lock file exists
+        try {
+            await fs.access(LOCK_FILE);
+            // Lock file exists, try to remove it
+            await fs.unlink(LOCK_FILE);
+            console.log('🔓 Cycle lock released');
+        } catch (accessErr) {
+            // Lock file doesn't exist, nothing to do
+            if (accessErr.code === 'ENOENT') {
+                console.log('⚠️ No lock file found to release');
+            } else {
+                console.warn(`⚠️ Error checking lock file: ${accessErr.message}`);
+            }
+        }
     } catch (error) {
-        console.warn('Warning: Could not remove lock file:', error);
+        console.warn(`⚠️ Failed to release lock: ${error.message}`);
+        // Even though we failed, don't throw an error to allow the cycle to complete
     }
 }
 
 // Helper function to get data file paths
 function getDataPath(filename) {
     return path.join(DATA_DIR, filename);
+}
+
+// New function to initialize required files
+async function initializeFiles() {
+    console.log('\n🔍 Checking for required files...');
+    
+    // Check for input.json (required, don't create)
+    const inputPath = getDataPath('input.json');
+    try {
+        await fs.access(inputPath);
+        console.log('✓ Input file exists');
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.error('❌ No input.json found - required for cycle');
+            throw new Error('Missing input.json - this file is created by user submissions');
+        } else {
+            throw err;
+        }
+    }
+    
+    // Initialize metadata.json if missing
+    const metadataPath = getDataPath('metadata.json');
+    try {
+        await fs.access(metadataPath);
+        console.log('✓ Metadata file exists');
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('⚠️ Creating new metadata.json file');
+            const initialMetadata = {
+                books: {},
+                last_update: new Date().toISOString()
+            };
+            await safeWriteJSON(metadataPath, initialMetadata);
+            console.log('✅ Initialized new metadata.json');
+        } else {
+            throw err;
+        }
+    }
+    
+    // Initialize books.json if missing
+    const booksPath = getDataPath('books.json');
+    try {
+        await fs.access(booksPath);
+        console.log('✓ Books file exists');
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('⚠️ Creating new books.json file');
+            const initialBooks = {
+                version: "1.0",
+                last_updated: new Date().toISOString(),
+                books: {}
+            };
+            await safeWriteJSON(booksPath, initialBooks);
+            console.log('✅ Initialized new books.json');
+        } else {
+            throw err;
+        }
+    }
+    
+    // Check if blacklist.json exists
+    const blacklistPath = getDataPath('blacklist.json');
+    try {
+        await fs.access(blacklistPath);
+        console.log('✓ Blacklist file exists');
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('⚠️ Creating new blacklist.json file');
+            const initialBlacklist = {
+                version: "1.0.0",
+                created_at: new Date().toISOString(),
+                last_updated: new Date().toISOString(),
+                title_patterns: ["adult", "xxx", "erotica"],
+                authors: [],
+                patterns: []
+            };
+            await safeWriteJSON(blacklistPath, initialBlacklist);
+            console.log('✅ Initialized new blacklist.json with default patterns');
+        } else {
+            throw err;
+        }
+    }
+    
+    // Initialize brownlist.json if missing
+    const brownlistPath = getDataPath('brownlist.json');
+    try {
+        await fs.access(brownlistPath);
+        console.log('✓ Brownlist file exists');
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('⚠️ Creating new brownlist.json file');
+            const initialBrownlist = {
+                version: "1.0.0",
+                created_at: new Date().toISOString(),
+                last_updated: new Date().toISOString(),
+                rejected_books: []
+            };
+            await safeWriteJSON(brownlistPath, initialBrownlist);
+            console.log('✅ Initialized new brownlist.json');
+        } else {
+            throw err;
+        }
+    }
+    
+    // Initialize cleanup_log.json if missing
+    const cleanupLogPath = getDataPath('cleanup_log.json');
+    try {
+        await fs.access(cleanupLogPath);
+        console.log('✓ Cleanup log file exists');
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('⚠️ Creating new cleanup_log.json file');
+            const initialCleanupLog = { 
+                cleaned_entries: [],
+                created_at: new Date().toISOString()
+            };
+            await safeWriteJSON(cleanupLogPath, initialCleanupLog);
+            console.log('✅ Initialized new cleanup_log.json');
+        } else {
+            throw err;
+        }
+    }
 }
 
 async function safeWriteJSON(filePath, data) {
@@ -103,6 +238,41 @@ async function safeWriteJSON(filePath, data) {
     }
 }
 
+// New helper function to load metadata with error handling
+async function loadMetadata() {
+    const metadataPath = getDataPath('metadata.json');
+    try {
+        const data = await fs.readFile(metadataPath, 'utf8');
+        const metadata = JSON.parse(data);
+        
+        // Ensure books object exists
+        if (!metadata.books) {
+            console.log('⚠️ No books object found in metadata, initializing...');
+            metadata.books = {};
+        }
+        
+        return metadata;
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.log('⚠️ No existing metadata found, creating new...');
+            const metadata = { 
+                books: {}, 
+                last_update: new Date().toISOString() 
+            };
+            return metadata;
+        } else if (error instanceof SyntaxError) {
+            console.error('❌ Invalid JSON in metadata file:', error);
+            console.log('⚠️ Creating new metadata with empty books object');
+            return { 
+                books: {}, 
+                last_update: new Date().toISOString() 
+            };
+        } else {
+            throw error;
+        }
+    }
+}
+
 /**
  * Runs a complete cycle of operations:
  * 1. Cleanup - Removes invalid submissions
@@ -125,6 +295,10 @@ async function cycle() {
         // Create lock
         await createLock();
         console.log('\n🚀 Initializing cycle process...');
+        
+        // Initialize required files
+        await initializeFiles();
+        
         console.log('📋 Checking system state and dependencies...');
 
         const startTime = Date.now();
@@ -136,21 +310,13 @@ async function cycle() {
         };
         
         try {
-            // Update cycle status
+            // Load metadata with better error handling
             const metadataPath = getDataPath('metadata.json');
-            let metadata;
-            try {
-                metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
-                console.log('✅ Successfully loaded metadata');
-            } catch (error) {
-                if (error.code === 'ENOENT') {
-                    console.log('⚠️ No existing metadata found, creating new...');
-                    metadata = { books: {}, last_update: new Date().toISOString() };
-                } else {
-                    throw error;
-                }
-            }
+            let metadata = await loadMetadata();
+            console.log('✅ Successfully loaded metadata');
+            console.log(`📊 Current metadata state: ${Object.keys(metadata.books).length} books in database`);
             
+            // Update cycle status
             metadata.cycle_status = {
                 state: 'running',
                 started_at: new Date().toISOString()
@@ -166,6 +332,10 @@ async function cycle() {
                 throw new Error(`Scrape failed: ${scrapeResult.error}`);
             }
             stats.scrape = scrapeResult.stats;
+            
+            // Check metadata after scraping
+            metadata = await loadMetadata();
+            console.log(`📊 Post-scrape metadata state: ${Object.keys(metadata.books).length} books in database`);
             console.log('✅ Scrape process completed successfully');
             
             console.log('\n🧹 Starting purge process...');
@@ -175,6 +345,10 @@ async function cycle() {
                 throw new Error(`Purge failed: ${purgeResult.error}`);
             }
             stats.purge = purgeResult.stats;
+            
+            // Check metadata after purging
+            metadata = await loadMetadata();
+            console.log(`📊 Post-purge metadata state: ${Object.keys(metadata.books).length} books in database`);
             console.log('✅ Purge process completed successfully');
             
             console.log('\n🧼 Starting cleanup process...');
@@ -184,6 +358,10 @@ async function cycle() {
                 throw new Error(`Cleanup failed: ${cleanupResult.error}`);
             }
             stats.cleanup = cleanupResult.stats;
+            
+            // Check metadata after cleanup
+            metadata = await loadMetadata();
+            console.log(`📊 Post-cleanup metadata state: ${Object.keys(metadata.books).length} books in database`);
             console.log('✅ Cleanup process completed successfully');
             
             console.log('\n📊 Starting publish process...');
@@ -193,6 +371,10 @@ async function cycle() {
                 throw new Error(`Publish failed: ${publishResult.error}`);
             }
             stats.publish = publishResult.stats;
+            
+            // Check metadata after publishing
+            metadata = await loadMetadata();
+            console.log(`📊 Final metadata state: ${Object.keys(metadata.books).length} books in database`);
             console.log('✅ Publish process completed successfully');
             
             // Calculate total duration
@@ -227,7 +409,7 @@ async function cycle() {
             
             // Update cycle status on failure
             try {
-                const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+                const metadata = await loadMetadata();
                 metadata.cycle_status = {
                     state: 'failed',
                     error: error.message,
@@ -252,7 +434,6 @@ async function cycle() {
         } finally {
             // Always release the lock when done
             await releaseLock();
-            console.log('🔓 Cycle lock released');
         }
     } catch (error) {
         console.error('\n❌ Critical cycle error:', error);

@@ -7,12 +7,12 @@
  * 
  * Cleaning Rules:
  * - Remove entries with invalid ASINs
- * - Remove entries that fail scraping 3 times
+ * - Remove entries that fail scraping (immediately)
  * - Remove blacklisted entries
- * - Keep successful entries (reset failure count)
+ * - Keep successful entries
  * 
  * Features:
- * - Failure tracking with retry limits
+ * - Immediate removal of failed entries
  * - Atomic file operations
  * - Operation logging
  * - Backup creation before modifications
@@ -111,10 +111,40 @@ async function logCleanup(removedSubmissions, reason) {
     
     try {
         try {
-            log = JSON.parse(await fs.readFile(logPath, 'utf8'));
+            // Read the existing log file
+            const logData = await fs.readFile(logPath, 'utf8');
+            
+            // Check if file is empty or has invalid JSON
+            if (!logData || logData.trim() === '') {
+                console.log('⚠️ Cleanup log file is empty, initializing new log');
+                log = { 
+                    cleaned_entries: [],
+                    created_at: new Date().toISOString() 
+                };
+            } else {
+                // Try to parse the JSON
+                try {
+                    log = JSON.parse(logData);
+                    
+                    // Ensure cleaned_entries array exists
+                    if (!log.cleaned_entries) {
+                        log.cleaned_entries = [];
+                    }
+                } catch (parseError) {
+                    console.log('⚠️ Invalid JSON in cleanup log file, initializing new log');
+                    log = { 
+                        cleaned_entries: [],
+                        created_at: new Date().toISOString() 
+                    };
+                }
+            }
         } catch (err) {
             if (err.code === 'ENOENT') {
-                log = { cleaned_entries: [] };
+                console.log('⚠️ No cleanup log file found, creating new log');
+                log = { 
+                    cleaned_entries: [],
+                    created_at: new Date().toISOString() 
+                };
             } else {
                 throw err;
             }
@@ -133,9 +163,28 @@ async function logCleanup(removedSubmissions, reason) {
         }
 
         await safeWriteJSON(logPath, log);
+        console.log(`✅ Logged ${removedSubmissions.length} cleaned entries`);
     } catch (error) {
         console.error('Error logging cleanup:', error);
         // Don't throw - we don't want logging failures to affect the cleanup
+        
+        // Try to create a new log file as a last resort
+        try {
+            console.log('🔄 Attempting to create new cleanup log file...');
+            const newLog = { 
+                cleaned_entries: removedSubmissions.map(submission => ({
+                    timestamp: new Date().toISOString(),
+                    url: submission.url,
+                    submitted_at: submission.submitted_at,
+                    reason: reason
+                })),
+                created_at: new Date().toISOString() 
+            };
+            await fs.writeFile(logPath, JSON.stringify(newLog, null, 4));
+            console.log('✅ Created new cleanup log file');
+        } catch (fallbackError) {
+            console.error('❌ Failed to create cleanup log file:', fallbackError);
+        }
     }
 }
 
@@ -160,33 +209,23 @@ async function cleanup() {
             const asin = extractASIN(submission.url);
             
             // If we can't extract ASIN, mark for removal
-                if (!asin) {
+            if (!asin) {
                 removedCount++;
                 removedSubmissions.push({ ...submission, reason: 'invalid_asin' });
                 console.log(`🗑️ Removed: ${submission.url} (Invalid ASIN)`);
-                    return false;
-                }
-                
-            // Initialize or increment failed attempts counter
-            submission.failed_attempts = (submission.failed_attempts || 0) + 1;
-            
-            // If book exists in metadata and is active, reset failed attempts and keep it
-            if (metadata.books[asin]) {
-                submission.failed_attempts = 0;
-                return true;
-            }
-            
-            // Only remove if it has failed 3 or more times
-            if (submission.failed_attempts >= 3) {
-                removedCount++;
-                removedSubmissions.push({ ...submission, reason: 'failed_or_purged' });
-                console.log(`🗑️ Removed: ${submission.url} (Failed scraping ${submission.failed_attempts} times)`);
                 return false;
             }
             
-            // Keep it but increment the failed counter
-            console.log(`⚠️ Keeping: ${submission.url} (Failed attempt ${submission.failed_attempts}/3)`);
-            return true;
+            // If book exists in metadata and is active, keep it
+            if (metadata.books[asin]) {
+                return true;
+            }
+            
+            // Book does not exist in metadata, remove it immediately
+            removedCount++;
+            removedSubmissions.push({ ...submission, reason: 'failed_or_purged' });
+            console.log(`🗑️ Removed: ${submission.url} (Failed scraping)`);
+            return false;
         });
         
         // Update input data

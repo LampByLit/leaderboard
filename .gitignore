@@ -10,6 +10,11 @@ yarn-error.log*
 *.backup
 *.temp
 !data/blacklist.json
+!data/*.template.json
+
+# Specific data files
+brownlist.json
+cleanup_log.json
 
 # Environment variables
 .env
@@ -30,8 +35,6 @@ Thumbs.db
 # Logs
 *.log
 server.log
-cleanup_log.json
-purge_log.json
 
 # Optional npm cache directory
 .npm
