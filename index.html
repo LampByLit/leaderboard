@@ -769,17 +769,6 @@
                 const inputElement = document.getElementById('input-json');
                 inputElement.innerHTML = syntaxHighlight(inputData);
 
-                // Fetch metadata from API
-                const metadataResponse = await fetch('/api/data/metadata');
-                if (!metadataResponse.ok) {
-                    throw new Error(`Failed to fetch metadata: ${metadataResponse.statusText}`);
-                }
-                const metadataData = await metadataResponse.json();
-                // Store original data for copying
-                originalMetadataData = metadataData;
-                const metadataElement = document.getElementById('metadata-json');
-                metadataElement.innerHTML = syntaxHighlight(metadataData);
-
                 // Fetch books data from API
                 const outputResponse = await fetch('/api/data/books');
                 if (!outputResponse.ok) {
@@ -790,6 +779,17 @@
                 originalOutputData = outputData;
                 const outputElement = document.getElementById('output-json');
                 outputElement.innerHTML = syntaxHighlight(outputData);
+
+                // Fetch metadata data from API
+                const metadataResponse = await fetch('/api/data/metadata');
+                if (!metadataResponse.ok) {
+                    throw new Error(`Failed to fetch metadata data: ${metadataResponse.statusText}`);
+                }
+                const metadataData = await metadataResponse.json();
+                // Store original data for copying
+                originalMetadataData = metadataData;
+                const metadataElement = document.getElementById('metadata-json');
+                metadataElement.innerHTML = syntaxHighlight(metadataData);
 
                 // Update leaderboard
                 const leaderboardBody = document.getElementById('leaderboard-body');
@@ -842,12 +842,12 @@
                 console.error('Error loading JSON files:', error);
                 // Reset original data
                 originalInputData = { error: 'Failed to load input data' };
-                originalMetadataData = { error: 'Failed to load metadata' };
                 originalOutputData = { error: 'Failed to load books data' };
+                originalMetadataData = { error: 'Failed to load metadata data' };
                 // Show error in code blocks
                 document.getElementById('input-json').innerHTML = syntaxHighlight({ error: 'Failed to load input data' });
-                document.getElementById('metadata-json').innerHTML = syntaxHighlight({ error: 'Failed to load metadata' });
                 document.getElementById('output-json').innerHTML = syntaxHighlight({ error: 'Failed to load books data' });
+                document.getElementById('metadata-json').innerHTML = syntaxHighlight({ error: 'Failed to load metadata data' });
                 // Show error in leaderboard
                 const leaderboardBody = document.getElementById('leaderboard-body');
                 leaderboardBody.innerHTML = `

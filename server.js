@@ -227,12 +227,12 @@ app.get('/api/data/metadata', async (req, res) => {
         const data = await fs.readFile(filePath, 'utf8');
         const jsonData = JSON.parse(data);
         
-        // Filter out sensitive information and only include necessary data
+        // Filter out sensitive information
         const sanitizedData = {
-            last_update: jsonData.last_update,
-            cycle_status: jsonData.cycle_status || { state: 'idle' },
-            books_count: Object.keys(jsonData.books || {}).length,
-            limiter_enabled: jsonData.limiter_enabled
+            last_updated: jsonData.last_updated,
+            cycle_status: jsonData.cycle_status,
+            stats: jsonData.stats,
+            version: jsonData.version
         };
         
         res.json(sanitizedData);
