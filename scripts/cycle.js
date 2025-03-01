@@ -154,16 +154,34 @@ async function initializeFiles() {
     } catch (err) {
         if (err.code === 'ENOENT') {
             console.log('⚠️ Creating new blacklist.json file');
-            const initialBlacklist = {
-                version: "1.0.0",
-                created_at: new Date().toISOString(),
-                last_updated: new Date().toISOString(),
-                title_patterns: ["adult", "xxx", "erotica"],
-                authors: [],
-                patterns: []
-            };
-            await safeWriteJSON(blacklistPath, initialBlacklist);
-            console.log('✅ Initialized new blacklist.json with default patterns');
+            
+            // Try to read from template file first
+            try {
+                const templatePath = getDataPath('blacklist.template.json');
+                const templateData = await fs.readFile(templatePath, 'utf8');
+                let blacklistTemplate = JSON.parse(templateData);
+                
+                // Ensure the timestamp is current
+                blacklistTemplate.created_at = new Date().toISOString();
+                blacklistTemplate.last_updated = new Date().toISOString();
+                
+                console.log('🔄 Using blacklist template file');
+                await safeWriteJSON(blacklistPath, blacklistTemplate);
+                console.log('✅ Initialized blacklist.json from template');
+            } catch (templateErr) {
+                // Fallback to default minimal blacklist if template not available
+                console.log('⚠️ No template found, using default minimal blacklist');
+                const initialBlacklist = {
+                    version: "1.0.0",
+                    created_at: new Date().toISOString(),
+                    last_updated: new Date().toISOString(),
+                    title_patterns: ["adult", "xxx", "erotica"],
+                    authors: ["Adolf Hitler"],
+                    patterns: []
+                };
+                await safeWriteJSON(blacklistPath, initialBlacklist);
+                console.log('✅ Initialized new blacklist.json with default patterns');
+            }
         } else {
             throw err;
         }
