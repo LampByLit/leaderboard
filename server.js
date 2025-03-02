@@ -58,6 +58,7 @@ const { cleanup } = require('./scripts/cleaner');
 const { cycle, isCycleLocked } = require('./scripts/cycle');
 const { initializeVolume } = require('./scripts/init-volume');
 const rateLimit = require('express-rate-limit');
+const cron = require('node-cron');
 require('dotenv').config();
 
 // Configure data directory
@@ -211,14 +212,21 @@ const PORT = process.env.PORT || 3001;
 // Initialize volume before starting server
 async function startServer() {
     try {
+        // Initialize volume
+        console.log('Initializing volume...');
         await initializeVolume();
         console.log('Volume initialized successfully');
 
+        // Initialize scheduled cycles
+        setupScheduledCycles();
+
+        // Start server
         app.listen(PORT, () => {
-            console.log(`Server running at http://localhost:${PORT}`);
+            console.log(`\n🚀 Server running on port ${PORT}`);
+            console.log(`📊 Leaderboard: http://localhost:${PORT}`);
         });
     } catch (error) {
-        console.error('Failed to initialize volume:', error);
+        console.error('Failed to start server:', error);
         process.exit(1);
     }
 }
@@ -1027,4 +1035,67 @@ app.get('/progress', (req, res) => {
     req.on('close', () => {
         clearInterval(pingInterval);
     });
-}); 
+});
+
+// Add scheduled cycle function
+async function runScheduledCycle(scheduleTime) {
+    console.log(`\n🕒 Starting scheduled cycle (${scheduleTime})...`);
+    try {
+        // Check if cycle is already running
+        if (await isCycleLocked()) {
+            console.log('🔒 Another cycle is currently running. Skipping scheduled cycle.');
+            return;
+        }
+
+        // Broadcast cycle start
+        broadcastToClients({
+            type: 'status',
+            message: `Starting scheduled cycle (${scheduleTime})...`
+        });
+
+        const result = await cycle();
+        
+        if (result.success) {
+            console.log('✅ Scheduled cycle completed successfully');
+            broadcastToClients({
+                type: 'status',
+                message: 'Scheduled cycle completed successfully',
+                data: result.stats
+            });
+        } else {
+            console.error('❌ Scheduled cycle failed:', result.error);
+            broadcastToClients({
+                type: 'error',
+                message: `Scheduled cycle failed: ${result.error}`,
+                data: result.stats
+            });
+        }
+    } catch (error) {
+        console.error('❌ Critical error in scheduled cycle:', error);
+        broadcastToClients({
+            type: 'error',
+            message: `Critical error in scheduled cycle: ${error.message}`
+        });
+    }
+}
+
+// Setup cron schedules
+function setupScheduledCycles() {
+    // Schedule morning cycle
+    cron.schedule('0 6 * * *', () => {
+        runScheduledCycle('morning');
+    }, {
+        timezone: "UTC"
+    });
+
+    // Schedule evening cycle
+    cron.schedule('0 18 * * *', () => {
+        runScheduledCycle('evening');
+    }, {
+        timezone: "UTC"
+    });
+
+    console.log(`📅 Cycle schedules initialized:`);
+    console.log(`   Morning: 0 6 * * * UTC`);
+    console.log(`   Evening: 0 18 * * * UTC`);
+} 
