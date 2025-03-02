@@ -1,47 +1,88 @@
 <!DOCTYPE html>
 <!--
-  Leaderboard UI
-  =============
+  /lit/ Leaderboard - Final Form
+  ===========================
   
-  Single-page application that displays the book leaderboard and cycle status.
-  Implements real-time updates using Server-Sent Events (SSE).
+  A sophisticated single-page application for tracking and displaying Amazon book rankings.
+  Built with modern web technologies and real-time updates via Server-Sent Events (SSE).
   
-  Key Features:
-  - Real-time cycle status updates
-  - Responsive book grid layout
-  - Dynamic sorting and filtering
-  - Error handling and retry
-  - Automatic refresh
+  Core Features:
+  -------------
+  1. Real-time Data Processing
+     - Server-Sent Events (SSE) for live updates
+     - Automatic bi-daily updates (6:00 and 18:00 UTC)
+     - Intelligent error handling and recovery
+     - Connection status monitoring
   
-  UI Components:
-  1. Header
-     - Title and status
-     - Cycle controls
-     - Last update time
+  2. Book Management
+     - Amazon paperback URL submission system
+     - Best Sellers Rank (BSR) tracking
+     - Automated data validation
+     - Rate limiting and spam protection
   
-  2. Book Grid
-     - Responsive layout
-     - Cover images
-     - Book details
-     - BSR ranking
+  3. UI Components
+     - Responsive Material Design interface
+     - Dynamic leaderboard with live sorting
+     - Interactive book covers with zoom
+     - Real-time console output
+     - JSON data visualization
   
-  3. Status Panel
-     - Cycle progress
-     - Error display
-     - Connection status
-     - Auto-refresh
+  4. Security Features
+     - URL validation and sanitization
+     - Rate limiting on submissions
+     - Anti-bot protection
+     - Error boundary implementation
   
-  Event Handling:
-  - SSE connection management
-  - Progress updates
-  - Error handling
-  - Page visibility
-  - Auto-refresh
+  Technical Stack:
+  --------------
+  - Frontend: Vanilla JavaScript, CSS3
+  - Backend: Node.js, Express
+  - Data: JSON storage with atomic writes
+  - Real-time: Server-Sent Events (SSE)
+  - Styling: Material Design principles
   
-  Dependencies:
-  - Server-Sent Events API
-  - Tailwind CSS
-  - Custom JavaScript
+  Performance Optimizations:
+  -----------------------
+  - Efficient DOM updates
+  - Lazy loading of images
+  - Connection state management
+  - Memory leak prevention
+  - Garbage collection handling
+  
+  Error Handling:
+  -------------
+  - Graceful degradation
+  - Automatic reconnection
+  - User feedback system
+  - Detailed error logging
+  - Recovery procedures
+  
+  Data Flow:
+  ---------
+  1. User submits Amazon URL
+  2. Server validates and processes
+  3. Data is atomically stored
+  4. SSE broadcasts updates
+  5. UI reflects changes
+  
+  Maintenance Notes:
+  ----------------
+  - Hosted on Railway.app
+  - Auto-deploys from GitHub
+  - Bi-daily update schedule
+  - Backup system in place
+  
+  Future Enhancements:
+  ------------------
+  - Enhanced mobile optimization
+  - Advanced sorting options
+  - Historical data tracking
+  - Performance metrics
+  - User accounts system
+  
+  Repository: https://github.com/hxkm/railwayleaderboard
+  Version: 1.0.0 FINAL FORM
+  Last Updated: 2024
 -->
 <html lang="en">
 <head>
