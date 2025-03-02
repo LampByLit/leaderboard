@@ -944,6 +944,16 @@
                         formattedMessage = `<span class="msg-network">${data.message}</span>`;
                     } else if (data.status) {
                         formattedMessage = formatConsoleMessage(data.status, data.message, data.stats);
+                        
+                        // If cycle completed successfully, refresh the page after a delay
+                        if (data.status === 'complete') {
+                            setTimeout(() => {
+                                addMessageToConsole('<span class="msg-network">🔄 Refreshing page to show updated leaderboard...</span>');
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 2000); // Wait 2 seconds before refreshing
+                            }, 1000); // Wait 1 second after completion message
+                        }
                     }
 
                     if (formattedMessage) {
