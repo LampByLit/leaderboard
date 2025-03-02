@@ -34,6 +34,42 @@ function getDataPath(filename) {
     return path.join(DATA_DIR, filename);
 }
 
+// Debug function to check file existence and contents
+async function debugFile(filePath) {
+    try {
+        await fs.access(filePath);
+        console.log(`✅ DEBUG: File exists at ${filePath}`);
+        try {
+            const content = await fs.readFile(filePath, 'utf8');
+            console.log(`✅ DEBUG: File size: ${content.length} bytes`);
+            if (content.length < 1000) {
+                console.log(`📄 DEBUG: File content: ${content}`);
+            } else {
+                console.log(`📄 DEBUG: File content preview: ${content.substring(0, 200)}...`);
+            }
+            
+            try {
+                const parsed = JSON.parse(content);
+                console.log(`✅ DEBUG: Valid JSON with keys: ${Object.keys(parsed).join(', ')}`);
+                if (parsed.authors) {
+                    console.log(`✅ DEBUG: Found ${parsed.authors.length} authors in blacklist`);
+                    parsed.authors.forEach(author => console.log(`👤 DEBUG: Blacklisted author: ${author}`));
+                }
+                if (parsed.title_patterns) {
+                    console.log(`✅ DEBUG: Found ${parsed.title_patterns.length} title patterns in blacklist`);
+                    parsed.title_patterns.forEach(pattern => console.log(`📕 DEBUG: Blacklisted title pattern: ${pattern}`));
+                }
+            } catch (jsonError) {
+                console.error(`❌ DEBUG: Invalid JSON: ${jsonError.message}`);
+            }
+        } catch (readErr) {
+            console.error(`❌ DEBUG: Cannot read file: ${readErr.message}`);
+        }
+    } catch (accessErr) {
+        console.error(`❌ DEBUG: File does not exist: ${accessErr.message}`);
+    }
+}
+
 /**
  * Initializes the brownlist.json file if it doesn't exist or is empty/invalid
  * Creates with default structure for tracking rejected books
@@ -458,33 +494,94 @@ async function purge() {
         console.log('📖 Reading metadata...');
         const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
         
-        // Read blacklist.json
+        // Read blacklist.json - with enhanced error handling
         const blacklistPath = getDataPath('blacklist.json');
+        console.log(`🔍 Looking for blacklist at: ${blacklistPath}`);
+        
+        // Debug the blacklist file
+        await debugFile(blacklistPath);
+        
         let blacklist;
         try {
             console.log('📋 Loading blacklist configuration...');
             const blacklistData = await fs.readFile(blacklistPath, 'utf8');
-            blacklist = JSON.parse(blacklistData);
+            console.log(`📄 Blacklist data size: ${blacklistData.length} bytes`);
             
-            // Log blacklist configuration
-            console.log(`\n📊 Blacklist Status:
+            if (!blacklistData || blacklistData.trim() === '') {
+                console.error('❌ Empty blacklist file');
+                throw new Error('Empty blacklist file');
+            }
+            
+            try {
+                blacklist = JSON.parse(blacklistData);
+                
+                // Ensure required arrays exist
+                if (!blacklist.authors) {
+                    console.log('⚠️ No authors array in blacklist, initializing...');
+                    blacklist.authors = [];
+                }
+                
+                if (!blacklist.title_patterns) {
+                    console.log('⚠️ No title_patterns array in blacklist, initializing...');
+                    blacklist.title_patterns = [];
+                }
+                
+                if (!blacklist.patterns) {
+                    console.log('⚠️ No patterns array in blacklist, initializing...');
+                    blacklist.patterns = [];
+                }
+                
+                // Explicitly populate with critical values if empty
+                if (blacklist.authors.length === 0) {
+                    console.log('⚠️ Empty authors array, adding critical values');
+                    blacklist.authors.push('Adolf Hitler', 'William Shakespeare', 'Randall Kennedy', 'Rick Donahue', 'Dick Gregory');
+                }
+                
+                if (blacklist.title_patterns.length === 0) {
+                    console.log('⚠️ Empty title_patterns array, adding critical values');
+                    blacklist.title_patterns.push('nigger', 'mein kampf', 'adult', 'xxx', 'erotica');
+                }
+                
+                // Log blacklist configuration
+                console.log(`\n📊 Blacklist Status:
     - ${blacklist.authors?.length || 0} authors blacklisted
     - ${blacklist.title_patterns?.length || 0} title patterns
     - ${blacklist.patterns?.length || 0} legacy patterns
-    - Version: ${blacklist.version}
-    - Last Updated: ${new Date(blacklist.last_updated).toLocaleString()}`);
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                console.log('⚠️ No blacklist.json found, using empty blacklist');
+    - Version: ${blacklist.version || 'N/A'}
+    - Last Updated: ${blacklist.last_updated ? new Date(blacklist.last_updated).toLocaleString() : 'N/A'}`);
+                
+                // List some entries for debugging
+                if (blacklist.authors && blacklist.authors.length > 0) {
+                    console.log(`\n👤 Sample blacklisted authors: ${blacklist.authors.slice(0, 3).join(', ')}${blacklist.authors.length > 3 ? '...' : ''}`);
+                }
+                
+                if (blacklist.title_patterns && blacklist.title_patterns.length > 0) {
+                    console.log(`\n📕 Sample blacklisted title patterns: ${blacklist.title_patterns.slice(0, 3).join(', ')}${blacklist.title_patterns.length > 3 ? '...' : ''}`);
+                }
+                
+            } catch (parseError) {
+                console.error(`❌ Error parsing blacklist JSON: ${parseError.message}`);
+                // Create a hardcoded emergency blacklist
+                console.log('🚨 Creating emergency hardcoded blacklist');
                 blacklist = { 
-                    authors: [], 
-                    title_patterns: [], 
-                    patterns: [] 
+                    authors: ['Adolf Hitler', 'William Shakespeare', 'Randall Kennedy', 'Rick Donahue', 'Dick Gregory'],
+                    title_patterns: ['nigger', 'mein kampf', 'adult', 'xxx', 'erotica'],
+                    patterns: [],
+                    version: "emergency",
+                    last_updated: new Date().toISOString()
                 };
-            } else {
-                console.error('❌ Error reading blacklist:', error);
-                throw error;
             }
+        } catch (error) {
+            console.error(`❌ Error reading blacklist: ${error.message}`);
+            // Create a hardcoded emergency blacklist
+            console.log('🚨 Creating emergency hardcoded blacklist');
+            blacklist = { 
+                authors: ['Adolf Hitler', 'William Shakespeare', 'Randall Kennedy', 'Rick Donahue', 'Dick Gregory'],
+                title_patterns: ['nigger', 'mein kampf', 'adult', 'xxx', 'erotica'],
+                patterns: [],
+                version: "emergency",
+                last_updated: new Date().toISOString()
+            };
         }
 
         // Process books
