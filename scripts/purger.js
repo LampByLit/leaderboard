@@ -42,25 +42,41 @@ async function debugFile(filePath) {
         try {
             const content = await fs.readFile(filePath, 'utf8');
             console.log(`✅ DEBUG: File size: ${content.length} bytes`);
-            if (content.length < 1000) {
-                console.log(`📄 DEBUG: File content: ${content}`);
-            } else {
-                console.log(`📄 DEBUG: File content preview: ${content.substring(0, 200)}...`);
-            }
             
             try {
                 const parsed = JSON.parse(content);
                 console.log(`✅ DEBUG: Valid JSON with keys: ${Object.keys(parsed).join(', ')}`);
-                if (parsed.authors) {
-                    console.log(`✅ DEBUG: Found ${parsed.authors.length} authors in blacklist`);
-                    parsed.authors.forEach(author => console.log(`👤 DEBUG: Blacklisted author: ${author}`));
-                }
+                
+                // Enhanced blacklist validation
                 if (parsed.title_patterns) {
-                    console.log(`✅ DEBUG: Found ${parsed.title_patterns.length} title patterns in blacklist`);
-                    parsed.title_patterns.forEach(pattern => console.log(`📕 DEBUG: Blacklisted title pattern: ${pattern}`));
+                    console.log(`\n📋 DEBUG: Found ${parsed.title_patterns.length} title patterns:`);
+                    parsed.title_patterns.forEach((pattern, index) => {
+                        console.log(`   ${index + 1}. "${pattern}"`);
+                    });
+                } else {
+                    console.log('❌ DEBUG: No title_patterns array found in blacklist!');
                 }
+
+                if (parsed.authors) {
+                    console.log(`\n👥 DEBUG: Found ${parsed.authors.length} blacklisted authors:`);
+                    // Show first 5 authors as sample
+                    parsed.authors.slice(0, 5).forEach((author, index) => {
+                        console.log(`   ${index + 1}. "${author}"`);
+                    });
+                    if (parsed.authors.length > 5) {
+                        console.log(`   ... and ${parsed.authors.length - 5} more`);
+                    }
+                } else {
+                    console.log('❌ DEBUG: No authors array found in blacklist!');
+                }
+
+                // Log version and last update
+                console.log(`\n📅 DEBUG: Blacklist version: ${parsed.version}`);
+                console.log(`📅 DEBUG: Last updated: ${parsed.last_updated}`);
+                
             } catch (jsonError) {
                 console.error(`❌ DEBUG: Invalid JSON: ${jsonError.message}`);
+                console.error('Raw content preview:', content.substring(0, 200));
             }
         } catch (readErr) {
             console.error(`❌ DEBUG: Cannot read file: ${readErr.message}`);
@@ -485,6 +501,8 @@ function isBlacklisted(book, blacklist) {
 async function purge() {
     try {
         console.log('\n🧹 Starting purge process...');
+        console.log(`📂 DEBUG: Current working directory: ${process.cwd()}`);
+        console.log(`📂 DEBUG: DATA_DIR resolved to: ${DATA_DIR}`);
         
         // Initialize brownlist if it doesn't exist
         await initializeBrownlist();
@@ -493,27 +511,44 @@ async function purge() {
         const metadataPath = getDataPath('metadata.json');
         console.log('📖 Reading metadata...');
         const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+        console.log(`📚 DEBUG: Found ${Object.keys(metadata.books).length} books in metadata`);
         
         // Read blacklist.json - with enhanced error handling
         const blacklistPath = getDataPath('blacklist.json');
-        console.log(`🔍 Looking for blacklist at: ${blacklistPath}`);
+        console.log(`\n🔍 DEBUG: Looking for blacklist at absolute path: ${path.resolve(blacklistPath)}`);
         
         // Debug the blacklist file
+        console.log('\n📋 DEBUG: Analyzing blacklist file...');
         await debugFile(blacklistPath);
         
         let blacklist;
         try {
-            console.log('📋 Loading blacklist configuration...');
+            console.log('\n📋 Loading blacklist configuration...');
             const blacklistData = await fs.readFile(blacklistPath, 'utf8');
-            console.log(`📄 Blacklist data size: ${blacklistData.length} bytes`);
+            console.log(`📄 DEBUG: Raw blacklist data size: ${blacklistData.length} bytes`);
             
             if (!blacklistData || blacklistData.trim() === '') {
-                console.error('❌ Empty blacklist file');
+                console.error('❌ DEBUG: Empty blacklist file');
                 throw new Error('Empty blacklist file');
             }
             
             try {
                 blacklist = JSON.parse(blacklistData);
+                console.log('\n✅ DEBUG: Successfully parsed blacklist JSON');
+                
+                // Log actual patterns that will be used
+                console.log('\n📋 DEBUG: Active filter configuration:');
+                console.log(`   • ${blacklist.title_patterns?.length || 0} title patterns`);
+                console.log(`   • ${blacklist.authors?.length || 0} authors`);
+                console.log(`   • ${blacklist.patterns?.length || 0} legacy patterns`);
+                
+                // Sample check for specific patterns we're interested in
+                const patterns = blacklist.title_patterns || [];
+                console.log('\n🔍 DEBUG: Checking for specific patterns:');
+                ['gay', 'sex', 'sexual', 'adult', 'erotic'].forEach(term => {
+                    const found = patterns.includes(term);
+                    console.log(`   • "${term}": ${found ? '✅ Found' : '❌ Not found'}`);
+                });
                 
                 // Ensure required arrays exist
                 if (!blacklist.authors) {

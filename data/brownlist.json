@@ -1,67 +1,87 @@
 {
     "version": "1.0.0",
-    "created_at": "2025-03-02T02:00:25.886Z",
-    "last_updated": "2025-03-02T02:00:25.945Z",
+    "created_at": "2025-03-02T05:40:21.912Z",
+    "last_updated": "2025-03-02T05:40:22.004Z",
     "rejected_books": [
         {
             "asin": "1481826506",
             "title": "BBC",
             "author": "Rick Donahue",
             "url": "https://www.amazon.com/BBC-Black-Cocks-Stories-Small/dp/1481826506",
-            "bsr": 8729884,
+            "bsr": 8730828,
             "rejection_reason": "blacklisted_author",
             "matched_pattern": "Rick Donahue",
-            "timestamp": "2025-03-02T02:00:25.901Z"
+            "timestamp": "2025-03-02T05:40:21.945Z"
+        },
+        {
+            "asin": "B08H566H8G",
+            "title": "Having Gay Sex",
+            "author": "David Ledain",
+            "url": "https://www.amazon.com/Having-Gay-Sex-Guide-Homosexual/dp/B08H566H8G/",
+            "bsr": 1465723,
+            "rejection_reason": "blacklisted_author",
+            "matched_pattern": "Avi",
+            "timestamp": "2025-03-02T05:40:21.954Z"
+        },
+        {
+            "asin": "8417805842",
+            "title": "Gay Sex. Manual sobre sexualidad y autoestima erótica para hombres homosexuales / Gay Sex. A Manual for Gay Men",
+            "author": "Gabriel J. Martin",
+            "url": "https://www.amazon.com/Gay-Sex-sexualidad-autoestima-homosexuales/dp/8417805842/",
+            "bsr": 1401121,
+            "rejection_reason": "blacklisted_author",
+            "matched_pattern": "George R.R. Martin",
+            "timestamp": "2025-03-02T05:40:21.964Z"
         },
         {
             "asin": "B0DPN6X4MD",
             "title": "Mein Kampf",
             "author": "Adolf Hitler",
             "url": "https://www.amazon.com/Mein-Kampf-Adolf-Hitler/dp/B0DPN6X4MD/",
-            "bsr": 15738,
+            "bsr": 17442,
             "rejection_reason": "blacklisted_author",
             "matched_pattern": "Adolf Hitler",
-            "timestamp": "2025-03-02T02:00:25.915Z"
+            "timestamp": "2025-03-02T05:40:21.974Z"
         },
         {
             "asin": "B09JJJ7234",
             "title": "Hamlet",
             "author": "William Shakespeare",
             "url": "https://www.amazon.com/dp/B09JJJ7234",
-            "bsr": 85922,
+            "bsr": 123157,
             "rejection_reason": "blacklisted_author",
             "matched_pattern": "William Shakespeare",
-            "timestamp": "2025-03-02T02:00:25.921Z"
+            "timestamp": "2025-03-02T05:40:21.981Z"
         },
         {
             "asin": "0593316525",
             "title": "Nigger",
             "author": "Randall Kennedy",
             "url": "https://www.amazon.com/Nigger-Strange-Career-Troublesome-Introduction-dp-0593316525/dp/0593316525/",
-            "bsr": 215240,
+            "bsr": 250952,
             "rejection_reason": "blacklisted_author",
             "matched_pattern": "Randall Kennedy",
-            "timestamp": "2025-03-02T02:00:25.931Z"
+            "timestamp": "2025-03-02T05:40:21.986Z"
         },
         {
             "asin": "0375713719",
             "title": "Nigger",
             "author": "Randall Kennedy",
             "url": "https://www.amazon.com/Nigger-Strange-Career-Troublesome-Word/dp/0375713719",
-            "bsr": 543808,
+            "bsr": 569741,
             "rejection_reason": "blacklisted_author",
             "matched_pattern": "Randall Kennedy",
-            "timestamp": "2025-03-02T02:00:25.936Z"
+            "timestamp": "2025-03-02T05:40:21.995Z"
         },
         {
             "asin": "0593086147",
             "title": "Nigger",
             "author": "Dick Gregory",
             "url": "https://www.amazon.com/Nigger-Autobiography-Dick-Gregory/dp/0593086147/",
-            "bsr": 297488,
+            "bsr": 127313,
             "rejection_reason": "blacklisted_title_pattern",
             "matched_pattern": "nigger",
-            "timestamp": "2025-03-02T02:00:25.945Z"
+            "timestamp": "2025-03-02T05:40:22.004Z"
         }
     ]
 }
