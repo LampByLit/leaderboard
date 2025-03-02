@@ -1,4 +1,48 @@
 <!DOCTYPE html>
+<!--
+  Leaderboard UI
+  =============
+  
+  Single-page application that displays the book leaderboard and cycle status.
+  Implements real-time updates using Server-Sent Events (SSE).
+  
+  Key Features:
+  - Real-time cycle status updates
+  - Responsive book grid layout
+  - Dynamic sorting and filtering
+  - Error handling and retry
+  - Automatic refresh
+  
+  UI Components:
+  1. Header
+     - Title and status
+     - Cycle controls
+     - Last update time
+  
+  2. Book Grid
+     - Responsive layout
+     - Cover images
+     - Book details
+     - BSR ranking
+  
+  3. Status Panel
+     - Cycle progress
+     - Error display
+     - Connection status
+     - Auto-refresh
+  
+  Event Handling:
+  - SSE connection management
+  - Progress updates
+  - Error handling
+  - Page visibility
+  - Auto-refresh
+  
+  Dependencies:
+  - Server-Sent Events API
+  - Tailwind CSS
+  - Custom JavaScript
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">

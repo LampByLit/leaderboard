@@ -1,3 +1,53 @@
+/**
+ * Leaderboard Server Module
+ * =======================
+ * 
+ * Express server that serves the leaderboard UI and handles real-time updates.
+ * Implements Server-Sent Events (SSE) for live cycle status updates.
+ * 
+ * Key Features:
+ * - Real-time cycle status updates
+ * - Server-Sent Events (SSE)
+ * - Static file serving
+ * - Error handling
+ * - Cycle management
+ * 
+ * Server Components:
+ * 1. Static File Server
+ *    - Serves index.html
+ *    - Handles static assets
+ *    - Caches responses
+ * 
+ * 2. SSE Endpoint
+ *    - Real-time updates
+ *    - Connection management
+ *    - Client tracking
+ *    - Heartbeat system
+ * 
+ * 3. Cycle Management
+ *    - Cycle initialization
+ *    - Progress tracking
+ *    - Error handling
+ *    - Status broadcasting
+ * 
+ * Safety Features:
+ * - Connection cleanup
+ * - Error boundaries
+ * - Memory management
+ * - Client reconnection
+ * - Detailed logging
+ * 
+ * Dependencies:
+ * - Express.js
+ * - Node.js fs/promises
+ * - Custom cycle modules
+ * 
+ * @module server
+ * @requires express
+ * @requires fs.promises
+ * @requires path
+ */
+
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
@@ -850,21 +900,6 @@ app.post('/cycle', async (req, res) => {
                     partial_stats: cycleStats
                 };
                 await safeWriteJSON(metadataPath, metadata);
-                
-                // If failure is due to no books in metadata after purging, create an empty books.json
-                if (currentStage === 'publishing' && error.message.includes('No books found in metadata')) {
-                    console.log('📝 All books were purged. Creating empty leaderboard...');
-                    const emptyData = {
-                        version: '1.0',
-                        last_updated: new Date().toISOString(),
-                        books: {}
-                    };
-                    
-                    // Write to books.json
-                    const booksPath = getDataPath('books.json');
-                    await safeWriteJSON(booksPath, emptyData);
-                    console.log('✅ Empty leaderboard created successfully');
-                }
             } catch (statusError) {
                 console.error('Failed to update cycle status:', statusError);
             }

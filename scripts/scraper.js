@@ -1,26 +1,52 @@
 /**
- * Amazon Book Scraper
- * ==================
+ * Amazon Book Scraper Module
+ * ========================
  * 
- * ⚠️ WARNING: This tool is sketchy and will break any moment. Amazon employs very strict anti-bot technology.
- * Use at your own risk and with extreme caution. Getting blocked is not a matter of if, but when.
+ * Responsible for extracting book data from Amazon product pages.
+ * Implements Amazon-friendly scraping with stealth and rate limiting.
  * 
  * Key Features:
- * - Batch processing with configurable delays
- * - Browser simulation with rotating user agents
- * - Compression handling (gzip, deflate, brotli)
- * - CAPTCHA detection and avoidance
- * - Cookie management and session persistence
- * - Atomic file operations with backups
+ * - Stealth scraping with Puppeteer
+ * - Intelligent rate limiting
+ * - User agent rotation
+ * - Exponential backoff
+ * - Detailed error logging
+ * - Atomic file operations
  * 
- * Safety Measures:
- * - MIN_REQUEST_DELAY: 15s between Amazon requests
- * - MAX_REQUEST_DELAY: 30s maximum delay
- * - Random delays with jitter
- * - Rotating user agents and viewport sizes
- * - Cookie management
+ * Scraping Strategy:
+ * 1. Page Loading
+ *    - Random delays (3-10s)
+ *    - Rotating user agents
+ *    - Stealth plugin
+ *    - Cookie handling
+ * 
+ * 2. Data Extraction
+ *    - Multiple selector fallbacks
+ *    - Error tolerance
+ *    - Validation checks
+ *    - Format normalization
+ * 
+ * 3. Rate Limiting
+ *    - Random delays
+ *    - Exponential backoff
+ *    - Request queuing
+ *    - IP protection
+ * 
+ * Safety Features:
+ * - Never makes concurrent requests
+ * - Handles timeouts gracefully
+ * - Validates all extracted data
+ * - Creates backups before updates
+ * - Detailed error logging
+ * 
+ * File Dependencies:
+ * - metadata.json: Output data
+ * - backup files (.bak)
  * 
  * @module scraper
+ * @requires puppeteer
+ * @requires puppeteer-extra
+ * @requires puppeteer-extra-plugin-stealth
  */
 
 const fs = require('fs').promises;

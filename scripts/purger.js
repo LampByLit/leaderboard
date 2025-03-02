@@ -3,20 +3,43 @@
  * ====================
  * 
  * Responsible for filtering out inappropriate or blacklisted content from the book database.
- * Implements a multi-layer filtering system with both title and author checks.
+ * Implements a multi-layer filtering system with intelligent pattern matching.
  * 
  * Key Features:
  * - Multi-pattern content filtering
- * - Author blacklisting
- * - Conservative error handling (blocks on uncertainty)
- * - Atomic file operations with backups
+ * - Intelligent author name matching
+ * - Word boundary-aware title filtering
+ * - Case-insensitive pattern matching
  * - Detailed logging of purged content
- * - Brownlist tracking of rejected books
+ * - Temporary brownlist tracking
  * 
  * Filtering Strategy:
- * 1. Title Pattern Matching - Checks for inappropriate keywords
- * 2. Author Blacklisting - Matches against known problematic authors
- * 3. Legacy Pattern Support - Maintains backward compatibility
+ * 1. Author Matching
+ *    - Exact full name matches
+ *    - Word boundary-aware partial matches
+ *    - Case-insensitive comparison
+ * 
+ * 2. Title Pattern Matching
+ *    - Word boundary checks
+ *    - Case-insensitive matching
+ *    - Multiple pattern formats
+ *    - Flexible pattern recognition
+ * 
+ * 3. Legacy Pattern Support
+ *    - Backward compatibility
+ *    - Mixed pattern types
+ * 
+ * Safety Features:
+ * - Conservative error handling (blocks on uncertainty)
+ * - Atomic file operations with backups
+ * - Detailed logging of all operations
+ * - Non-blocking brownlist operations
+ * - Fallback pattern support
+ * 
+ * File Dependencies:
+ * - metadata.json: Source of book data
+ * - blacklist.json: Filtering patterns (in config/)
+ * - brownlist.json: Temporary rejected books log
  * 
  * @module purger
  * @requires fs.promises

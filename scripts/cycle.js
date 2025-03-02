@@ -6,24 +6,44 @@
  * This is the main conductor that ensures all operations happen in the correct sequence.
  * 
  * Cycle Sequence:
- * 1. Cleanup  - Remove invalid/failed submissions
- * 2. Scrape   - Fetch latest data from Amazon
- * 3. Purge    - Remove blacklisted entries
- * 4. Publish  - Update the leaderboard
+ * 1. Initialize - Check and create required files
+ * 2. Scrape     - Fetch latest data from Amazon
+ * 3. Purge      - Remove blacklisted entries
+ * 4. Cleanup    - Remove invalid/failed submissions
+ * 5. Publish    - Update the leaderboard
+ * 6. Reset      - Clear brownlist for next cycle
  * 
  * Features:
  * - Atomic file operations with backups
  * - Progress tracking and status updates
  * - Error handling and recovery
  * - Cycle state persistence
+ * - Lock mechanism to prevent concurrent cycles
+ * - Auto-cleanup of temporary data
+ * - Detailed logging and statistics
  * 
  * File Dependencies:
  * - input.json: Source of Amazon URLs
  * - metadata.json: Internal state and book data
  * - books.json: Published leaderboard data
- * - blacklist.json: Filtering patterns
+ * - blacklist.json: Filtering patterns (in config/)
+ * - brownlist.json: Temporary rejected books log
+ * - cleanup_log.json: Submission cleanup history
+ * 
+ * Safety Features:
+ * - Atomic writes with rollback capability
+ * - Stale lock detection and cleanup
+ * - Automatic file initialization
+ * - Error state persistence
+ * - Non-blocking cleanup operations
  * 
  * @module cycle
+ * @requires fs.promises
+ * @requires path
+ * @requires ./scraper
+ * @requires ./publisher
+ * @requires ./purger
+ * @requires ./cleaner
  */
 
 const fs = require('fs').promises;

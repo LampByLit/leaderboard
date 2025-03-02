@@ -1,40 +1,49 @@
 /**
- * Leaderboard Publisher
+ * Book Publisher Module
  * ===================
  * 
- * Transforms raw book data into a ranked leaderboard format.
- * Handles the final stage of the update cycle, preparing data for public consumption.
+ * Responsible for transforming filtered book data into the final published format.
+ * Handles data validation, transformation, and atomic file operations.
  * 
  * Key Features:
- * - BSR-based ranking system
  * - Data validation and sanitization
- * - HTML entity decoding
  * - Atomic file operations
+ * - Empty state handling
+ * - Detailed error logging
+ * - Backup creation
  * 
- * Validation Rules:
- * - Required fields: title, author, cover_url, bsr, url
- * - Valid BSR (numeric, > 0)
- * - Valid URLs (must be Amazon links)
- * - Sequential rank validation
- * - No duplicate ranks
+ * Publishing Process:
+ * 1. Data Validation
+ *    - Checks for required fields
+ *    - Validates data types
+ *    - Handles empty states
  * 
- * Output Format:
- * {
- *   version: string,
- *   last_updated: ISO timestamp,
- *   books: {
- *     [asin]: {
- *       rank: number,
- *       title: string,
- *       author: string,
- *       cover_url: string,
- *       bsr: number,
- *       url: string
- *     }
- *   }
- * }
+ * 2. Data Transformation
+ *    - Formats book entries
+ *    - Sorts by BSR
+ *    - Removes duplicates
+ *    - Normalizes fields
+ * 
+ * 3. File Operations
+ *    - Creates backups
+ *    - Atomic writes
+ *    - Handles errors
+ * 
+ * Safety Features:
+ * - Never loses previous data on failure
+ * - Validates all fields before writing
+ * - Creates backups before updates
+ * - Handles empty states gracefully
+ * - Detailed error logging
+ * 
+ * File Dependencies:
+ * - metadata.json: Source data
+ * - books.json: Published output
+ * - backup files (.bak)
  * 
  * @module publisher
+ * @requires fs.promises
+ * @requires path
  */
 
 const fs = require('fs').promises;

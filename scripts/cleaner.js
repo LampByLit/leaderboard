@@ -1,33 +1,49 @@
 /**
- * Submission Cleaner
- * ================
+ * Book Data Cleaner Module
+ * =======================
  * 
- * Maintains the health of the submission pool by removing invalid or consistently failing entries.
- * Acts as the first line of defense in the update cycle.
+ * Responsible for cleaning and normalizing book data before publishing.
+ * Handles data validation, normalization, and duplicate removal.
  * 
- * Cleaning Rules:
- * - Remove entries with invalid ASINs
- * - Remove entries that fail scraping (immediately)
- * - Remove blacklisted entries
- * - Keep successful entries
+ * Key Features:
+ * - Data validation and cleanup
+ * - HTML entity decoding
+ * - Duplicate detection
+ * - Field normalization
+ * - Error logging
  * 
- * Features:
- * - Immediate removal of failed entries
- * - Atomic file operations
- * - Operation logging
- * - Backup creation before modifications
+ * Cleaning Process:
+ * 1. Data Validation
+ *    - Required field checks
+ *    - Type validation
+ *    - Format validation
+ * 
+ * 2. Data Normalization
+ *    - HTML entity decoding
+ *    - Whitespace cleanup
+ *    - URL normalization
+ *    - BSR formatting
+ * 
+ * 3. Duplicate Handling
+ *    - ASIN-based deduplication
+ *    - BSR conflict resolution
+ *    - Title similarity checks
+ * 
+ * Safety Features:
+ * - Never loses original data
+ * - Validates all fields
+ * - Creates backups
+ * - Detailed error logging
+ * - Conservative cleanup
  * 
  * File Dependencies:
- * - input.json: Source of submissions
- * - metadata.json: Book data and state
- * - cleanup_log.json: Operation history
- * 
- * Safety Measures:
- * - Atomic writes with rollback
- * - Backup files before modifications
- * - Validation before removal
+ * - metadata.json: Source/output data
+ * - backup files (.bak)
  * 
  * @module cleaner
+ * @requires fs.promises
+ * @requires path
+ * @requires he (HTML entities)
  */
 
 const fs = require('fs').promises;
