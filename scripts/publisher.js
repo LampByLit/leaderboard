@@ -310,21 +310,19 @@ async function publish() {
         const totalBooks = Object.keys(metadata.books).length;
         if (totalBooks === 0) {
             console.warn('⚠️ No books found in metadata');
-            
-            // Instead of failing, create an empty books.json file
-            console.log('📝 Creating empty leaderboard...');
+            // Create empty public books.json
             const emptyData = {
                 version: '1.0',
                 last_updated: new Date().toISOString(),
                 books: {}
             };
             
-            // Write to books.json
+            // Write empty state to books.json
             console.log('💾 Saving empty leaderboard...');
             const booksPath = getDataPath('books.json');
             await safeWriteJSON(booksPath, emptyData);
             
-            // Update metadata with latest publish info
+            // Update metadata with empty publish info
             metadata.last_publish = {
                 timestamp: new Date().toISOString(),
                 total_books: 0,
@@ -332,7 +330,7 @@ async function publish() {
             };
             await safeWriteJSON(metadataPath, metadata);
             
-            console.log('✅ Empty publish completed successfully\n');
+            console.log('✅ Published empty leaderboard successfully\n');
             return {
                 success: true,
                 stats: {
