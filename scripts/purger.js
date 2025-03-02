@@ -278,6 +278,7 @@ function isTitleBlacklisted(bookTitle, titlePatterns) {
     }
     
     const normalizedTitle = normalizeString(bookTitle);
+    console.log(`DEBUG: Checking title "${bookTitle}" (normalized: "${normalizedTitle}")`);
     
     for (const pattern of titlePatterns) {
         const normalizedPattern = normalizeString(pattern);
@@ -285,27 +286,30 @@ function isTitleBlacklisted(bookTitle, titlePatterns) {
         // Skip empty patterns
         if (!normalizedPattern) continue;
         
-        // Check for exact pattern match
-        if (normalizedTitle.includes(normalizedPattern)) {
-            console.log(`Title pattern match: "${pattern}" found in "${bookTitle}"`);
+        console.log(`DEBUG: Checking pattern "${pattern}" (normalized: "${normalizedPattern}")`);
+        
+        // First try a case-insensitive substring match
+        if (normalizedTitle.toLowerCase().includes(normalizedPattern.toLowerCase())) {
+            console.log(`Title substring match: "${pattern}" found in "${bookTitle}"`);
             return {
                 isBlacklisted: true,
                 matchedPattern: pattern
             };
         }
         
-        // Check for word boundary match (to avoid matching substrings within words)
+        // Then try a word boundary match
         try {
-            const wordBoundaryRegex = new RegExp(`\\b${escapeRegExp(normalizedPattern)}\\b`, 'i');
-            if (wordBoundaryRegex.test(normalizedTitle)) {
-                console.log(`Word boundary title match: "${pattern}" found as whole word in "${bookTitle}"`);
+            // Make it case insensitive and flexible with word boundaries
+            const flexibleRegex = new RegExp(escapeRegExp(normalizedPattern), 'i');
+            if (flexibleRegex.test(normalizedTitle)) {
+                console.log(`Flexible pattern match: "${pattern}" found in "${bookTitle}"`);
                 return {
                     isBlacklisted: true,
                     matchedPattern: pattern
                 };
             }
         } catch (error) {
-            console.error(`Error creating regex for pattern "${pattern}":`, error);
+            console.error(`Error checking pattern "${pattern}":`, error);
         }
     }
     

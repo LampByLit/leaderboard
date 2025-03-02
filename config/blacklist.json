@@ -1,20 +1,36 @@
 {
     "version": "2.0.0",
     "created_at": "2025-03-02T02:30:00.000Z",
-    "last_updated": "2025-03-02T02:30:00.000Z",
+    "last_updated": "2025-03-02T05:45:00.000Z",
     "authors": [
         "Adolf Hitler",
         "William Shakespeare",
         "Randall Kennedy",
         "Rick Donahue",
-        "Dick Gregory"
+        "Dick Gregory",
+        "David Ledain",
+        "Gabriel J. Martin",
+        "Owen McCarron",
+        "Guy Hocquenghem",
+        "Richard Isay",
+        "Victor St. Chocolat",
+        "Zane"
     ],
     "title_patterns": [
         "nigger",
         "mein kampf",
         "adult",
         "xxx",
-        "erotica"
+        "erotica",
+        "erotic",
+        "gay",
+        "homosexual",
+        "sex",
+        "sexual",
+        "passion",
+        "flava",
+        "BBC",
+        "Super Erotic"
     ],
     "patterns": []
 }
