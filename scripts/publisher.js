@@ -310,9 +310,37 @@ async function publish() {
         const totalBooks = Object.keys(metadata.books).length;
         if (totalBooks === 0) {
             console.warn('⚠️ No books found in metadata');
+            
+            // Instead of failing, create an empty books.json file
+            console.log('📝 Creating empty leaderboard...');
+            const emptyData = {
+                version: '1.0',
+                last_updated: new Date().toISOString(),
+                books: {}
+            };
+            
+            // Write to books.json
+            console.log('💾 Saving empty leaderboard...');
+            const booksPath = getDataPath('books.json');
+            await safeWriteJSON(booksPath, emptyData);
+            
+            // Update metadata with latest publish info
+            metadata.last_publish = {
+                timestamp: new Date().toISOString(),
+                total_books: 0,
+                ranked_books: 0
+            };
+            await safeWriteJSON(metadataPath, metadata);
+            
+            console.log('✅ Empty publish completed successfully\n');
             return {
-                success: false,
-                error: 'No books found in metadata'
+                success: true,
+                stats: {
+                    total_books: 0,
+                    ranked_books: 0,
+                    timestamp: new Date().toISOString()
+                },
+                books: emptyData
             };
         }
 

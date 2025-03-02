@@ -850,6 +850,21 @@ app.post('/cycle', async (req, res) => {
                     partial_stats: cycleStats
                 };
                 await safeWriteJSON(metadataPath, metadata);
+                
+                // If failure is due to no books in metadata after purging, create an empty books.json
+                if (currentStage === 'publishing' && error.message.includes('No books found in metadata')) {
+                    console.log('📝 All books were purged. Creating empty leaderboard...');
+                    const emptyData = {
+                        version: '1.0',
+                        last_updated: new Date().toISOString(),
+                        books: {}
+                    };
+                    
+                    // Write to books.json
+                    const booksPath = getDataPath('books.json');
+                    await safeWriteJSON(booksPath, emptyData);
+                    console.log('✅ Empty leaderboard created successfully');
+                }
             } catch (statusError) {
                 console.error('Failed to update cycle status:', statusError);
             }
