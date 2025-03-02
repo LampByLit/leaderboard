@@ -146,29 +146,6 @@ async function initializeFiles() {
         }
     }
     
-    // Check if blacklist.json exists
-    const blacklistPath = getDataPath('blacklist.json');
-    try {
-        await fs.access(blacklistPath);
-        console.log('✓ Blacklist file exists');
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            console.log('⚠️ Creating new blacklist.json file');
-            const initialBlacklist = {
-                version: "1.0.0",
-                created_at: new Date().toISOString(),
-                last_updated: new Date().toISOString(),
-                title_patterns: ["adult", "xxx", "erotica"],
-                authors: [],
-                patterns: []
-            };
-            await safeWriteJSON(blacklistPath, initialBlacklist);
-            console.log('✅ Initialized new blacklist.json with default patterns');
-        } else {
-            throw err;
-        }
-    }
-    
     // Initialize brownlist.json if missing
     const brownlistPath = getDataPath('brownlist.json');
     try {

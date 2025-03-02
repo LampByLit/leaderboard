@@ -28,10 +28,16 @@ const path = require('path');
 
 // Configure data directory
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
+const CONFIG_DIR = path.resolve(process.env.RAILWAY_PROJECT_DIR || '.', 'config');
 
 // Helper function to get data file paths
 function getDataPath(filename) {
     return path.join(DATA_DIR, filename);
+}
+
+// Helper function to get config file paths
+function getConfigPath(filename) {
+    return path.join(CONFIG_DIR, filename);
 }
 
 // Debug function to check file existence and contents
@@ -501,24 +507,46 @@ function isBlacklisted(book, blacklist) {
 async function purge() {
     try {
         console.log('\n🧹 Starting purge process...');
+        
+        // Log current directory and resolved paths
         console.log(`📂 DEBUG: Current working directory: ${process.cwd()}`);
         console.log(`📂 DEBUG: DATA_DIR resolved to: ${DATA_DIR}`);
+        console.log(`📂 DEBUG: CONFIG_DIR resolved to: ${CONFIG_DIR}`);
         
-        // Initialize brownlist if it doesn't exist
+        // Initialize brownlist
         await initializeBrownlist();
         
         // Read metadata.json
         const metadataPath = getDataPath('metadata.json');
-        console.log('📖 Reading metadata...');
-        const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
-        console.log(`📚 DEBUG: Found ${Object.keys(metadata.books).length} books in metadata`);
+        console.log('\n📖 Reading metadata...');
         
+        let metadata;
+        try {
+            metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            if (!metadata.books) {
+                console.warn('⚠️ No books found in metadata, initializing empty books object');
+                metadata.books = {};
+            }
+            console.log(`📚 DEBUG: Found ${Object.keys(metadata.books).length} books in metadata`);
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.log('⚠️ No existing metadata found, creating new...');
+                metadata = { books: {} };
+            } else if (error instanceof SyntaxError) {
+                console.error('❌ Invalid JSON in metadata file:', error);
+                console.log('⚠️ Creating new metadata with empty books object');
+                metadata = { books: {} };
+            } else {
+                throw error;
+            }
+        }
+
         // Read blacklist.json - with enhanced error handling
-        const blacklistPath = getDataPath('blacklist.json');
-        console.log(`\n🔍 DEBUG: Looking for blacklist at absolute path: ${path.resolve(blacklistPath)}`);
-        
-        // Debug the blacklist file
+        const blacklistPath = getConfigPath('blacklist.json');
+        console.log(`\n🔍 DEBUG: Looking for blacklist at absolute path: ${blacklistPath}`);
         console.log('\n📋 DEBUG: Analyzing blacklist file...');
+        
+        // Debug blacklist file
         await debugFile(blacklistPath);
         
         let blacklist;
