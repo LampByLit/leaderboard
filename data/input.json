@@ -2,14 +2,8 @@
     "submissions": [
         {
             "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB",
-            "submitted_at": "2025-02-28T05:59:47.715Z",
-            "failed_attempts": 0
-        },
-        {
-            "url": "https://www.amazon.com/dp/1795641495?ref=cm_sw_r_ffobk_cso_cp_mwn_dp_1MGMVETT0YZVJTJHAQJC&ref_=cm_sw_r_ffobk_cso_cp_mwn_dp_1MGMVETT0YZVJTJHAQJC",
-            "submitted_at": "2025-03-01T03:36:03.677Z",
-            "failed_attempts": 0
+            "submitted_at": "2025-03-01T23:19:30.678Z"
         }
     ],
-    "last_cleanup": "2025-03-01T21:55:51.275Z"
+    "last_cleanup": "2025-03-02T02:00:25.959Z"
 }

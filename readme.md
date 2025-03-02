@@ -116,22 +116,3 @@ All data files are stored in the mounted volume at `/data`:
 ## License
 
 MIT License - see LICENSE file for details.
-
-## Debugging Volume Files
-
-To view files stored on the Railway volume:
-
-1. Go to your Railway project dashboard
-2. Deploy a new service using the "filebrowser" template
-   - Click "New Service" → "Template" → search for "filebrowser"
-3. Temporarily detach the volume from the main leaderboard service:
-   - Go to your main service → "Variables" tab → find and remove the volume
-4. Attach the volume to the filebrowser service:
-   - Go to the filebrowser service → "Variables" tab → "Attach Volume"
-5. Access your files through the filebrowser URL
-   - Login with credentials from the service variables
-6. When finished, reattach the volume to the main service:
-   - Detach from filebrowser
-   - Reattach to the main leaderboard service
-
-**IMPORTANT:** Your leaderboard service will not function while the volume is detached.

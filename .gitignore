@@ -11,10 +11,16 @@ yarn-error.log*
 *.temp
 !data/blacklist.json
 !data/*.template.json
+# TEMPORARY EXCEPTIONS FOR ONE-TIME UPLOAD
+!data/metadata.json
+!data/books.json
+!data/brownlist.json
+!data/input.json
+!data/cleanup_log.json
 
 # Specific data files
-brownlist.json
-cleanup_log.json
+# brownlist.json - TEMPORARILY ALLOWING
+# cleanup_log.json - TEMPORARILY ALLOWING
 
 # Environment variables
 .env

@@ -1,0 +1,28 @@
+{
+    "books": {
+        "B0DLGLKGFB": {
+            "asin": "B0DLGLKGFB",
+            "title": "Shards",
+            "author": "Robert James Cross",
+            "cover_url": "https://m.media-amazon.com/images/I/41Nr6CfHZUL._SY522_.jpg",
+            "bsr": 9234922,
+            "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB"
+        }
+    },
+    "last_update": "2025-03-02T02:00:25.874Z",
+    "cycle_status": {
+        "state": "completed",
+        "completed_at": "2025-03-02T02:00:25.990Z",
+        "duration": 114205
+    },
+    "scraping_progress": {
+        "current": 7,
+        "total": 7,
+        "successful": 7
+    },
+    "last_publish": {
+        "timestamp": "2025-03-02T02:00:25.984Z",
+        "total_books": 1,
+        "ranked_books": 1
+    }
+}
