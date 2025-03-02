@@ -151,80 +151,19 @@ async function initializeFiles() {
     try {
         await fs.access(blacklistPath);
         console.log('✓ Blacklist file exists');
-        
-        // NEW CODE: Additionally validate that the blacklist has content
-        try {
-            const blacklistData = await fs.readFile(blacklistPath, 'utf8');
-            const blacklist = JSON.parse(blacklistData);
-            
-            // Check if blacklist has any filtering rules (empty arrays for both)
-            if ((!blacklist.authors || blacklist.authors.length === 0) && 
-                (!blacklist.title_patterns || blacklist.title_patterns.length === 0) &&
-                (!blacklist.patterns || blacklist.patterns.length === 0)) {
-                
-                console.log('⚠️ Found empty blacklist, attempting to use template...');
-                
-                // Try to use the template if available
-                try {
-                    const templatePath = getDataPath('blacklist.template.json');
-                    const templateData = await fs.readFile(templatePath, 'utf8');
-                    let blacklistTemplate = JSON.parse(templateData);
-                    
-                    // Preserve version but update timestamps
-                    blacklistTemplate.version = blacklist.version || "1.0.0";
-                    blacklistTemplate.created_at = blacklist.created_at || new Date().toISOString();
-                    blacklistTemplate.last_updated = new Date().toISOString();
-                    
-                    console.log('🔄 Upgrading empty blacklist with template content');
-                    await safeWriteJSON(blacklistPath, blacklistTemplate);
-                    console.log('✅ Blacklist updated with filtering rules from template');
-                } catch (templateErr) {
-                    console.log('⚠️ No template found, using default minimal blacklist');
-                    
-                    // Update the existing blacklist with minimal default values
-                    blacklist.title_patterns = ["adult", "xxx", "erotica"];
-                    blacklist.authors = ["Adolf Hitler", "William Shakespeare"];
-                    blacklist.last_updated = new Date().toISOString();
-                    
-                    await safeWriteJSON(blacklistPath, blacklist);
-                    console.log('✅ Empty blacklist updated with default filtering rules');
-                }
-            }
-        } catch (validationErr) {
-            console.error('⚠️ Error validating blacklist:', validationErr);
-            // Continue without throwing - we already know the file exists
-        }
     } catch (err) {
         if (err.code === 'ENOENT') {
             console.log('⚠️ Creating new blacklist.json file');
-            
-            // Try to read from template file first
-            try {
-                const templatePath = getDataPath('blacklist.template.json');
-                const templateData = await fs.readFile(templatePath, 'utf8');
-                let blacklistTemplate = JSON.parse(templateData);
-                
-                // Ensure the timestamp is current
-                blacklistTemplate.created_at = new Date().toISOString();
-                blacklistTemplate.last_updated = new Date().toISOString();
-                
-                console.log('🔄 Using blacklist template file');
-                await safeWriteJSON(blacklistPath, blacklistTemplate);
-                console.log('✅ Initialized blacklist.json from template');
-            } catch (templateErr) {
-                // Fallback to default minimal blacklist if template not available
-                console.log('⚠️ No template found, using default minimal blacklist');
-                const initialBlacklist = {
-                    version: "1.0.0",
-                    created_at: new Date().toISOString(),
-                    last_updated: new Date().toISOString(),
-                    title_patterns: ["adult", "xxx", "erotica"],
-                    authors: ["Adolf Hitler", "William Shakespeare"],
-                    patterns: []
-                };
-                await safeWriteJSON(blacklistPath, initialBlacklist);
-                console.log('✅ Initialized new blacklist.json with default patterns');
-            }
+            const initialBlacklist = {
+                version: "1.0.0",
+                created_at: new Date().toISOString(),
+                last_updated: new Date().toISOString(),
+                title_patterns: ["adult", "xxx", "erotica"],
+                authors: [],
+                patterns: []
+            };
+            await safeWriteJSON(blacklistPath, initialBlacklist);
+            console.log('✅ Initialized new blacklist.json with default patterns');
         } else {
             throw err;
         }
