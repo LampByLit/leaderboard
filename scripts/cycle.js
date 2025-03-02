@@ -250,6 +250,29 @@ async function loadMetadata() {
     }
 }
 
+// Helper function to clear brownlist
+async function clearBrownlist() {
+    const brownlistPath = getDataPath('brownlist.json');
+    try {
+        // Create new empty brownlist
+        const emptyBrownlist = {
+            version: "1.0.0",
+            created_at: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
+            rejected_books: []
+        };
+        
+        // Write empty brownlist
+        await safeWriteJSON(brownlistPath, emptyBrownlist);
+        console.log('🧹 Cleared brownlist for next cycle');
+        return true;
+    } catch (error) {
+        console.error('⚠️ Failed to clear brownlist:', error.message);
+        // Don't throw - this is a non-critical operation
+        return false;
+    }
+}
+
 /**
  * Runs a complete cycle of operations:
  * 1. Cleanup - Removes invalid submissions
@@ -353,6 +376,13 @@ async function cycle() {
             metadata = await loadMetadata();
             console.log(`📊 Final metadata state: ${Object.keys(metadata.books).length} books in database`);
             console.log('✅ Publish process completed successfully');
+            
+            // Clear brownlist after successful cycle
+            console.log('\n🧹 Clearing brownlist for next cycle...');
+            const brownlistCleared = await clearBrownlist();
+            if (!brownlistCleared) {
+                console.warn('⚠️ Failed to clear brownlist - will retry next cycle');
+            }
             
             // Calculate total duration
             const duration = Date.now() - startTime;
