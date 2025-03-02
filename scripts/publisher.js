@@ -238,10 +238,6 @@ function validateOutput(output) {
         console.warn('Some invalid books were filtered out');
     }
 
-    if (Object.keys(validBooks).length === 0) {
-        throw new Error('No valid books found in output');
-    }
-
     // Return sanitized output
     return {
         version: output.version,
