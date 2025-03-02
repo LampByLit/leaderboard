@@ -236,34 +236,24 @@ function isAuthorMatch(bookAuthor, blacklistAuthor) {
         return true;
     }
     
-    // Check if blacklisted author is contained within book author
-    if (normalizedBookAuthor.includes(normalizedBlacklistAuthor)) {
-        console.log(`Partial author match: "${bookAuthor}" contains "${blacklistAuthor}"`);
-        return true;
-    }
+    // Split authors into words and check for exact word matches
+    const bookAuthorWords = normalizedBookAuthor.toLowerCase().split(/\s+/);
+    const blacklistAuthorWords = normalizedBlacklistAuthor.toLowerCase().split(/\s+/);
     
-    // Check if book author is contained within blacklisted author
-    if (normalizedBlacklistAuthor.includes(normalizedBookAuthor)) {
-        console.log(`Partial author match: "${blacklistAuthor}" contains "${bookAuthor}"`);
-        return true;
-    }
-    
-    // Check for name parts (first name, last name)
-    const bookAuthorParts = normalizedBookAuthor.split(' ');
-    const blacklistAuthorParts = normalizedBlacklistAuthor.split(' ');
-    
-    // Check if last names match (assuming last part is last name)
-    if (bookAuthorParts.length > 0 && blacklistAuthorParts.length > 0) {
-        const bookLastName = bookAuthorParts[bookAuthorParts.length - 1];
-        const blacklistLastName = blacklistAuthorParts[blacklistAuthorParts.length - 1];
+    // Check if ALL words in blacklisted author appear as complete words in book author
+    const allWordsMatch = blacklistAuthorWords.every(blacklistWord => {
+        // Create a regex with word boundaries
+        const wordRegex = new RegExp(`\\b${blacklistWord}\\b`, 'i');
+        const matches = wordRegex.test(normalizedBookAuthor);
         
-        if (bookLastName === blacklistLastName && bookLastName.length > 3) {
-            console.log(`Last name match: "${bookAuthor}" and "${blacklistAuthor}" share last name "${bookLastName}"`);
-            return true;
+        if (matches) {
+            console.log(`Partial author match: "${bookAuthor}" contains word "${blacklistWord}"`);
         }
-    }
+        
+        return matches;
+    });
     
-    return false;
+    return allWordsMatch;
 }
 
 /**
