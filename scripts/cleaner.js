@@ -51,9 +51,14 @@ const path = require('path');
 
 // Configure data directory
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || './data');
+const ROOT_DIR = path.resolve(__dirname, '..');
 
 // Helper function to get data file paths
 function getDataPath(filename) {
+    // Special case for input.json which is now in root
+    if (filename === 'input.json') {
+        return path.join(ROOT_DIR, filename);
+    }
     return path.join(DATA_DIR, filename);
 }
 
