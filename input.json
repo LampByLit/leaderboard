@@ -1,21 +1,4 @@
 {
-    "books": [
-        {
-            "url": "https://www.amazon.com/dp/1728276314",
-            "title": "Fourth Wing (The Empyrean, 1)",
-            "author": "Rebecca Yarros"
-        },
-        {
-            "url": "https://www.amazon.com/dp/1728276357",
-            "title": "Iron Flame (The Empyrean, 2)",
-            "author": "Rebecca Yarros"
-        },
-        {
-            "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB",
-            "title": "Shards",
-            "author": "Robert James Cross"
-        }
-    ],
     "submissions": [
         {
             "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB",
