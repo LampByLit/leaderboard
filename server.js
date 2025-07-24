@@ -53,8 +53,6 @@ const fs = require('fs').promises;
 const path = require('path');
 const { scrape } = require('./scripts/scraper');
 const { publish } = require('./scripts/publisher');
-const { purge } = require('./scripts/purger');
-const { cleanup } = require('./scripts/cleaner');
 const { cycle, isCycleLocked } = require('./scripts/cycle');
 const { initializeVolume } = require('./scripts/init-volume');
 const rateLimit = require('express-rate-limit');
@@ -812,44 +810,36 @@ app.post('/cycle', async (req, res) => {
             }
             cycleStats.scrape = scrapeResult.stats;
             
-            // Run purge
+            // Skip purge (disabled)
             currentStage = 'purging';
-            console.log('🧹 Running purge process...');
+            console.log('⏭️ Skipping purge process...');
             sendProgressToClients({ 
                 status: 'purging', 
-                message: '🧹 Running purge process...',
+                message: '⏭️ Purge process disabled',
                 timestamp: new Date().toISOString()
             });
-            const purgeResult = await purge();
-            if (!purgeResult.success) {
-                throw new Error(`Purge failed: ${purgeResult.error}`);
-            }
-            cycleStats.purge = purgeResult.stats;
+            cycleStats.purge = { skipped: true, reason: 'disabled' };
             sendProgressToClients({
                 status: 'purging',
-                message: '🧹 Purge process completed',
+                message: '⏭️ Purge process skipped',
                 timestamp: new Date().toISOString(),
-                stats: purgeResult.stats
+                stats: cycleStats.purge
             });
             
-            // Run cleanup
+            // Skip cleanup (disabled)
             currentStage = 'cleaning';
-            console.log('🗑️ Running cleanup process...');
+            console.log('⏭️ Skipping cleanup process...');
             sendProgressToClients({ 
                 status: 'cleaning', 
-                message: '🗑️ Running cleanup process...',
+                message: '⏭️ Cleanup process disabled',
                 timestamp: new Date().toISOString()
             });
-            const cleanupResult = await cleanup();
-            if (!cleanupResult.success) {
-                throw new Error(`Cleanup failed: ${cleanupResult.error}`);
-            }
-            cycleStats.cleanup = cleanupResult.stats;
+            cycleStats.cleanup = { skipped: true, reason: 'disabled' };
             sendProgressToClients({
                 status: 'cleaning',
-                message: '🗑️ Cleanup process completed',
+                message: '⏭️ Cleanup process skipped',
                 timestamp: new Date().toISOString(),
-                stats: cleanupResult.stats
+                stats: cycleStats.cleanup
             });
             
             // Run publish

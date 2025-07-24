@@ -45,7 +45,7 @@
             "title": "I Pray to the Hungry God",
             "author": "Ogden Nesmer",
             "cover_url": "https://m.media-amazon.com/images/I/619K8gFdVVL._SY522_.jpg",
-            "bsr": 5114122,
+            "bsr": 5112176,
             "url": "https://www.amazon.com/Pray-Hungry-God-Ogden-Nesmer/dp/B0BMJMP3GK"
         },
         "B0DCS1X54Z": {
@@ -53,7 +53,7 @@
             "title": "SILKWORM",
             "author": "Ogden Nesmer",
             "cover_url": "https://m.media-amazon.com/images/I/71g7j2pCt5L._SY522_.jpg",
-            "bsr": 3196052,
+            "bsr": 3187444,
             "url": "https://www.amazon.com/SILKWORM-Ogden-Nesmer/dp/B0DCS1X54Z"
         },
         "B0B9265BPY": {
@@ -61,7 +61,7 @@
             "title": "The Savage Green",
             "author": "Zulu Alitspa",
             "cover_url": "https://m.media-amazon.com/images/I/71TbYqEmBxL._SY522_.jpg",
-            "bsr": 3211694,
+            "bsr": 3216655,
             "url": "https://www.amazon.com/Savage-Green-Zulu-Alitspa/dp/B0B9265BPY"
         },
         "B0B6LBBJ3S": {
@@ -191,6 +191,14 @@
             "cover_url": "https://m.media-amazon.com/images/I/71jW0LN3mLL._SY522_.jpg",
             "bsr": 2559915,
             "url": "https://www.amazon.com/Tales-Unreal-Vol-Miles-MacNaughton/dp/B0CHGLPWGB"
+        },
+        "195189779X": {
+            "asin": "195189779X",
+            "title": "NUTCRANKR",
+            "author": "Dan Baltic",
+            "cover_url": "https://m.media-amazon.com/images/I/61iNMBGB3dL._SY522_.jpg",
+            "bsr": 479266,
+            "url": "https://www.amazon.com/NUTCRANKR-Dan-Baltic/dp/195189779X"
         }
     },
     "last_update": "2025-07-24T03:20:49.210Z",
@@ -199,9 +207,9 @@
         "started_at": "2025-07-24T08:09:46.753Z"
     },
     "scraping_progress": {
-        "current": 2,
+        "current": 6,
         "total": 32,
-        "successful": 2
+        "successful": 6
     },
     "last_publish": {
         "timestamp": "2025-07-24T03:22:32.435Z",
