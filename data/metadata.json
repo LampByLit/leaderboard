@@ -204,16 +204,16 @@
     "last_update": "2025-07-24T03:20:49.210Z",
     "cycle_status": {
         "state": "running",
-        "started_at": "2025-07-24T08:09:46.753Z"
+        "started_at": "2025-07-24T08:22:04.986Z"
     },
     "scraping_progress": {
-        "current": 6,
+        "current": 4,
         "total": 32,
-        "successful": 6
+        "successful": 4
     },
     "last_publish": {
-        "timestamp": "2025-07-24T03:22:32.435Z",
-        "total_books": 24,
-        "ranked_books": 24
+        "timestamp": "2025-07-24T08:21:09.181Z",
+        "total_books": 25,
+        "ranked_books": 25
     }
 }
