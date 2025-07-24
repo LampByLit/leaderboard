@@ -29,7 +29,7 @@
             "title": "Shards",
             "author": "Robert James Cross",
             "cover_url": "https://m.media-amazon.com/images/I/41Nr6CfHZUL._SY522_.jpg",
-            "bsr": 9102482,
+            "bsr": 9102623,
             "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB"
         },
         "B09MJBNL7X": {
@@ -37,7 +37,7 @@
             "title": "Eggplant",
             "author": "Ogden Nesmer",
             "cover_url": "https://m.media-amazon.com/images/I/71sQQGkR2TL._SY522_.jpg",
-            "bsr": 3804726,
+            "bsr": 3813044,
             "url": "https://www.amazon.com/Eggplant-Ogden-Nesmer/dp/B09MJBNL7X"
         },
         "B0BMJMP3GK": {
@@ -196,12 +196,12 @@
     "last_update": "2025-07-24T03:20:49.210Z",
     "cycle_status": {
         "state": "running",
-        "started_at": "2025-07-24T02:34:01.620Z"
+        "started_at": "2025-07-24T08:09:46.753Z"
     },
     "scraping_progress": {
-        "current": 29,
-        "total": 29,
-        "successful": 24
+        "current": 2,
+        "total": 32,
+        "successful": 2
     },
     "last_publish": {
         "timestamp": "2025-07-24T03:22:32.435Z",

@@ -8,10 +8,7 @@
  * Cycle Sequence:
  * 1. Initialize - Check and create required files
  * 2. Scrape     - Fetch latest data from Amazon
- * 3. Purge      - Remove blacklisted entries
- * 4. Cleanup    - Remove invalid/failed submissions
- * 5. Publish    - Update the leaderboard
- * 6. Reset      - Clear brownlist for next cycle
+ * 3. Publish    - Update the leaderboard
  * 
  * Features:
  * - Atomic file operations with backups
@@ -26,9 +23,6 @@
  * - input.json: Source of Amazon URLs
  * - metadata.json: Internal state and book data
  * - books.json: Published leaderboard data
- * - blacklist.json: Filtering patterns (in config/)
- * - brownlist.json: Temporary rejected books log
- * - cleanup_log.json: Submission cleanup history
  * 
  * Safety Features:
  * - Atomic writes with rollback capability
@@ -50,8 +44,6 @@ const fs = require('fs').promises;
 const path = require('path');
 const { scrape } = require('./scraper');
 const { publish } = require('./publisher');
-const { purge } = require('./purger');
-const { cleanup } = require('./cleaner');
 
 // Configure data directory
 const DATA_DIR = path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '..', 'data'));
@@ -358,31 +350,15 @@ async function cycle() {
             console.log(`📊 Post-scrape metadata state: ${Object.keys(metadata.books).length} books in database`);
             console.log('✅ Scrape process completed successfully');
             
-            console.log('\n🧹 Starting purge process...');
-            console.log('🔍 Checking books against blacklist criteria...');
-            const purgeResult = await purge();
-            if (!purgeResult.success) {
-                throw new Error(`Purge failed: ${purgeResult.error}`);
-            }
-            stats.purge = purgeResult.stats;
+            console.log('\n⏭️ Skipping purge and cleanup processes...');
+            console.log('🔍 Blacklist and cleanup functionality disabled');
+            stats.purge = { skipped: true, reason: 'disabled' };
+            stats.cleanup = { skipped: true, reason: 'disabled' };
             
-            // Check metadata after purging
+            // Check metadata after scraping (no purge/cleanup)
             metadata = await loadMetadata();
-            console.log(`📊 Post-purge metadata state: ${Object.keys(metadata.books).length} books in database`);
-            console.log('✅ Purge process completed successfully');
-            
-            console.log('\n🧼 Starting cleanup process...');
-            console.log('📊 Analyzing submission history and failures...');
-            const cleanupResult = await cleanup();
-            if (!cleanupResult.success) {
-                throw new Error(`Cleanup failed: ${cleanupResult.error}`);
-            }
-            stats.cleanup = cleanupResult.stats;
-            
-            // Check metadata after cleanup
-            metadata = await loadMetadata();
-            console.log(`📊 Post-cleanup metadata state: ${Object.keys(metadata.books).length} books in database`);
-            console.log('✅ Cleanup process completed successfully');
+            console.log(`📊 Post-scrape metadata state: ${Object.keys(metadata.books).length} books in database`);
+            console.log('✅ Scrape process completed successfully');
             
             console.log('\n📊 Starting publish process...');
             console.log('📝 Preparing leaderboard data...');
