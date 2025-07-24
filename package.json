@@ -4,6 +4,7 @@
     "description": "A Node.js application that tracks Amazon book rankings and displays them in a leaderboard format",
     "main": "server.js",
     "scripts": {
+        "prestart": "node scripts/cleanup-railway.js",
         "start": "node server.js",
         "dev": "nodemon server.js"
     },

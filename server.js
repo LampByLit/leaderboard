@@ -1081,21 +1081,13 @@ async function runScheduledCycle(scheduleTime) {
 
 // Setup cron schedules
 function setupScheduledCycles() {
-    // Schedule morning cycle
-    cron.schedule('0 6 * * *', () => {
-        runScheduledCycle('morning');
+    // Schedule daily cycle at 3:00 PM UTC
+    cron.schedule('0 15 * * *', () => {
+        runScheduledCycle('daily');
     }, {
         timezone: "UTC"
     });
 
-    // Schedule evening cycle
-    cron.schedule('0 18 * * *', () => {
-        runScheduledCycle('evening');
-    }, {
-        timezone: "UTC"
-    });
-
-    console.log(`📅 Cycle schedules initialized:`);
-    console.log(`   Morning: 0 6 * * * UTC`);
-    console.log(`   Evening: 0 18 * * * UTC`);
+    console.log(`📅 Cycle schedule initialized:`);
+    console.log(`   Daily: 0 15 * * * UTC (3:00 PM UTC)`);
 } 

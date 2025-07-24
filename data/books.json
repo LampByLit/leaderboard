@@ -1,14 +1,198 @@
 {
     "version": "1.0",
-    "last_updated": "2025-03-02T05:40:22.043Z",
+    "last_updated": "2025-07-24T03:22:32.405Z",
     "books": {
-        "B0DLGLKGFB": {
+        "1922427586": {
+            "rank": 16,
+            "title": "Remembering the Dead and Other Stories",
+            "author": "Lewis Woolston",
+            "cover_url": "https://m.media-amazon.com/images/I/611yH2-BvNL._SY522_.jpg",
+            "bsr": 5796112,
+            "url": "https://www.amazon.com/Remembering-Other-Stories-Lewis-Woolston/dp/1922427586"
+        },
+        "1925536882": {
+            "rank": 4,
+            "title": "The Last Free Man and Other Stories",
+            "author": "Lewis Woolston",
+            "cover_url": "https://m.media-amazon.com/images/I/71TPgME7cpL._SY522_.jpg",
+            "bsr": 1645420,
+            "url": "https://www.amazon.com/Last-Free-Man-Other-Stories/dp/1925536882"
+        },
+        "1957599006": {
+            "rank": 24,
+            "title": "Five to Four",
+            "author": "James Krake",
+            "cover_url": "https://m.media-amazon.com/images/I/61ra9mvilSL._SY522_.jpg",
+            "bsr": 11492944,
+            "url": "https://www.amazon.com/dp/1957599006"
+        },
+        "B0BW32CX2G": {
             "rank": 1,
+            "title": "Mixtape Hyperborea",
+            "author": "Adem Luz Rienspects",
+            "cover_url": "https://m.media-amazon.com/images/I/71Z6dEF6rBL._SY522_.jpg",
+            "bsr": 152208,
+            "url": "https://www.amazon.com/Mixtape-Hyperborea-Adem-Luz-Rienspects/dp/B0BW32CX2G"
+        },
+        "B0CJLCZVCG": {
+            "rank": 2,
+            "title": "INCEL",
+            "author": "ARX-Han",
+            "cover_url": "https://m.media-amazon.com/images/I/81DwGA83SgL._SY522_.jpg",
+            "bsr": 426100,
+            "url": "https://www.amazon.com/INCEL-Novel-ARX-Han/dp/B0CJLCZVCG"
+        },
+        "B0BRC7Z2Q9": {
+            "rank": 3,
+            "title": "Fedbook",
+            "author": "John Jay Stancliff",
+            "cover_url": "https://m.media-amazon.com/images/I/41q8CLN+x6L._SY522_.jpg",
+            "bsr": 1634873,
+            "url": "https://www.amazon.com/Fedbook-John-Jay-Stancliff/dp/B0BRC7Z2Q9/"
+        },
+        "B0DRT4DW5T": {
+            "rank": 5,
+            "title": "Tales of the Unreal Volume 4",
+            "author": "Alex Beyman",
+            "cover_url": "https://m.media-amazon.com/images/I/715PQBge8tL._SY522_.jpg",
+            "bsr": 1715725,
+            "url": "https://www.amazon.com/Tales-Unreal-4-Alex-Beyman/dp/B0DRT4DW5T"
+        },
+        "B0B5KVDCR6": {
+            "rank": 6,
+            "title": "Egregore",
+            "author": "Spencer Weedman",
+            "cover_url": "https://m.media-amazon.com/images/I/71HhSPmoZEL._SY522_.jpg",
+            "bsr": 2037880,
+            "url": "https://www.amazon.com/Egregore-Gothic-Horror-Spencer-Weedman/dp/B0B5KVDCR6"
+        },
+        "B0BZF9QYLF": {
+            "rank": 7,
+            "title": "Kabbalah of the Crocodile",
+            "author": "F. Gardner",
+            "cover_url": "https://m.media-amazon.com/images/I/715VCASMqWL._SY522_.jpg",
+            "bsr": 2076534,
+            "url": "https://www.amazon.com/dp/B0BZF9QYLF"
+        },
+        "B0D8TPX8LV": {
+            "rank": 8,
+            "title": "Tales of The Unreal",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71gzPwXgmGL._SY522_.jpg",
+            "bsr": 2523141,
+            "url": "https://www.amazon.com/Tales-Unreal-Vol-Zulu-Alitspa/dp/B0D8TPX8LV"
+        },
+        "B0CHGLPWGB": {
+            "rank": 9,
+            "title": "Tales of the Unreal",
+            "author": "Miles MacNaughton",
+            "cover_url": "https://m.media-amazon.com/images/I/71jW0LN3mLL._SY522_.jpg",
+            "bsr": 2559915,
+            "url": "https://www.amazon.com/Tales-Unreal-Vol-Miles-MacNaughton/dp/B0CHGLPWGB"
+        },
+        "B0BVTFZ1TF": {
+            "rank": 10,
+            "title": "Tales of The Unreal",
+            "author": "Guy Hayes",
+            "cover_url": "https://m.media-amazon.com/images/I/612W4Yj+OOL._SY522_.jpg",
+            "bsr": 2670703,
+            "url": "https://www.amazon.com/Tales-Unreal-Vol-Guy-Hayes/dp/B0BVTFZ1TF"
+        },
+        "B0DCS1X54Z": {
+            "rank": 11,
+            "title": "SILKWORM",
+            "author": "Ogden Nesmer",
+            "cover_url": "https://m.media-amazon.com/images/I/71g7j2pCt5L._SY522_.jpg",
+            "bsr": 3196052,
+            "url": "https://www.amazon.com/SILKWORM-Ogden-Nesmer/dp/B0DCS1X54Z"
+        },
+        "B0B9265BPY": {
+            "rank": 12,
+            "title": "The Savage Green",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71TbYqEmBxL._SY522_.jpg",
+            "bsr": 3211694,
+            "url": "https://www.amazon.com/Savage-Green-Zulu-Alitspa/dp/B0B9265BPY"
+        },
+        "B09MJBNL7X": {
+            "rank": 13,
+            "title": "Eggplant",
+            "author": "Ogden Nesmer",
+            "cover_url": "https://m.media-amazon.com/images/I/71sQQGkR2TL._SY522_.jpg",
+            "bsr": 3804726,
+            "url": "https://www.amazon.com/Eggplant-Ogden-Nesmer/dp/B09MJBNL7X"
+        },
+        "B0BW31G7MG": {
+            "rank": 14,
+            "title": "Cephalopology",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/717tTvRYggL._SY522_.jpg",
+            "bsr": 4778272,
+            "url": "https://www.amazon.com/Cephalopology-narrative-recounting-humanitys-intelligence/dp/B0BW31G7MG"
+        },
+        "B0BMJMP3GK": {
+            "rank": 15,
+            "title": "I Pray to the Hungry God",
+            "author": "Ogden Nesmer",
+            "cover_url": "https://m.media-amazon.com/images/I/619K8gFdVVL._SY522_.jpg",
+            "bsr": 5114122,
+            "url": "https://www.amazon.com/Pray-Hungry-God-Ogden-Nesmer/dp/B0BMJMP3GK"
+        },
+        "B08XR19N6X": {
+            "rank": 17,
+            "title": "Six Days in the Life of David Vallejo",
+            "author": "K. D. Walter",
+            "cover_url": "https://m.media-amazon.com/images/I/71-G6+ZNqWL._SY522_.jpg",
+            "bsr": 6202709,
+            "url": "https://www.amazon.com/Six-Days-Life-David-Vallejo/dp/B08XR19N6X"
+        },
+        "B0B6LBBJ3S": {
+            "rank": 18,
+            "title": "Modem Waves",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71DxACNamhL._SY522_.jpg",
+            "bsr": 7317424,
+            "url": "https://www.amazon.com/Modem-Waves-Zulu-Alitspa/dp/B0B6LBBJ3S"
+        },
+        "B0BTRTBP5H": {
+            "rank": 19,
+            "title": "The Beautiful Kingdom",
+            "author": "K.K. Wing",
+            "cover_url": "https://m.media-amazon.com/images/I/71ZjCe3Kb1L._SY522_.jpg",
+            "bsr": 7881019,
+            "url": "https://www.amazon.com/Beautiful-Kingdom-K-K-Wing/dp/B0BTRTBP5H"
+        },
+        "B09JJFF82K": {
+            "rank": 20,
+            "title": "The Book of the Void-Sun and the Lion-Serpent at the feet of Christ",
+            "author": "Frater Asemlen",
+            "cover_url": "https://m.media-amazon.com/images/I/719juUMCMrL._SY522_.jpg",
+            "bsr": 8585635,
+            "url": "https://www.amazon.com/Book-Void-Sun-Lion-Serpent-feet-Christ/dp/B09JJFF82K"
+        },
+        "B0DLGLKGFB": {
+            "rank": 21,
             "title": "Shards",
             "author": "Robert James Cross",
             "cover_url": "https://m.media-amazon.com/images/I/41Nr6CfHZUL._SY522_.jpg",
-            "bsr": 9236770,
+            "bsr": 9102482,
             "url": "https://www.amazon.com/Shards-City-Robert-James-Cross/dp/B0DLGLKGFB"
+        },
+        "B0BTJ6JV1D": {
+            "rank": 22,
+            "title": "Panther Pride",
+            "author": "Zulu Alitspa",
+            "cover_url": "https://m.media-amazon.com/images/I/71+NPJOyl3L._SY522_.jpg",
+            "bsr": 9374983,
+            "url": "https://www.amazon.com/Panther-Pride-Zulu-Alitspa/dp/B0BTJ6JV1D"
+        },
+        "B0BYRNM6Z5": {
+            "rank": 23,
+            "title": "Chicken World",
+            "author": "K. R. Hartley",
+            "cover_url": "https://m.media-amazon.com/images/I/61SRpyydboL._SY522_.jpg",
+            "bsr": 10967465,
+            "url": "https://www.amazon.com/dp/B0BYRNM6Z5"
         }
     }
 }
